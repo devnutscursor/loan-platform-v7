@@ -1,0 +1,197 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import { useRouter, useSearchParams } from 'next/navigation';
+// Removed Session import - not needed for free plan
+
+export default function AuthPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  // Remove signup functionality - only admin-created accounts
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const checkUserRoleAndRedirect = useCallback(async (user: { id: string; email?: string }) => {
+    try {
+      console.log('Checking user role for:', user.id);
+      
+      // Get user role from database
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user role:', error);
+        // If RLS is blocking, try to redirect based on email
+        if (user.email === 'admin@loanplatform.com') {
+          console.log('Redirecting super admin based on email');
+          router.push('/admin/companies');
+          return;
+        }
+        // Default fallback
+        router.push('/dashboard');
+        return;
+      }
+
+      console.log('User role:', userData.role);
+
+      // Redirect based on role
+      if (userData.role === 'super_admin') {
+        console.log('Redirecting to /admin/companies');
+        router.push('/admin/companies');
+      } else if (userData.role === 'company_admin') {
+        console.log('Redirecting to /admin/employees');
+        router.push('/admin/employees');
+      } else {
+        console.log('Redirecting to /dashboard (default)');
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      // Fallback redirect
+      router.push('/dashboard');
+    }
+  }, [router]);
+
+  // Simple redirect after successful login
+  useEffect(() => {
+    // Check for success messages from URL params
+    const message = searchParams.get('message');
+    if (message === 'verification_complete') {
+      setSuccess('✅ Email verified successfully! You can now login with your credentials.');
+    }
+
+    // REMOVED: onAuthStateChange listener - let useAuth hook handle this
+    // Multiple listeners were causing conflicts
+  }, [checkUserRoleAndRedirect, searchParams]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      console.log('Attempting sign in with:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Sign in error:', error);
+        // Show user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          setError('❌ Invalid email or password. Please check your credentials and try again.');
+        } else if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
+          setError('📧 Please check your email and confirm your account before signing in. Look for the verification email and click the confirmation link.');
+        } else if (error.message.includes('signup_disabled')) {
+          setError('🚫 Account registration is disabled. Please contact your administrator.');
+        } else if (error.message.includes('user_not_found')) {
+          setError('👤 No account found with this email. Please check your email or contact your administrator.');
+        } else if (error.message.includes('too_many_requests')) {
+          setError('⏰ Too many login attempts. Please wait a few minutes before trying again.');
+        } else {
+          setError(`⚠️ ${error.message}`);
+        }
+      } else if (data.user) {
+        console.log('Sign in successful for:', data.user.email);
+        setError('');
+        // Handle redirect directly after successful login
+        await checkUserRoleAndRedirect(data.user);
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      setError('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Signup functionality removed - only admin-created accounts
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to Loan Officer Platform
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Access your dashboard
+          </p>
+        </div>
+        
+        {success && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-700 text-sm text-center">{success}</p>
+          </div>
+        )}
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email-address" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          <div className="flex space-x-3">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50"
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+        </form>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Contact your administrator for account access
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
