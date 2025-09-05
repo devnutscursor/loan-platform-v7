@@ -17,21 +17,39 @@ export default function InvitePage() {
   const router = useRouter();
   
   const companyId = searchParams.get('company');
+  const isOfficerInvite = searchParams.get('officer') === 'true';
 
   useEffect(() => {
-    // Check if user is already logged in from invite
+    // Listen for auth state changes to handle invite flow
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+        setUser(session.user);
+        await fetchCompanyInfo(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setError('Please check your email and click the invite link to continue.');
+      }
+    });
+
+    // Check if user is already logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
-        // Fetch company info
         await fetchCompanyInfo(user);
       } else {
-        setError('Please check your email and click the invite link to continue.');
+        // If no user is logged in, show the password creation form
+        // This handles the case where someone clicks an invite link
+        setUser({ email: 'invite@example.com' } as any); // Temporary user object
+        await fetchCompanyInfo(null);
       }
     };
 
     checkUser();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchCompanyInfo = async (currentUser: any) => {
@@ -41,33 +59,74 @@ export default function InvitePage() {
     }
 
     try {
-      const { data: company, error } = await supabase
-        .from('companies')
-        .select('name, admin_email, invite_status, invite_expires_at')
-        .eq('id', companyId)
-        .single();
+      if (isOfficerInvite) {
+        // For loan officer invites, check if the company exists and get its info
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('name, admin_email')
+          .eq('id', companyId)
+          .single();
 
-      if (error || !company) {
-        setError('Company not found or invite is invalid.');
-        return;
+        if (companyError || !company) {
+          setError('Company not found or invite is invalid.');
+          return;
+        }
+
+        // If user is logged in, check if they have access to this company
+        if (currentUser) {
+          const { data: userCompany, error: userError } = await supabase
+            .from('user_companies')
+            .select('is_active')
+            .eq('user_id', currentUser.id)
+            .eq('company_id', companyId)
+            .eq('role', 'employee')
+            .single();
+
+          if (userError || !userCompany) {
+            setError('You are not authorized to access this company.');
+            return;
+          }
+
+          if (userCompany.is_active) {
+            setError('You have already completed your setup. Please login to access your dashboard.');
+            return;
+          }
+        }
+
+        setCompanyInfo({
+          name: company.name,
+          email: company.admin_email
+        });
+      } else {
+        // For company admin invites, check companies table
+        const { data: company, error } = await supabase
+          .from('companies')
+          .select('name, admin_email, invite_status, invite_expires_at')
+          .eq('id', companyId)
+          .single();
+
+        if (error || !company) {
+          setError('Company not found or invite is invalid.');
+          return;
+        }
+
+        if (company.invite_status === 'accepted') {
+          setSuccess('This invite has already been accepted. You can login now.');
+          setTimeout(() => router.push('/auth'), 3000);
+          return;
+        }
+
+        if (company.invite_status === 'expired' || 
+            (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
+          setError('This invite has expired. Please contact your administrator for a new invite.');
+          return;
+        }
+
+        setCompanyInfo({
+          name: company.name,
+          email: company.admin_email || (currentUser ? currentUser.email : '')
+        });
       }
-
-      if (company.invite_status === 'accepted') {
-        setSuccess('This invite has already been accepted. You can login now.');
-        setTimeout(() => router.push('/auth'), 3000);
-        return;
-      }
-
-      if (company.invite_status === 'expired' || 
-          (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
-        setError('This invite has expired. Please contact your administrator for a new invite.');
-        return;
-      }
-
-      setCompanyInfo({
-        name: company.name,
-        email: company.admin_email || currentUser.email
-      });
     } catch (error) {
       setError('Failed to load company information.');
     }
@@ -88,14 +147,23 @@ export default function InvitePage() {
       return;
     }
 
-    if (!user) {
-      setError('You must be logged in to accept this invite.');
-      return;
-    }
-
     setLoading(true);
 
     try {
+      // For invite links, we need to handle the authentication differently
+      if (!user || user.email === 'invite@example.com') {
+        // This is an invite link - we need to get the user from the invite
+        const { data: { user: currentUser }, error: getUserError } = await supabase.auth.getUser();
+        
+        if (getUserError || !currentUser) {
+          setError('Please click the invite link from your email to continue.');
+          setLoading(false);
+          return;
+        }
+        
+        setUser(currentUser);
+      }
+
       // Update user password
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
@@ -105,47 +173,74 @@ export default function InvitePage() {
         throw updateError;
       }
 
-      // Update company status to accepted and activate
-      const { error: companyError } = await supabase
-        .from('companies')
-        .update({
-          invite_status: 'accepted',
-          admin_email_verified: true,
-          admin_user_id: user.id,
-          is_active: true, // Activate company when invite is accepted
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', companyId);
+      if (isOfficerInvite) {
+        // Update user and user-company to active for loan officer
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ is_active: true })
+          .eq('id', user.id);
 
-      if (companyError) {
-        throw companyError;
+        if (userError) {
+          throw userError;
+        }
+
+        const { error: companyError } = await supabase
+          .from('user_companies')
+          .update({ is_active: true })
+          .eq('user_id', user.id)
+          .eq('company_id', companyId);
+
+        if (companyError) {
+          throw companyError;
+        }
+      } else {
+        // Update company status to accepted and activate for company admin
+        const { error: companyError } = await supabase
+          .from('companies')
+          .update({
+            invite_status: 'accepted',
+            admin_email_verified: true,
+            admin_user_id: user.id,
+            is_active: true, // Activate company when invite is accepted
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', companyId);
+
+        if (companyError) {
+          throw companyError;
+        }
       }
 
-      // Add user to users table
+      // Add user to users table with correct role
       await supabase
         .from('users')
         .upsert({
           id: user.id,
           email: user.email!,
-          first_name: '',
-          last_name: '',
-          role: 'company_admin',
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          role: isOfficerInvite ? 'employee' : 'company_admin',
           is_active: true
         });
 
-      // Link user to company
+      // Link user to company with correct role
       await supabase
         .from('user_companies')
         .upsert({
           user_id: user.id,
           company_id: companyId,
-          role: 'admin'
+          role: isOfficerInvite ? 'employee' : 'admin',
+          is_active: true
         });
 
       setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard...');
       
       setTimeout(() => {
-        router.push('/admin/employees');
+        if (isOfficerInvite) {
+          router.push('/officers/dashboard');
+        } else {
+          router.push('/companyadmin/loanofficers');
+        }
       }, 2000);
 
     } catch (error) {
@@ -156,7 +251,7 @@ export default function InvitePage() {
     }
   };
 
-  if (!user) {
+  if (!user || user.email === 'invite@example.com') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
@@ -169,6 +264,11 @@ export default function InvitePage() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
             <p className="text-gray-600 mb-4">Please check your email and click the invite link to continue with the setup.</p>
             <p className="text-sm text-gray-500">If you don't see the email, check your spam folder.</p>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> Make sure to click the invite link from your email. The link will automatically sign you in.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -203,7 +303,12 @@ export default function InvitePage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Setup</h1>
-          <p className="text-gray-600">Create a password to access your company dashboard.</p>
+          <p className="text-gray-600">
+            {isOfficerInvite 
+              ? 'Create a password to access your loan officer dashboard.' 
+              : 'Create a password to access your company dashboard.'
+            }
+          </p>
           {companyInfo && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-700">

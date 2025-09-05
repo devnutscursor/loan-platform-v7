@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { RouteGuard } from '@/components/auth/RouteGuard';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { DataTable, TableColumn } from '@/components/ui/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { ActionButton } from '@/components/ui/ActionButton';
 
 interface Company {
   id: string;
@@ -170,6 +174,33 @@ export default function CompaniesPage() {
     }
   };
 
+  const handleDeactivateCompany = async (companyId: string) => {
+    if (!confirm('Are you sure you want to deactivate this company? The company admin will not be able to sign in.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/deactivate-company', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ companyId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccess(result.message);
+        fetchCompanies(); // Refresh the list
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Failed to deactivate company. Please try again.');
+    }
+  };
+
   const handleDeleteCompany = async (companyId: string) => {
     if (!confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
       return;
@@ -228,12 +259,11 @@ export default function CompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Company Management</h1>
-            <p className="mt-2 text-gray-600">Manage companies and their administrators</p>
-          </div>
+    <RouteGuard allowedRoles={['super_admin']}>
+      <DashboardLayout 
+        title="Company Management" 
+        subtitle="Manage companies and their administrators"
+      >
 
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -395,6 +425,14 @@ export default function CompaniesPage() {
                                   <span className="text-gray-300">|</span>
                                 </>
                               )}
+                              {company.invite_status === 'accepted' && (
+                                <button
+                                  onClick={() => handleDeactivateCompany(company.id)}
+                                  className="text-red-600 hover:text-red-900 text-xs"
+                                >
+                                  Deactivate
+                                </button>
+                              )}
                               {(company.invite_status === 'pending' || company.invite_status === 'expired') && (
                                 <button
                                   onClick={() => handleDeleteCompany(company.id)}
@@ -413,7 +451,7 @@ export default function CompaniesPage() {
               )}
             </div>
           </div>
-        </div>
-      </div>
+      </DashboardLayout>
+    </RouteGuard>
   );
 }

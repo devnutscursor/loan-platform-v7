@@ -46,8 +46,11 @@ export default function AuthPage() {
         console.log('Redirecting to /admin/companies');
         router.push('/admin/companies');
       } else if (userData.role === 'company_admin') {
-        console.log('Redirecting to /admin/employees');
-        router.push('/admin/employees');
+        console.log('Redirecting to /companyadmin/loanofficers');
+        router.push('/companyadmin/loanofficers');
+      } else if (userData.role === 'employee') {
+        console.log('Redirecting to /officers/dashboard');
+        router.push('/officers/dashboard');
       } else {
         console.log('Redirecting to /dashboard (default)');
         router.push('/dashboard');

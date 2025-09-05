@@ -102,14 +102,15 @@ export function useAuth() {
       }
 
       // Check user-company relationship for employees
-      const { data: userCompany } = await supabase
+      const { data: userCompanies } = await supabase
         .from('user_companies')
         .select('company_id, role')
         .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
 
-      if (userCompany) {
+      if (userCompanies && userCompanies.length > 0) {
+        // Use the first active company relationship
+        const userCompany = userCompanies[0];
         console.log('🔍 useAuth: User is employee with company:', userCompany.company_id);
         setUserRole({ role: 'employee', companyId: userCompany.company_id });
         setCompanyId(userCompany.company_id);
