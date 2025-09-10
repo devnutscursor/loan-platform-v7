@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -21,6 +21,34 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // Cache invalidation functions
+  const clearProfileCache = useCallback(() => {
+    try {
+      localStorage.removeItem('loan_officer_profile_cache');
+      console.log('🗑️ Profile cache cleared from useAuth');
+    } catch (error) {
+      console.error('Error clearing profile cache:', error);
+    }
+  }, []);
+
+  const invalidateCacheOnUserChange = useCallback((newUser: User | null, oldUser: User | null) => {
+    // Only clear cache if user actually changed (different ID or email) or signed out
+    if (!newUser) {
+      // User signed out
+      clearProfileCache();
+    } else if (!oldUser) {
+      // First time user is set (initial load) - don't clear cache
+      console.log('🔐 useAuth: Initial user load, keeping existing cache');
+    } else if (newUser.id !== oldUser.id || newUser.email !== oldUser.email) {
+      // User actually changed
+      console.log('🔐 useAuth: User changed, clearing cache');
+      clearProfileCache();
+    } else {
+      // Same user, same session - keep cache
+      console.log('🔐 useAuth: Same user, keeping cache');
+    }
+  }, [clearProfileCache]);
+
   useEffect(() => {
     setMounted(true);
     
@@ -32,20 +60,29 @@ export function useAuth() {
       async (event: string, session: any) => {
         console.log('🔐 useAuth: Auth state changed:', event, session?.user?.email);
         
+        const previousUser = user;
+        
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           console.log('🔐 useAuth: User authenticated:', session.user.email, 'Event:', event);
           setUser(session.user);
           await fetchUserRole(session.user.id);
+          // Only invalidate cache on actual sign in, not initial session
+          if (event === 'SIGNED_IN') {
+            invalidateCacheOnUserChange(session.user, previousUser);
+          }
         } else if (event === 'SIGNED_OUT') {
           console.log('🔐 useAuth: User signed out');
           setUser(null);
           setUserRole(null);
           setCompanyId(null);
+          // Clear cache on sign out
+          clearProfileCache();
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Handle token refresh - user is still signed in
           console.log('🔐 useAuth: Token refreshed, user still signed in:', session.user.email);
           setUser(session.user);
           await fetchUserRole(session.user.id);
+          // Don't clear cache on token refresh - same user
         }
         setLoading(false);
       }
@@ -58,29 +95,27 @@ export function useAuth() {
     try {
       console.log('🔍 useAuth: Fetching user role for:', userId);
       
-      // First check if user is super admin
-      const { data: superAdmin } = await supabase
+      // Get user data first (this should work with RLS)
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
         .eq('id', userId)
-        .eq('role', 'super_admin')
         .single();
 
-      if (superAdmin) {
+      if (userError) {
+        console.error('🔍 useAuth: Error fetching user data:', userError);
+        return;
+      }
+
+      console.log('🔍 useAuth: User role from database:', userData.role);
+
+      if (userData.role === 'super_admin') {
         console.log('🔍 useAuth: User is super admin');
         setUserRole({ role: 'super_admin' });
         return;
       }
 
-      // Check if user is company admin
-      const { data: companyAdmin } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .eq('role', 'company_admin')
-        .single();
-
-      if (companyAdmin) {
+      if (userData.role === 'company_admin') {
         console.log('🔍 useAuth: User is company admin');
         // Get company ID for company admin
         const { data: userCompany } = await supabase
@@ -115,7 +150,8 @@ export function useAuth() {
         setUserRole({ role: 'employee', companyId: userCompany.company_id });
         setCompanyId(userCompany.company_id);
       } else {
-        console.log('🔍 useAuth: No user-company relationship found');
+        console.log('🔍 useAuth: User has no company relationship');
+        setUserRole({ role: 'employee' });
       }
     } catch (error) {
       console.error('🔍 useAuth: Error fetching user role:', error);
@@ -128,6 +164,8 @@ export function useAuth() {
       setUser(null);
       setUserRole(null);
       setCompanyId(null);
+      // Clear cache on manual sign out
+      clearProfileCache();
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -147,5 +185,6 @@ export function useAuth() {
     isCompanyAdmin,
     isEmployee,
     isAuthenticated: !!user,
+    clearProfileCache, // Export cache clearing function
   };
 }

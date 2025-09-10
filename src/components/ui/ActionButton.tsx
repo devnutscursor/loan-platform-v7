@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { colors, spacing, typography, borderRadius } from '@/theme/theme';
 
 export interface ActionButtonProps {
   onClick: () => void;
@@ -22,15 +23,15 @@ export function ActionButton({
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
-        return 'bg-pink-600 text-white hover:bg-pink-700 focus:ring-pink-500';
+        return `text-white`;
       case 'secondary':
-        return 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500';
+        return `text-gray-700`;
       case 'danger':
-        return 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500';
+        return `text-white`;
       case 'link':
-        return 'text-pink-600 hover:text-pink-700 focus:ring-pink-500 bg-transparent';
+        return `bg-transparent`;
       default:
-        return 'bg-pink-600 text-white hover:bg-pink-700 focus:ring-pink-500';
+        return `text-white`;
     }
   };
 
@@ -47,14 +48,7 @@ export function ActionButton({
     }
   };
 
-  const baseStyles = `
-    inline-flex items-center justify-center font-medium rounded-lg
-    focus:outline-none focus:ring-2 focus:ring-offset-2
-    transition-colors duration-200
-    disabled:opacity-50 disabled:cursor-not-allowed
-    ${getVariantStyles()}
-    ${getSizeStyles()}
-  `;
+  const baseStyles = `inline-flex items-center justify-center font-medium focus:outline-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles()} ${getSizeStyles()}`;
 
   if (variant === 'link') {
     return (
@@ -62,6 +56,7 @@ export function ActionButton({
         onClick={onClick}
         disabled={disabled || loading}
         className={baseStyles}
+        style={{ color: colors.primary[600] }}
       >
         {loading ? (
           <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -79,6 +74,10 @@ export function ActionButton({
       onClick={onClick}
       disabled={disabled || loading}
       className={baseStyles}
+      style={{
+        borderRadius: borderRadius.lg as unknown as number,
+        backgroundColor: variant === 'primary' ? colors.primary[600] : variant === 'secondary' ? colors.gray[100] : variant === 'danger' ? '#dc2626' : 'transparent',
+      }}
     >
       {loading ? (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">

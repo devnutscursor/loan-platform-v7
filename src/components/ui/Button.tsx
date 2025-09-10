@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { theme, RoleType } from '@/theme/theme';
+import { theme, RoleType, colors, spacing, borderRadius, typography } from '@/theme/theme';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -57,48 +59,35 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  // Base button classes
-  const baseClasses = `
-    inline-flex items-center justify-center
-    font-medium rounded-md
-    transition-colors duration-200
-    focus:outline-none focus:ring-2 focus:ring-offset-2
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
-
-  // Size classes
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm h-8',
-    md: 'px-4 py-2 text-sm h-10',
-    lg: 'px-6 py-3 text-base h-12',
+  // Size tokens from theme
+  const sizeStyle: Record<NonNullable<ButtonProps['size']>, React.CSSProperties> = {
+    sm: { padding: `${spacing[2]} ${spacing[3]}`, fontSize: typography.fontSize.sm as unknown as number, height: 32 },
+    md: { padding: `${spacing[2]} ${spacing[4]}`, fontSize: typography.fontSize.sm as unknown as number, height: 40 },
+    lg: { padding: `${spacing[3]} ${spacing[6]}`, fontSize: typography.fontSize.base as unknown as number, height: 48 },
   };
 
-  // Variant classes
-  const variantClasses = {
-    primary: `
-      bg-pink-600 text-white
-      hover:bg-pink-700
-      focus:ring-pink-500
-      active:bg-pink-800
-    `,
-    secondary: `
-      bg-white text-gray-900 border border-gray-300
-      hover:bg-gray-50
-      focus:ring-pink-500
-      active:bg-gray-100
-    `,
-    ghost: `
-      bg-transparent text-gray-700
-      hover:bg-gray-100
-      focus:ring-pink-500
-      active:bg-gray-200
-    `,
-    danger: `
-      bg-red-600 text-white
-      hover:bg-red-700
-      focus:ring-red-500
-      active:bg-red-800
-    `,
+  // Variant tokens from theme
+  const variantStyle: Record<NonNullable<ButtonProps['variant']>, React.CSSProperties> = {
+    primary: {
+      backgroundColor: colors.primary[600],
+      color: '#ffffff',
+      border: `1px solid ${colors.primary[600]}`,
+    },
+    secondary: {
+      backgroundColor: '#ffffff',
+      color: colors.gray[900],
+      border: `1px solid ${colors.gray[300]}`,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      color: colors.gray[700],
+      border: `1px solid transparent`,
+    },
+    danger: {
+      backgroundColor: '#dc2626',
+      color: '#ffffff',
+      border: `1px solid #dc2626`,
+    },
   };
 
   // Loading spinner component
@@ -130,13 +119,13 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`
-        ${baseClasses}
-        ${sizeClasses[size]}
-        ${variantClasses[variant]}
-        ${className}
-      `.trim()}
+      className={`inline-flex items-center justify-center font-medium transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${className}`.trim()}
       disabled={isDisabled}
+      style={{
+        borderRadius: borderRadius.md as unknown as number,
+        ...sizeStyle[size],
+        ...variantStyle[variant],
+      }}
       {...props}
     >
       {loading && <LoadingSpinner />}

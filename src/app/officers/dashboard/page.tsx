@@ -1,12 +1,16 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
+import { dashboard } from '@/theme/theme';
+import { icons } from '@/components/ui/Icon';
 
 export default function OfficersDashboardPage() {
   const { user, userRole } = useAuth();
+  const router = useRouter();
 
   return (
     <RouteGuard allowedRoles={['employee']}>
@@ -14,22 +18,41 @@ export default function OfficersDashboardPage() {
         title="Loan Officer Dashboard" 
         subtitle="Welcome to your loan officer dashboard"
       >
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Welcome Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-12 w-12 rounded-full bg-pink-100 flex items-center justify-center">
-                  <span className="text-lg font-medium text-pink-600">
+          <div style={dashboard.card}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexShrink: 0 }}>
+                <div style={{
+                  height: '48px',
+                  width: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fce7f3',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{
+                    fontSize: '18px',
+                    fontWeight: 'medium',
+                    color: '#db2777'
+                  }}>
                     {user?.email?.charAt(0).toUpperCase()}
                   </span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div style={{ marginLeft: '16px' }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: 'medium',
+                  color: '#111827'
+                }}>
                   Welcome, {user?.email}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p style={{
+                  fontSize: '14px',
+                  color: '#6b7280'
+                }}>
                   You are logged in as a Loan Officer
                 </p>
               </div>
@@ -37,115 +60,229 @@ export default function OfficersDashboardPage() {
           </div>
 
           {/* Dashboard Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+          <div style={dashboard.grid.cols3}>
+            <div style={dashboard.statsCard}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{
+                    ...dashboard.statsCardIcon,
+                    backgroundColor: '#dbeafe'
+                  }}>
+                    {React.createElement(icons.document, { 
+                      size: 20, 
+                      style: { color: '#2563eb' } 
+                    })}
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Active Loans</p>
-                  <p className="text-2xl font-semibold text-gray-900">0</p>
+                <div style={dashboard.statsCardContent}>
+                  <p style={dashboard.statsCardLabel}>Active Loans</p>
+                  <p style={dashboard.statsCardValue}>0</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
+            <div style={dashboard.statsCard}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{
+                    ...dashboard.statsCardIcon,
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    {React.createElement(icons.calculators, { 
+                      size: 20, 
+                      style: { color: '#16a34a' } 
+                    })}
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Processed</p>
-                  <p className="text-2xl font-semibold text-gray-900">0</p>
+                <div style={dashboard.statsCardContent}>
+                  <p style={dashboard.statsCardLabel}>Total Processed</p>
+                  <p style={dashboard.statsCardValue}>0</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+            <div style={dashboard.statsCard}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{
+                    ...dashboard.statsCardIcon,
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    {React.createElement(icons.clock, { 
+                      size: 20, 
+                      style: { color: '#d97706' } 
+                    })}
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Pending Reviews</p>
-                  <p className="text-2xl font-semibold text-gray-900">0</p>
+                <div style={dashboard.statsCardContent}>
+                  <p style={dashboard.statsCardLabel}>Pending Reviews</p>
+                  <p style={dashboard.statsCardValue}>0</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="text-center">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">New Loan</p>
+          <div style={dashboard.card}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'medium',
+              color: '#111827',
+              marginBottom: '16px'
+            }}>
+              Quick Actions
+            </h3>
+            <div style={dashboard.grid.cols4}>
+              <button style={{
+                ...dashboard.quickActionCard,
+                padding: '16px',
+                border: '1px solid #e5e7eb',
+                textAlign: 'center'
+              }}
+              onMouseEnter={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCardHover);
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCard);
+                e.currentTarget.style.backgroundColor = '#ffffff';
+              }}>
+                <div style={{
+                  ...dashboard.quickActionIcon,
+                  backgroundColor: '#dbeafe',
+                  margin: '0 auto 8px auto'
+                }}>
+                  {React.createElement(icons.plus, { 
+                    size: 20, 
+                    style: { color: '#2563eb' } 
+                  })}
                 </div>
+                <p style={dashboard.quickActionTitle}>New Loan</p>
               </button>
 
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="text-center">
-                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
-                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">View Applications</p>
+              <button style={{
+                ...dashboard.quickActionCard,
+                padding: '16px',
+                border: '1px solid #e5e7eb',
+                textAlign: 'center'
+              }}
+              onMouseEnter={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCardHover);
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCard);
+                e.currentTarget.style.backgroundColor = '#ffffff';
+              }}>
+                <div style={{
+                  ...dashboard.quickActionIcon,
+                  backgroundColor: '#dcfce7',
+                  margin: '0 auto 8px auto'
+                }}>
+                  {React.createElement(icons.document, { 
+                    size: 20, 
+                    style: { color: '#16a34a' } 
+                  })}
                 </div>
+                <p style={dashboard.quickActionTitle}>View Applications</p>
               </button>
 
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="text-center">
-                  <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-2">
-                    <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">Reports</p>
+              <button style={{
+                ...dashboard.quickActionCard,
+                padding: '16px',
+                border: '1px solid #e5e7eb',
+                textAlign: 'center'
+              }}
+              onMouseEnter={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCardHover);
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.currentTarget.style, dashboard.quickActionCard);
+                e.currentTarget.style.backgroundColor = '#ffffff';
+              }}>
+                <div style={{
+                  ...dashboard.quickActionIcon,
+                  backgroundColor: '#e9d5ff',
+                  margin: '0 auto 8px auto'
+                }}>
+                  {React.createElement(icons.trendingUp, { 
+                    size: 20, 
+                    style: { color: '#9333ea' } 
+                  })}
                 </div>
+                <p style={dashboard.quickActionTitle}>Reports</p>
               </button>
 
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="text-center">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
-                    <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">Profile</p>
+              <button 
+                onClick={() => router.push('/officers/profile')}
+                style={{
+                  ...dashboard.quickActionCard,
+                  padding: '16px',
+                  border: '1px solid #e5e7eb',
+                  textAlign: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.quickActionCardHover);
+                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                }}
+                onMouseLeave={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.quickActionCard);
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                }}
+              >
+                <div style={{
+                  ...dashboard.quickActionIcon,
+                  backgroundColor: '#fed7aa',
+                  margin: '0 auto 8px auto'
+                }}>
+                  {React.createElement(icons.profile, { 
+                    size: 20, 
+                    style: { color: '#ea580c' } 
+                  })}
                 </div>
+                <p style={dashboard.quickActionTitle}>Profile</p>
               </button>
             </div>
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-            <div className="text-center py-8 text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating your first loan application.</p>
+          <div style={dashboard.card}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'medium',
+              color: '#111827',
+              marginBottom: '16px'
+            }}>
+              Recent Activity
+            </h3>
+            <div style={{
+              textAlign: 'center',
+              padding: '32px 0',
+              color: '#6b7280'
+            }}>
+              {React.createElement(icons.document, { 
+                size: 48, 
+                style: { 
+                  margin: '0 auto',
+                  color: '#9ca3af'
+                } 
+              })}
+              <h3 style={{
+                marginTop: '8px',
+                fontSize: '14px',
+                fontWeight: 'medium',
+                color: '#111827'
+              }}>
+                No recent activity
+              </h3>
+              <p style={{
+                marginTop: '4px',
+                fontSize: '14px',
+                color: '#6b7280'
+              }}>
+                Get started by creating your first loan application.
+              </p>
             </div>
           </div>
         </div>

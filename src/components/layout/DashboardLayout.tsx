@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { dashboard } from '@/theme/theme';
+import { icons } from '@/components/ui/Icon';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,6 +21,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const { user, signOut, userRole } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await signOut();
@@ -42,15 +45,17 @@ export function DashboardLayout({
     switch (userRole?.role) {
       case 'super_admin':
         return [
-          { name: 'Companies', href: '/admin/companies', current: false },
+          { name: 'Companies', href: '/admin/companies', current: pathname === '/admin/companies' },
         ];
       case 'company_admin':
         return [
-          { name: 'Loan Officers', href: '/companyadmin/loanofficers', current: false },
+          { name: 'Loan Officers', href: '/companyadmin/loanofficers', current: pathname === '/companyadmin/loanofficers' },
         ];
       case 'employee':
         return [
-          { name: 'Dashboard', href: '/officers/dashboard', current: false },
+          { name: 'Dashboard', href: '/officers/dashboard', current: pathname === '/officers/dashboard' },
+          { name: 'Profile', href: '/officers/profile', current: pathname === '/officers/profile' },
+          { name: 'Leads', href: '/officers/leads', current: pathname === '/officers/leads' },
         ];
       default:
         return [];
@@ -58,25 +63,43 @@ export function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={dashboard.container}>
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-gray-900">Loan Officer Platform</h1>
+      <nav style={dashboard.nav}>
+        <div style={dashboard.navContent}>
+          <div style={dashboard.navInner}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexShrink: 0 }}>
+                <h1 style={{ 
+                  fontSize: '20px', 
+                  fontWeight: 'bold', 
+                  color: '#111827' 
+                }}>
+                  Loan Officer Platform
+                </h1>
               </div>
-              <div className="hidden md:ml-6 md:flex md:space-x-8">
+              <div style={{ 
+                marginLeft: '24px', 
+                ...dashboard.navLinks 
+              }}>
                 {getNavigationItems().map((item) => (
                   <a
                     key={item.name}
                     href={item.href}
-                    className={`${
-                      item.current
-                        ? 'border-pink-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors`}
+                    style={{
+                      ...dashboard.navLink,
+                      ...(item.current ? dashboard.navLinkActive : {}),
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!item.current) {
+                        Object.assign(e.currentTarget.style, dashboard.navLinkHover);
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!item.current) {
+                        Object.assign(e.currentTarget.style, dashboard.navLink);
+                      }
+                    }}
                   >
                     {item.name}
                   </a>
@@ -84,14 +107,14 @@ export function DashboardLayout({
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{user?.email}</p>
-                  <p className="text-xs text-gray-500">{getRoleDisplayName()}</p>
+            <div style={dashboard.userInfo}>
+              <div style={dashboard.userInfo}>
+                <div style={dashboard.userDetails}>
+                  <p style={dashboard.userEmail}>{user?.email}</p>
+                  <p style={dashboard.userRole}>{getRoleDisplayName()}</p>
                 </div>
-                <div className="h-8 w-8 bg-pink-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-pink-600">
+                <div style={dashboard.userAvatar}>
+                  <span style={dashboard.userAvatarText}>
                     {user?.email?.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -99,7 +122,15 @@ export function DashboardLayout({
               
               <button
                 onClick={handleSignOut}
-                className="bg-pink-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-pink-700 transition-colors"
+                style={{
+                  ...dashboard.button.primary,
+                }}
+                onMouseEnter={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.button.primaryHover);
+                }}
+                onMouseLeave={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.button.primary);
+                }}
               >
                 Sign Out
               </button>
@@ -109,24 +140,51 @@ export function DashboardLayout({
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main style={dashboard.mainContent}>
+        <div style={{ padding: '24px 0' }}>
           {showBackButton && (
             <button
               onClick={() => router.back()}
-              className="mb-4 inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+              style={{
+                marginBottom: '16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '14px',
+                color: '#6b7280',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#374151';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#6b7280';
+              }}
             >
-              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              {React.createElement(icons.chevronLeft, { 
+                size: 16, 
+                style: { marginRight: '8px' } 
+              })}
               Back
             </button>
           )}
           
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+          <div style={{ marginBottom: '32px' }}>
+            <h1 style={{ 
+              fontSize: '30px', 
+              fontWeight: 'bold', 
+              color: '#111827' 
+            }}>
+              {title}
+            </h1>
             {subtitle && (
-              <p className="mt-2 text-gray-600">{subtitle}</p>
+              <p style={{ 
+                marginTop: '8px', 
+                color: '#4b5563' 
+              }}>
+                {subtitle}
+              </p>
             )}
           </div>
 
