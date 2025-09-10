@@ -1,14 +1,36 @@
 'use client';
 
 import React from 'react';
+import { colors } from '@/theme/theme';
 
 export interface StatusBadgeProps {
-  status: 'active' | 'inactive' | 'pending' | 'sent' | 'accepted' | 'expired';
-  children: React.ReactNode;
+  status: 'active' | 'inactive' | 'pending' | 'sent' | 'accepted' | 'expired' | 'new' | 'contacted' | 'qualified' | 'converted' | 'closed';
+  children?: React.ReactNode;
+  color?: 'blue' | 'green' | 'yellow' | 'purple' | 'gray' | 'red';
 }
 
-export function StatusBadge({ status, children }: StatusBadgeProps) {
+export function StatusBadge({ status, children, color }: StatusBadgeProps) {
   const getStatusStyles = () => {
+    // If color is provided, use theme colors
+    if (color) {
+      const colorMap = {
+        blue: colors.darkBlue,
+        green: colors.green,
+        yellow: colors.yellow,
+        purple: colors.darkPurple,
+        gray: colors.gray,
+        red: colors.red,
+      };
+      
+      const selectedColor = colorMap[color];
+      return {
+        backgroundColor: selectedColor[50],
+        color: selectedColor[600],
+        borderColor: selectedColor[200],
+      };
+    }
+    
+    // Fallback to original Tailwind classes
     switch (status) {
       case 'active':
       case 'accepted':
@@ -65,11 +87,17 @@ export function StatusBadge({ status, children }: StatusBadgeProps) {
     }
   };
 
+  const styles = getStatusStyles();
+  const isObjectStyle = typeof styles === 'object';
+  
   return (
-    <span className={`
-      inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-      ${getStatusStyles()}
-    `}>
+    <span 
+      className={isObjectStyle ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border' : `
+        inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+        ${styles}
+      `}
+      style={isObjectStyle ? styles : undefined}
+    >
       {getIcon()}
       {children}
     </span>

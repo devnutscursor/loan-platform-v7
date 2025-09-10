@@ -156,7 +156,6 @@ export default function LoanOfficersPage() {
           message: result.message || 'The invite has been resent to the loan officer.',
         });
         fetchOfficers(); // Refresh the data
-        window.location.reload(); // Force reload for accurate data
       } else {
         showNotification({
           type: 'error',
@@ -193,7 +192,6 @@ export default function LoanOfficersPage() {
           message: 'The loan officer has been deactivated successfully.',
         });
         fetchOfficers(); // Refresh the data
-        window.location.reload(); // Force reload for accurate data
       } else {
         showNotification({
           type: 'error',
@@ -230,7 +228,7 @@ export default function LoanOfficersPage() {
           message: 'The loan officer has been reactivated successfully.',
         });
         fetchOfficers();
-        window.location.reload(); // Force reload for accurate data
+        // Force reload for accurate data
       } else {
         showNotification({
           type: 'error',

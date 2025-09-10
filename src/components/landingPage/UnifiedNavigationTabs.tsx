@@ -1,0 +1,71 @@
+'use client';
+
+import React, { useState } from 'react';
+import { typography, getTemplateNavigationStyles } from '@/theme/theme';
+import { icons } from '@/components/ui/Icon';
+
+interface Tab {
+  id: string;
+  label: string;
+  icon: keyof typeof icons;
+}
+
+interface UnifiedNavigationTabsProps {
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
+  template?: 'template1' | 'template2';
+  className?: string;
+}
+
+const defaultTabs: Tab[] = [
+  { id: 'apply', label: 'Apply for Loan', icon: 'apply' },
+  { id: 'custom', label: 'Get Custom Offer', icon: 'custom' },
+  { id: 'rates', label: "Today's Rates", icon: 'rates' },
+  { id: 'calculators', label: 'Calculators', icon: 'calculators' },
+  { id: 'about', label: 'About Us', icon: 'about' }
+];
+
+export default function UnifiedNavigationTabs({
+  activeTab = 'apply',
+  onTabChange,
+  template = 'template1',
+  className = ""
+}: UnifiedNavigationTabsProps) {
+  const [currentTab, setCurrentTab] = useState(activeTab);
+
+  const handleTabClick = (tabId: string) => {
+    setCurrentTab(tabId);
+    onTabChange?.(tabId);
+  };
+
+  return (
+    <div className={`bg-white border-b border-gray-200 ${className}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="flex space-x-8 overflow-x-auto">
+          {defaultTabs.map((tab) => {
+            const isActive = currentTab === tab.id;
+            const navStyles = getTemplateNavigationStyles(template, isActive);
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`
+                  flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200
+                  ${
+                    isActive
+                      ? `border-${navStyles.borderColor.includes('pink') ? 'pink' : 'purple'}-600 text-${navStyles.color.includes('pink') ? 'pink' : 'purple'}-600`
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                  }
+                `}
+              >
+                {React.createElement(icons[tab.icon], { size: 18 })}
+                <span className={typography.body.small}>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
+}

@@ -3,6 +3,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import Icon from '@/components/ui/Icon';
+import { Input } from '@/components/ui/Input';
+import { colors, spacing, borderRadius, shadows, typography } from '@/theme/theme';
 
 function InvitePageContent() {
   const [password, setPassword] = useState('');
@@ -253,65 +258,59 @@ function InvitePageContent() {
 
   if (!user || user.email === 'invite@example.com') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(to bottom right, ${colors.primary[50]}, ${colors.darkPurple[100]})` }}>
+        <Card className="max-w-md w-full">
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: spacing.xl2, height: spacing.xl2, backgroundColor: colors.blue[50], borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', marginBottom: spacing.md }}>
+              <Icon name="email" size={32} color={colors.blue[600]} />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
-            <p className="text-gray-600 mb-4">Please check your email and click the invite link to continue with the setup.</p>
-            <p className="text-sm text-gray-500">If you don't see the email, check your spam folder.</p>
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <h1 style={{ fontSize: typography.h1.fontSize, fontWeight: typography.h1.fontWeight, color: colors.text.primary, marginBottom: spacing.sm }}>Check Your Email</h1>
+            <p style={{ color: colors.text.secondary, marginBottom: spacing.md }}>Please check your email and click the invite link to continue with the setup.</p>
+            <p style={{ fontSize: typography.sm.fontSize, color: colors.text.muted }}>If you don't see the email, check your spam folder.</p>
+            <div style={{ marginTop: spacing.md, padding: spacing.md, backgroundColor: colors.yellow[50], border: `1px solid ${colors.yellow[200]}`, borderRadius: borderRadius.lg }}>
+              <p style={{ fontSize: typography.sm.fontSize, color: colors.yellow[800] }}>
                 <strong>Note:</strong> Make sure to click the invite link from your email. The link will automatically sign you in.
               </p>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   if (!companyId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(to bottom right, ${colors.primary[50]}, ${colors.darkPurple[100]})` }}>
+        <Card className="max-w-md w-full">
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: spacing.xl2, height: spacing.xl2, backgroundColor: colors.red[50], borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', marginBottom: spacing.md }}>
+              <Icon name="warning" size={32} color={colors.red[600]} />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invite Link</h1>
-            <p className="text-gray-600">This invite link is invalid or missing required information.</p>
+            <h1 style={{ fontSize: typography.h1.fontSize, fontWeight: typography.h1.fontWeight, color: colors.text.primary, marginBottom: spacing.sm }}>Invalid Invite Link</h1>
+            <p style={{ color: colors.text.secondary }}>This invite link is invalid or missing required information.</p>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(to bottom right, ${colors.primary[50]}, ${colors.darkPurple[100]})` }}>
+      <Card className="max-w-md w-full">
+        <div style={{ textAlign: 'center', marginBottom: spacing.xl }}>
+          <div style={{ width: spacing.xl2, height: spacing.xl2, backgroundColor: colors.primary[50], borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', marginBottom: spacing.md }}>
+            <Icon name="check" size={32} color={colors.primary[600]} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Setup</h1>
-          <p className="text-gray-600">
+          <h1 style={{ fontSize: typography.h1.fontSize, fontWeight: typography.h1.fontWeight, color: colors.text.primary, marginBottom: spacing.sm }}>Complete Your Setup</h1>
+          <p style={{ color: colors.text.secondary }}>
             {isOfficerInvite 
               ? 'Create a password to access your loan officer dashboard.' 
               : 'Create a password to access your company dashboard.'
             }
           </p>
           {companyInfo && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700">
+            <div style={{ marginTop: spacing.md, padding: spacing.md, backgroundColor: colors.gray[50], borderRadius: borderRadius.lg }}>
+              <p style={{ fontSize: typography.sm.fontSize, color: colors.text.secondary }}>
                 <strong>Company:</strong> {companyInfo.name}<br />
                 <strong>Email:</strong> {companyInfo.email}
               </p>
@@ -319,72 +318,71 @@ function InvitePageContent() {
           )}
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div style={{ marginBottom: spacing.md, padding: spacing.md, backgroundColor: colors.red[50], border: `1px solid ${colors.red[200]}`, borderRadius: borderRadius.lg }}>
+              <p style={{ color: colors.red[700], fontSize: typography.sm.fontSize }}>{error}</p>
+            </div>
+          )}
 
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700 text-sm">{success}</p>
-          </div>
-        )}
+          {success && (
+            <div style={{ marginBottom: spacing.md, padding: spacing.md, backgroundColor: colors.green[50], border: `1px solid ${colors.green[200]}`, borderRadius: borderRadius.lg }}>
+              <p style={{ color: colors.green[700], fontSize: typography.sm.fontSize }}>{success}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Create Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              placeholder="Enter your password"
-              required
-              minLength={8}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+            <div>
+              <label htmlFor="password" style={{ display: 'block', fontSize: typography.sm.fontSize, fontWeight: typography.sm.fontWeight, color: colors.text.secondary, marginBottom: spacing.sm }}>
+                Create Password
+              </label>
+              <Input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                minLength={8}
+                disabled={loading}
+              />
+              <p style={{ fontSize: typography.xs.fontSize, color: colors.text.muted, marginTop: spacing.xs }}>Password must be at least 8 characters long</p>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" style={{ display: 'block', fontSize: typography.sm.fontSize, fontWeight: typography.sm.fontWeight, color: colors.text.secondary, marginBottom: spacing.sm }}>
+                Confirm Password
+              </label>
+              <Input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                required
+                minLength={8}
+                disabled={loading}
+              />
+            </div>
+
+            <Button
+              type="submit"
               disabled={loading}
-            />
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters long</p>
-          </div>
+              loading={loading}
+              className="w-full"
+            >
+              {loading ? 'Setting up account...' : 'Complete Setup & Go to Dashboard'}
+            </Button>
+          </form>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              placeholder="Confirm your password"
-              required
-              minLength={8}
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-pink-600 text-white py-3 px-6 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {loading ? 'Setting up account...' : 'Complete Setup & Go to Dashboard'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+        <div style={{ marginTop: spacing.lg, textAlign: 'center' }}>
+          <p style={{ fontSize: typography.sm.fontSize, color: colors.text.secondary }}>
             Need help?{' '}
-            <a href="mailto:support@loanplatform.com" className="text-pink-600 hover:underline">
+            <a href="mailto:support@loanplatform.com" style={{ color: colors.primary[600], textDecoration: 'none' }} onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}>
               Contact Support
             </a>
           </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -392,8 +390,8 @@ function InvitePageContent() {
 export default function InvitePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-600"></div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '8rem', width: '8rem', borderBottom: `2px solid ${colors.primary[600]}` }}></div>
       </div>
     }>
       <InvitePageContent />

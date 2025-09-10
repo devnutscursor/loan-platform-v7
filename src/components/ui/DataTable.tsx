@@ -27,7 +27,7 @@ export interface DataTableProps<T = any> {
 
 /**
  * Centralized DataTable Component
- * 
+ *
  * Features:
  * - Reusable for both companies and loan officers
  * - Role-based action buttons
@@ -65,7 +65,6 @@ export const DataTable = <T extends Record<string, any>>({
     // For officers: active when isActive is true
     const isActive = inviteStatus === 'accepted' || record?.isActive === true;
     const isDeactivated = record?.deactivated === true;
-    
 
     // Reactivate button for deactivated records
     if (onReactivate && isDeactivated) {
@@ -111,13 +110,12 @@ export const DataTable = <T extends Record<string, any>>({
     // Delete button for inactive/pending/expired records (only if not deactivated)
     // Only show delete for: pending, sent, expired, or inactive records
     const shouldShowDelete = !isDeactivated && (
-      inviteStatus === 'pending' || 
-      inviteStatus === 'sent' || 
-      inviteStatus === 'expired' || 
+      inviteStatus === 'pending' ||
+      inviteStatus === 'sent' ||
+      inviteStatus === 'expired' ||
       !isActive
     );
-    
-    
+
     if (onDelete && shouldShowDelete) {
       actions.push(
         <DeleteButton
@@ -199,7 +197,6 @@ export const DataTable = <T extends Record<string, any>>({
               <tr key={record.id || index} className="hover:bg-gray-50">
                 {finalColumns.map((column) => {
                   const value = column.dataIndex ? record[column.dataIndex] : record[column.key];
-                  
                   return (
                     <td
                       key={column.key}
@@ -252,7 +249,7 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'>> = 
         const status = value || 'pending';
         const expiresAt = record.invite_expires_at;
         const isDeactivated = record.deactivated === true;
-        
+
         // If deactivated, show deactivated status regardless of invite status
         if (isDeactivated) {
           return (
@@ -263,7 +260,7 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'>> = 
             </div>
           );
         }
-        
+
         return (
           <div>
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -342,7 +339,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'>> = 
       dataIndex: 'isActive',
       render: (value, record) => {
         const isDeactivated = record.deactivated === true;
-        
+
         // If deactivated, show deactivated status
         if (isDeactivated) {
           return (
@@ -351,7 +348,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'>> = 
             </span>
           );
         }
-        
+
         return (
           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
             value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -21,37 +21,86 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // Cache invalidation functions
+  const clearProfileCache = useCallback(() => {
+    try {
+      localStorage.removeItem('loan_officer_profile_cache');
+      console.log('🗑️ Profile cache cleared from useAuth');
+    } catch (error) {
+      console.error('Error clearing profile cache:', error);
+    }
+  }, []);
+
+  const invalidateCacheOnUserChange = useCallback((newUser: User | null, oldUser: User | null) => {
+    // Only clear cache if user actually changed (different ID or email) or signed out
+    if (!newUser) {
+      // User signed out
+      clearProfileCache();
+    } else if (!oldUser) {
+      // First time user is set (initial load) - don't clear cache
+      console.log('🔐 useAuth: Initial user load, keeping existing cache');
+    } else if (newUser.id !== oldUser.id || newUser.email !== oldUser.email) {
+      // User actually changed
+      console.log('🔐 useAuth: User changed, clearing cache');
+      clearProfileCache();
+    } else {
+      // Same user, same session - keep cache
+      console.log('🔐 useAuth: Same user, keeping cache');
+    }
+  }, [clearProfileCache]);
+
   useEffect(() => {
     setMounted(true);
     
     // For free Supabase plan, we rely only on onAuthStateChange
     // No initial session check to avoid getSession() calls
 
+    // macOS-specific: Add small delay to ensure auth state is ready
+    const initTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('🔐 useAuth: macOS timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 10000);
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: any) => {
         console.log('🔐 useAuth: Auth state changed:', event, session?.user?.email);
         
+        const previousUser = user;
+        
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           console.log('🔐 useAuth: User authenticated:', session.user.email, 'Event:', event);
           setUser(session.user);
           await fetchUserRole(session.user.id);
+          // Only invalidate cache on actual sign in, not initial session
+          if (event === 'SIGNED_IN') {
+            invalidateCacheOnUserChange(session.user, previousUser);
+          }
         } else if (event === 'SIGNED_OUT') {
           console.log('🔐 useAuth: User signed out');
           setUser(null);
           setUserRole(null);
           setCompanyId(null);
+          // Clear cache on sign out
+          clearProfileCache();
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Handle token refresh - user is still signed in
           console.log('🔐 useAuth: Token refreshed, user still signed in:', session.user.email);
           setUser(session.user);
           await fetchUserRole(session.user.id);
+          // Don't clear cache on token refresh - same user
         }
         setLoading(false);
+        clearTimeout(initTimeout);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(initTimeout);
+    };
   }, []);
 
   const fetchUserRole = async (userId: string) => {
@@ -160,7 +209,8 @@ export function useAuth() {
         setUserRole({ role: 'employee', companyId: userCompany.company_id });
         setCompanyId(userCompany.company_id);
       } else {
-        console.log('🔍 useAuth: No user-company relationship found');
+        console.log('🔍 useAuth: User has no company relationship');
+        setUserRole({ role: 'employee' });
       }
     } catch (error) {
       console.error('🔍 useAuth: Error fetching user role:', error);
@@ -173,6 +223,8 @@ export function useAuth() {
       setUser(null);
       setUserRole(null);
       setCompanyId(null);
+      // Clear cache on manual sign out
+      clearProfileCache();
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -192,5 +244,6 @@ export function useAuth() {
     isCompanyAdmin,
     isEmployee,
     isAuthenticated: !!user,
+    clearProfileCache, // Export cache clearing function
   };
 }
