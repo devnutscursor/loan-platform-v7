@@ -42,6 +42,14 @@ import {
   Calendar,
   Shield,
   Clock,
+  Download,
+  Share,
+  Play,
+  Book,
+  Heart,
+  Map,
+  ExternalLink,
+  Monitor,
 } from 'lucide-react';
 
 // Centralized icon registry for the entire app
@@ -115,6 +123,22 @@ export const icons = {
   shield: Shield,
   clock: Clock,
   target: Target,
+  
+  // Extended icons
+  download: Download,
+  share: Share,
+  play: Play,
+  book: Book,
+  heart: Heart,
+  map: Map,
+  externalLink: ExternalLink,
+  monitor: Monitor,
+  fileText: FileText,
+  mapPin: MapPin,
+  calculator: Calculator,
+  x: X,
+  search: Search,
+  mail: Mail,
 } as const;
 
 interface IconProps {

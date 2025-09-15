@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useCallback, memo } from 'react';
-import { typography, colors, spacing, borderRadius, shadows, getTemplateStyles } from '@/theme/theme';
+import { spacing, borderRadius, shadows, typography } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import Icon from '@/components/ui/Icon';
 import LeadCaptureModal, { type LeadData } from './LeadCaptureModal';
 
@@ -50,7 +51,35 @@ interface RateResultsProps {
 }
 
 function RateResults({ products, loading, rawData, template = 'template1', isMockData = false, dataSource = 'unknown' }: RateResultsProps) {
-  const templateStyles = getTemplateStyles(template);
+  const { getTemplateSync } = useEfficientTemplates();
+  const templateData = getTemplateSync(template);
+  
+  // Comprehensive debugging for template data
+  console.log('🔍 RateResults Debug:', {
+    template,
+    templateData,
+    hasTemplateData: !!templateData,
+    colors: templateData?.template?.colors,
+    classes: templateData?.template?.classes,
+    primaryColor: templateData?.template?.colors?.primary,
+    buttonPrimary: templateData?.template?.classes?.button?.primary,
+    timestamp: new Date().toISOString()
+  });
+  
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
+  const layout = templateData?.template?.layout || {
+    alignment: 'center',
+    spacing: 18,
+    borderRadius: 8,
+    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
+  };
   const [sortBy, setSortBy] = useState<'rate' | 'payment' | 'fees'>('rate');
   const [selectedTerm, setSelectedTerm] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<RateProduct | null>(null);
@@ -189,7 +218,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
         <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
           <div style={{
             height: spacing[8],
-            backgroundColor: colors.gray[200],
+            backgroundColor: colors.border,
             borderRadius: borderRadius.md,
             marginBottom: spacing[4]
           }}></div>
@@ -197,7 +226,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} style={{
                 height: spacing[24],
-                backgroundColor: colors.gray[200],
+                backgroundColor: colors.border,
                 borderRadius: borderRadius.md
               }}></div>
             ))}
@@ -217,7 +246,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
         textAlign: 'center'
       }}>
         <div style={{
-          color: colors.gray[500],
+          color: colors.textSecondary,
           fontSize: typography.fontSize.lg,
           lineHeight: typography.lineHeight.relaxed
         }}>
@@ -262,7 +291,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
       {/* Header */}
       <div style={{
         padding: spacing[6],
-        borderBottom: `1px solid ${colors.gray[200]}`
+        borderBottom: `1px solid ${colors.border}`
       }}>
         <div style={{
           display: 'flex',
@@ -275,12 +304,12 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
             <h2 style={{
               fontSize: typography.fontSize['2xl'],
               fontWeight: typography.fontWeight.bold,
-              color: colors.gray[900],
+              color: colors.text,
               lineHeight: typography.lineHeight.tight
             }}>Mortgage Rates</h2>
             <p style={{
               fontSize: typography.fontSize.sm,
-              color: colors.gray[600],
+              color: colors.textSecondary,
               marginTop: spacing[1],
               lineHeight: typography.lineHeight.relaxed
             }}>
@@ -303,7 +332,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
                 onChange={(e) => handleSortChange(e.target.value as 'rate' | 'payment' | 'fees')}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none"
                 style={{ 
-                  '--tw-ring-color': templateStyles.primary.color,
+                  '--tw-ring-color': colors.primary,
                   '--tw-ring-opacity': '1'
                 } as React.CSSProperties}
               >
@@ -329,9 +358,9 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
                   : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
               }`}
               style={selectedTerm === term ? {
-                backgroundColor: templateStyles.primary.light,
-                color: templateStyles.primary.color,
-                borderColor: templateStyles.primary.color,
+                backgroundColor: `${colors.primary}20`,
+                color: colors.primary,
+                borderColor: colors.primary,
               } : {}}
             >
               {term === 'all' ? 'All' : `${term}yr Fixed`}
@@ -408,14 +437,14 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
                         onClick={() => handleGetStarted(product)}
                         className="w-full text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                         style={{ 
-                          backgroundColor: templateStyles.primary.color,
-                          color: templateStyles.primary.text,
+                          backgroundColor: colors.primary,
+                          color: colors.background,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = templateStyles.primary.hover;
+                          e.currentTarget.style.backgroundColor = colors.secondary;
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = templateStyles.primary.color;
+                          e.currentTarget.style.backgroundColor = colors.primary;
                         }}
                       >
                         Get Started
@@ -448,7 +477,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
           <p className="text-sm text-gray-500 mt-2">
             Want more personalized rates? <span 
               className="cursor-pointer hover:underline"
-              style={{ color: templateStyles.primary.color }}
+              style={{ color: colors.primary }}
             >Get a custom quote</span>
           </p>
         </div>
@@ -509,7 +538,7 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-700">Interest Rate:</span>
-                      <span className="font-medium" style={{ color: templateStyles.primary.color }}>{formatRate(selectedProduct.interestRate)}</span>
+                      <span className="font-medium" style={{ color: colors.primary }}>{formatRate(selectedProduct.interestRate)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-700">APR:</span>
@@ -627,14 +656,14 @@ function RateResults({ products, loading, rawData, template = 'template1', isMoc
                   onClick={() => handleGetStarted(selectedProduct)}
                   className="flex-1 text-white py-3 px-6 rounded-md font-medium transition-colors"
                   style={{ 
-                    backgroundColor: templateStyles.primary.color,
-                    color: templateStyles.primary.text,
+                    backgroundColor: colors.primary,
+                    color: colors.background,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = templateStyles.primary.hover;
+                    e.currentTarget.style.backgroundColor = colors.secondary;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = templateStyles.primary.color;
+                    e.currentTarget.style.backgroundColor = colors.primary;
                   }}
                 >
                   Get Started with This Loan

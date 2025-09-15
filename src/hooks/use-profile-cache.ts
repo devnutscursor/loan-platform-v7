@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -42,6 +42,11 @@ export function useProfileCache() {
   const [error, setError] = useState<string | null>(null);
 
   console.log('🔍 useProfileCache hook initialized:', { loading, hasProfile: !!profile });
+
+  // Debug loading state changes
+  React.useEffect(() => {
+    console.log('🔍 Profile loading state changed:', { loading, hasProfile: !!profile });
+  }, [loading, profile]);
 
   // Get cached profile from localStorage
   const getCachedProfile = useCallback((): CachedProfile | null => {
@@ -113,9 +118,10 @@ export function useProfileCache() {
 
   // Fetch fresh profile data
   const fetchProfile = useCallback(async (user: User): Promise<LoanOfficerProfile> => {
-    console.log('🔍 Fetching fresh profile data for user:', user.email);
+    console.log('🔍 Fetching fresh profile data for user:', user.email, 'ID:', user.id);
 
     // Fetch user data from users table
+    console.log('🔍 Starting Supabase user query...');
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select(`
@@ -130,15 +136,24 @@ export function useProfileCache() {
       `)
       .eq('id', user.id)
       .single();
+    
+    console.log('🔍 Supabase user query completed:', { userData, userError });
 
     if (userError) {
       console.error('❌ Error fetching user data:', userError);
-      throw new Error('Failed to fetch user data');
+      console.error('❌ User ID being queried:', user.id);
+      throw new Error(`Failed to fetch user data: ${userError.message || 'Unknown error'}`);
+    }
+
+    if (!userData) {
+      console.error('❌ No user data returned for ID:', user.id);
+      throw new Error('No user data found');
     }
 
     console.log('✅ User data fetched:', userData);
 
     // Fetch company data
+    console.log('🔍 Starting Supabase company query...');
     const { data: companyData, error: companyError } = await supabase
       .from('user_companies')
       .select(`
@@ -158,12 +173,15 @@ export function useProfileCache() {
       .eq('is_active', true)
       .limit(1)
       .single();
+    
+    console.log('🔍 Supabase company query completed:', { companyData, companyError });
 
     if (companyError) {
       console.error('❌ Error fetching company data:', companyError);
+      console.error('❌ This is not critical, continuing without company data');
+    } else {
+      console.log('✅ Company data fetched:', companyData);
     }
-
-    console.log('✅ Company data fetched:', companyData);
 
     // Determine if user is online
     const isOnline = userData.last_login_at 
@@ -205,7 +223,7 @@ export function useProfileCache() {
 
   // Main function to get profile (with caching logic)
   const getProfile = useCallback(async (user: User | null, authLoading: boolean) => {
-    console.log('🔄 getProfile called:', { user: user?.email, authLoading });
+    console.log('🔄 getProfile called:', { user: user?.email, authLoading, userId: user?.id });
     
     if (authLoading) {
       console.log('⏳ Auth still loading, waiting...');
@@ -214,6 +232,7 @@ export function useProfileCache() {
     
     try {
       console.log('🚀 Starting profile fetch...');
+      console.log('🔍 Setting loading to true');
       setLoading(true);
       setError(null);
 
@@ -225,18 +244,28 @@ export function useProfileCache() {
           lastName: 'Smith',
           email: 'user@example.com',
           phone: null,
+          avatar: null,
           nmlsNumber: null,
           title: null,
           isOnline: true,
+          lastLoginAt: null,
         };
         setProfile(fallbackProfile);
+        setLoading(false);
         return;
       }
 
       // Check if we already have a valid profile for this user
       if (profile && profile.id === user.id && profile.email === user.email) {
-        console.log('✅ Profile already loaded for user:', user.email);
+        console.log('✅ Profile already loaded for user:', {
+          userEmail: user.email,
+          profileId: profile.id,
+          profileEmail: profile.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName
+        });
         setLoading(false);
+        console.log('✅ Profile loading state cleared (already loaded)');
         return;
       }
 
@@ -244,46 +273,83 @@ export function useProfileCache() {
       const cachedProfile = getCachedProfile();
       
       if (cachedProfile && isCacheValid(cachedProfile, user)) {
-        console.log('✅ Using cached profile data');
+        console.log('✅ Using cached profile data:', {
+          id: cachedProfile.profile.id,
+          firstName: cachedProfile.profile.firstName,
+          lastName: cachedProfile.profile.lastName,
+          email: cachedProfile.profile.email
+        });
         setProfile(cachedProfile.profile);
+        setLoading(false);
+        console.log('✅ Profile loading state cleared (cached)');
         return;
       }
 
       console.log('🔄 Cache invalid or expired, fetching fresh data');
       
-      // Fetch fresh data
-      const freshProfile = await fetchProfile(user);
+      // Fetch fresh data with timeout
+      const fetchPromise = fetchProfile(user);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout after 10 seconds')), 10000)
+      );
+      
+      const freshProfile = await Promise.race([fetchPromise, timeoutPromise]) as LoanOfficerProfile;
       
       // Save to cache
-      saveToCache(freshProfile, user.id, user.email);
+      saveToCache(freshProfile, user.id, user.email || 'unknown@example.com');
       
       // Set profile
+      console.log('✅ Setting fresh profile data:', {
+        id: freshProfile.id,
+        firstName: freshProfile.firstName,
+        lastName: freshProfile.lastName,
+        email: freshProfile.email
+      });
       setProfile(freshProfile);
+      setLoading(false);
+      console.log('✅ Profile loading state cleared');
 
     } catch (err) {
       console.error('❌ Error in getProfile:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch profile');
+      setError(err instanceof Error ? (err.message || 'Unknown error') : 'Failed to fetch profile');
       
       // Try to use cached data even if expired as fallback
       const cachedProfile = getCachedProfile();
       if (cachedProfile) {
         console.log('⚠️ Using expired cached data as fallback');
         setProfile(cachedProfile.profile);
+      } else if (user) {
+        // Use user data as fallback
+        console.log('⚠️ Using user data as fallback');
+        const fallbackProfile: LoanOfficerProfile = {
+          id: user.id,
+          firstName: user.user_metadata?.first_name || user.email?.split('@')[0] || 'User',
+          lastName: user.user_metadata?.last_name || 'Smith',
+          email: user.email || 'user@example.com',
+          phone: user.user_metadata?.phone || null,
+          avatar: user.user_metadata?.avatar_url || null,
+          nmlsNumber: null,
+          title: null,
+          isOnline: true,
+          lastLoginAt: null,
+        };
+        setProfile(fallbackProfile);
       } else {
-        // Use fallback data
+        // Use generic fallback data
         const fallbackProfile: LoanOfficerProfile = {
           id: 'fallback',
           firstName: 'User',
           lastName: 'Smith',
           email: 'user@example.com',
           phone: null,
+          avatar: null,
           nmlsNumber: null,
           title: null,
           isOnline: true,
+          lastLoginAt: null,
         };
         setProfile(fallbackProfile);
       }
-    } finally {
       setLoading(false);
     }
   }, [getCachedProfile, isCacheValid, fetchProfile, saveToCache]);

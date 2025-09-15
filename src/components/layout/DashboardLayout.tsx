@@ -55,6 +55,7 @@ export function DashboardLayout({
         return [
           { name: 'Dashboard', href: '/officers/dashboard', current: pathname === '/officers/dashboard' },
           { name: 'Profile', href: '/officers/profile', current: pathname === '/officers/profile' },
+          { name: 'Customizer', href: '/officers/customizer', current: pathname === '/officers/customizer' },
           { name: 'Leads', href: '/officers/leads', current: pathname === '/officers/leads' },
         ];
       default:

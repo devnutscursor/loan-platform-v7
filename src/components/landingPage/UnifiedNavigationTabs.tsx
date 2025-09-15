@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { typography, getTemplateNavigationStyles } from '@/theme/theme';
+import { typography } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import { icons } from '@/components/ui/Icon';
 
 interface Tab {
@@ -32,6 +33,16 @@ export default function UnifiedNavigationTabs({
   className = ""
 }: UnifiedNavigationTabsProps) {
   const [currentTab, setCurrentTab] = useState(activeTab);
+  const { getTemplateSync } = useEfficientTemplates();
+  const templateData = getTemplateSync(template);
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
 
   const handleTabClick = (tabId: string) => {
     setCurrentTab(tabId);
@@ -44,20 +55,23 @@ export default function UnifiedNavigationTabs({
         <nav className="flex space-x-8 overflow-x-auto">
           {defaultTabs.map((tab) => {
             const isActive = currentTab === tab.id;
-            const navStyles = getTemplateNavigationStyles(template, isActive);
+            const navStyles = templateData?.template?.classes?.navigation?.tab || {
+              base: 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer',
+              inactive: 'text-gray-600 hover:text-gray-800 hover:bg-gray-100',
+              active: 'text-white shadow-md',
+              hover: 'hover:bg-opacity-10'
+            };
             
             return (
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
-                className={`
-                  flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200
-                  ${
-                    isActive
-                      ? `border-${navStyles.borderColor.includes('pink') ? 'pink' : 'purple'}-600 text-${navStyles.color.includes('pink') ? 'pink' : 'purple'}-600`
-                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-                  }
-                `}
+                className="flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200"
+                style={{
+                  borderBottomColor: isActive ? colors.primary : 'transparent',
+                  color: isActive ? colors.primary : colors.text,
+                  backgroundColor: isActive ? `${colors.primary}10` : 'transparent'
+                }}
               >
                 {React.createElement(icons[tab.icon], { size: 18 })}
                 <span className={typography.body.small}>{tab.label}</span>

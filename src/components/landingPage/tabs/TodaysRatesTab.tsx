@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { typography, colors, spacing, borderRadius } from '@/theme/theme';
+import { typography } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
+import { useAuth } from '@/hooks/use-auth';
 import { icons } from '@/components/ui/Icon';
 
 interface Rate {
@@ -74,6 +76,110 @@ export default function TodaysRatesTab({
   selectedTemplate,
   className = ''
 }: TodaysRatesTabProps) {
+  const { user } = useAuth();
+  const { getTemplateSync, fetchTemplate } = useEfficientTemplates();
+  const templateData = getTemplateSync(selectedTemplate);
+
+  // Fetch template data when component mounts (same as TemplateSelector)
+  useEffect(() => {
+    if (user && selectedTemplate) {
+      console.log('🔄 TodaysRatesTab: Fetching template data for:', selectedTemplate);
+      fetchTemplate(selectedTemplate).then(() => {
+        console.log('✅ TodaysRatesTab: Template data fetched successfully for:', selectedTemplate);
+      }).catch(error => {
+        console.error('❌ TodaysRatesTab: Error fetching template:', error);
+      });
+    }
+  }, [user, selectedTemplate, fetchTemplate]);
+  
+  // Comprehensive template data usage
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
+  
+  const typography = templateData?.template?.typography || {
+    fontFamily: 'Inter',
+    fontSize: 16,
+    fontWeight: {
+      normal: 400,
+      medium: 500,
+      semibold: 600,
+      bold: 700
+    }
+  };
+  
+  const content = templateData?.template?.content || {
+    headline: "Today's Mortgage Rates",
+    subheadline: 'Current rates as of today',
+    ctaText: 'Get Quote',
+    ctaSecondary: 'Learn More'
+  };
+  
+  const layout = templateData?.template?.layout || {
+    alignment: 'center',
+    spacing: 18,
+    borderRadius: 8,
+    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
+  };
+  
+  const classes = templateData?.template?.classes || {
+    button: {
+      primary: selectedTemplate === 'template2' 
+        ? 'px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-white'
+        : 'px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-white',
+      secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300',
+      outline: selectedTemplate === 'template2'
+        ? 'border-2 px-6 py-3 rounded-lg font-medium transition-all duration-200'
+        : 'border-2 px-6 py-3 rounded-lg font-medium transition-all duration-200',
+      ghost: selectedTemplate === 'template2'
+        ? 'px-4 py-2 rounded-lg font-medium transition-all duration-200'
+        : 'px-4 py-2 rounded-lg font-medium transition-all duration-200'
+    },
+    card: {
+      container: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200',
+      header: 'px-6 py-4 border-b border-gray-200',
+      body: 'px-6 py-4',
+      footer: 'px-6 py-4 border-t border-gray-200 bg-gray-50'
+    },
+    heading: {
+      h1: 'text-3xl font-bold text-gray-900 mb-4',
+      h2: 'text-2xl font-bold text-gray-900 mb-3',
+      h3: 'text-xl font-semibold text-gray-900 mb-2',
+      h4: 'text-lg font-semibold text-gray-900 mb-2',
+      h5: 'text-base font-semibold text-gray-900 mb-2',
+      h6: 'text-sm font-semibold text-gray-900 mb-1'
+    },
+    body: {
+      large: 'text-lg text-gray-700 leading-relaxed',
+      base: 'text-base text-gray-700 leading-relaxed',
+      small: 'text-sm text-gray-600 leading-relaxed',
+      xs: 'text-xs text-gray-500 leading-normal'
+    },
+    icon: {
+      primary: selectedTemplate === 'template2' 
+        ? 'w-12 h-12 rounded-lg flex items-center justify-center mb-4'
+        : 'w-12 h-12 rounded-lg flex items-center justify-center mb-4',
+      secondary: 'w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-3',
+      small: selectedTemplate === 'template2'
+        ? 'w-8 h-8 rounded-lg flex items-center justify-center'
+        : 'w-8 h-8 rounded-lg flex items-center justify-center'
+    },
+    select: {
+      base: 'px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+      error: 'px-3 py-2 border border-red-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500'
+    },
+    status: {
+      success: 'text-green-600 bg-green-50 px-2 py-1 rounded text-sm',
+      warning: 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-sm',
+      error: 'text-red-600 bg-red-50 px-2 py-1 rounded text-sm',
+      info: 'text-blue-600 bg-blue-50 px-2 py-1 rounded text-sm'
+    }
+  };
   const [rates, setRates] = useState<Rate[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'rate' | 'payment'>('rate');
@@ -355,109 +461,61 @@ export default function TodaysRatesTab({
     return `${rate.toFixed(3)}%`;
   };
 
-  const getThemeColors = () => {
-    return selectedTemplate === 'template1' 
-      ? {
-          primary: 'pink',
-          primaryBg: 'bg-pink-50',
-          primaryText: 'text-pink-600',
-          primaryBorder: 'border-pink-200',
-          primaryHover: 'hover:bg-pink-100'
-        }
-      : {
-          primary: 'purple',
-          primaryBg: 'bg-purple-50',
-          primaryText: 'text-purple-600',
-          primaryBorder: 'border-purple-200',
-          primaryHover: 'hover:bg-purple-100'
-        };
-  };
-
-  const theme = getThemeColors();
-
   return (
-    <div style={{ width: '100%', ...(className ? { className } : {}) }}>
+    <div 
+      className={`w-full ${className}`}
+      style={{ fontFamily: typography.fontFamily }}
+    >
       {/* Header */}
-      <div style={{ marginBottom: spacing.lg }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          marginBottom: spacing.md 
-        }}>
+      <div 
+        className={`${classes.card.header}`}
+        style={{ borderBottomColor: colors.border }}
+      >
+        <div 
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6"
+          style={{ gap: `${layout.spacing}px` }}
+        >
           <div>
-            <h2 style={{ 
-              fontSize: typography.fontSize.xl, 
-              fontWeight: typography.fontWeight.bold, 
-              color: colors.text.primary 
-            }}>
-              Today's Mortgage Rates
+            <h2 
+              className={`${classes.heading.h2}`}
+              style={{ color: colors.text }}
+            >
+              {content.headline}
             </h2>
-            <p style={{ 
-              fontSize: typography.fontSize.base, 
-              color: colors.text.secondary, 
-              marginTop: spacing.sm 
-            }}>
-              Current rates as of {new Date().toLocaleDateString('en-US', { 
+            <p 
+              className={`${classes.body.base}`}
+              style={{ color: colors.textSecondary }}
+            >
+              {content.subheadline} - {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}
             </p>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: spacing.xs,
-              marginTop: spacing.xs,
-              padding: `${spacing.xs} ${spacing.sm}`,
-              backgroundColor: colors.blue[50],
-              borderRadius: borderRadius.md,
-              border: `1px solid ${colors.blue[200]}`
-            }}>
-              {React.createElement(icons.calendar, { size: 16, color: colors.blue[600] })}
-              <span style={{
-                fontSize: typography.fontSize.sm,
-                color: colors.blue[700],
-                fontWeight: typography.fontWeight.medium
-              }}>
+            <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+              {React.createElement(icons.calendar, { size: 16, className: "text-blue-600" })}
+              <span className="text-sm font-medium text-blue-700">
                 Showing only today's rates
               </span>
             </div>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: spacing.sm 
-          }}>
-            {React.createElement(icons.refresh, { size: 20, style: { color: colors.text.muted } })}
-            <span style={{ 
-              fontSize: typography.fontSize.sm, 
-              color: colors.text.muted 
-            }}>
-              {lastUpdated ? `Updated ${lastUpdated}` : 'Loading...'}
-            </span>
+          
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              {React.createElement(icons.refresh, { size: 20, className: "text-gray-500" })}
+              <span className="text-sm text-gray-600">
+                {lastUpdated ? `Updated ${lastUpdated}` : 'Loading...'}
+              </span>
+            </div>
+            
             {lastUpdated && lastUpdated !== 'Cached' && (
-              <span style={{
-                fontSize: typography.fontSize.xs,
-                color: colors.green[600],
-                backgroundColor: colors.green[50],
-                padding: `${spacing.xs} ${spacing.sm}`,
-                borderRadius: borderRadius.sm,
-                fontWeight: typography.fontWeight.medium
-              }}>
+              <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded-md">
                 Live Data
               </span>
             )}
             {lastUpdated === 'Cached' && (
-              <span style={{
-                fontSize: typography.fontSize.xs,
-                color: colors.blue[600],
-                backgroundColor: colors.blue[50],
-                padding: `${spacing.xs} ${spacing.sm}`,
-                borderRadius: borderRadius.sm,
-                fontWeight: typography.fontWeight.medium
-              }}>
+              <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
                 Cached Data
               </span>
             )}
@@ -465,119 +523,72 @@ export default function TodaysRatesTab({
         </div>
 
         {/* Filters and Controls */}
-        <div style={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          alignItems: 'center', 
-          gap: spacing.md, 
-          marginBottom: spacing.lg 
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: spacing.sm 
-          }}>
-            <label style={{ 
-              fontSize: typography.fontSize.sm, 
-              fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary 
-            }}>
-              Loan Type:
-            </label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              style={{ 
-                padding: `${spacing.xs} ${spacing.md}`,
-                border: `1px solid ${colors.gray[300]}`,
-                borderRadius: borderRadius.md,
-                outline: 'none',
-                fontSize: typography.fontSize.sm,
-                color: colors.text.primary,
-                backgroundColor: colors.white
-              }}
-            >
-              {loanTypes.map(type => (
-                <option key={type} value={type}>
-                  {type === 'all' ? 'All Types' : type}
-                </option>
-              ))}
-            </select>
+        <div 
+          className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6"
+          style={{ gap: `${layout.spacing}px` }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label 
+                className={`${classes.body.small} font-medium`}
+                style={{ color: colors.text }}
+              >
+                Loan Type:
+              </label>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className={classes.select.base}
+                style={{ 
+                  borderColor: colors.border,
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+              >
+                {loanTypes.map(type => (
+                  <option key={type} value={type}>
+                    {type === 'all' ? 'All Types' : type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label 
+                className={`${classes.body.small} font-medium`}
+                style={{ color: colors.text }}
+              >
+                Sort by:
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'rate' | 'payment')}
+                className={classes.select.base}
+                style={{ 
+                  borderColor: colors.border,
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+              >
+                <option value="rate">Interest Rate</option>
+                <option value="payment">Monthly Payment</option>
+              </select>
+            </div>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: spacing.sm 
-          }}>
-            <label style={{ 
-              fontSize: typography.fontSize.sm, 
-              fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary 
-            }}>
-              Sort by:
-            </label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'rate' | 'payment')}
-              style={{ 
-                padding: `${spacing.xs} ${spacing.md}`,
-                border: `1px solid ${colors.gray[300]}`,
-                borderRadius: borderRadius.md,
-                outline: 'none',
-                fontSize: typography.fontSize.sm,
-                color: colors.text.primary,
-                backgroundColor: colors.white
-              }}
-            >
-              <option value="rate">Interest Rate</option>
-              <option value="payment">Monthly Payment</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center' }}>
-            <button
-              onClick={() => fetchTodaysRates(false)}
-              disabled={isLoading}
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                backgroundColor: colors.gray[100],
-                color: colors.text.primary,
-                border: `1px solid ${colors.gray[300]}`,
-                borderRadius: borderRadius.md,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing.sm,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium
-              }}
-            >
-              {React.createElement(icons.refresh, { size: 16 })}
-              <span>{isLoading ? 'Updating...' : 'Refresh Rates'}</span>
-            </button>
-            
+          <div className="flex gap-2">
             <button
               onClick={() => fetchTodaysRates(true)}
               disabled={isLoading}
+              className={`${classes.button.primary} flex items-center gap-2 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
               style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                backgroundColor: colors.blue[600],
-                color: colors.white,
-                border: 'none',
-                borderRadius: borderRadius.md,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing.sm,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium
+                backgroundColor: isLoading ? `${colors.primary}50` : colors.primary,
+                color: colors.background,
+                borderColor: colors.primary
               }}
             >
-              {React.createElement(icons.refresh, { size: 16 })}
-              <span>Force Refresh</span>
+              {React.createElement(icons.refresh, { size: 16, color: colors.background })}
+              <span>{isLoading ? 'Updating...' : 'Force Refresh'}</span>
             </button>
           </div>
         </div>
@@ -594,169 +605,271 @@ export default function TodaysRatesTab({
       )}
 
       {/* Rates Table */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+      <div 
+        className={`${classes.card.container} overflow-hidden`}
+        style={{ 
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          borderRadius: `${layout.borderRadius}px`
+        }}
+      >
         {isLoading ? (
-          <div className="p-8 text-center">
+          <div 
+            className="p-8 text-center"
+            style={{ padding: `${layout.padding.xlarge}px` }}
+          >
             <div className="flex items-center justify-center space-x-2">
-              {React.createElement(icons.refresh, { size: 20, className: "animate-spin text-gray-500" })}
-              <span className="text-gray-600">Loading today's rates...</span>
+              {React.createElement(icons.refresh, { size: 20, className: "animate-spin" })}
+              <span 
+                className={`${classes.body.base}`}
+                style={{ color: colors.textSecondary }}
+              >
+                Loading today's rates...
+              </span>
             </div>
           </div>
         ) : filteredRates.length === 0 ? (
-          <div className="p-8 text-center">
+          <div 
+            className="p-8 text-center"
+            style={{ padding: `${layout.padding.xlarge}px` }}
+          >
             <div className="flex items-center justify-center space-x-2">
-              {React.createElement(icons.error, { size: 20, className: "text-gray-500" })}
-              <span className="text-gray-600">No rates available for today</span>
+              {React.createElement(icons.error, { size: 20 })}
+              <span 
+                className={`${classes.body.base}`}
+                style={{ color: colors.textSecondary }}
+              >
+                No rates available for today
+              </span>
             </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-            <thead className={`${theme.primaryBg} border-b border-gray-200`}>
-              <tr>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  Loan Type
-                </th>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  Interest Rate
-                </th>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  APR
-                </th>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  Points
-                </th>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  Monthly Payment*
-                </th>
-                <th className={`px-6 py-4 text-left ${typography.body.small} font-semibold ${theme.primaryText}`}>
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredRates.map((rate, index) => (
-                <tr key={`${rate.id}-${index}-${rate.loanType}-${rate.rate}`} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      {React.createElement(icons.document, { size: 16, className: "text-gray-500" })}
-                      <span className={`${typography.body.small} font-medium text-gray-900`}>
-                        {rate.loanType}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`${typography.body.small} font-semibold text-gray-900`}>
-                      {formatRate(rate.rate)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`${typography.body.small} text-gray-700`}>
-                      {formatRate(rate.apr)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`${typography.body.small} text-gray-700`}>
-                      {rate.points}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`${typography.body.small} font-semibold text-gray-900`}>
-                      {formatCurrency(rate.monthlyPayment)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      className={`px-4 py-2 ${theme.primaryBg} ${theme.primaryText} rounded-md ${theme.primaryHover} transition-colors flex items-center space-x-2`}
-                    >
-                      {React.createElement(icons.arrowRight, { size: 16 })}
-                      <span>Get Quote</span>
-                    </button>
-                  </td>
+              <thead 
+                className="border-b"
+                style={{ 
+                  backgroundColor: `${colors.primary}10`,
+                  borderBottomColor: colors.border
+                }}
+              >
+                <tr>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    Loan Type
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    Interest Rate
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    APR
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    Points
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    Monthly Payment*
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-left text-sm font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredRates.map((rate, index) => (
+                  <tr key={`${rate.id}-${index}-${rate.loanType}-${rate.rate}`} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center space-x-2">
+                        {React.createElement(icons.document, { size: 16, className: "text-gray-500" })}
+                        <span className="text-sm font-medium text-gray-900">
+                          {rate.loanType}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatRate(rate.rate)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-700">
+                        {formatRate(rate.apr)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-700">
+                        {rate.points}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(rate.monthlyPayment)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        className={`${classes.button.outline} flex items-center space-x-2`}
+                        style={{
+                          backgroundColor: colors.background,
+                          borderColor: colors.primary,
+                          color: colors.primary
+                        }}
+                      >
+                        {React.createElement(icons.arrowRight, { size: 16, color: colors.primary })}
+                        <span>{content.ctaText}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Footer Note */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <p className={`${typography.body.xs} text-gray-600`}>
+          <p className="text-xs text-gray-600">
             * Monthly payment based on $400,000 loan amount. Rates are subject to change without notice. 
             Actual rates may vary based on credit score, loan amount, and other factors.
           </p>
         </div>
       </div>
 
-      {/* Market Trends */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`w-10 h-10 ${theme.primaryBg} rounded-full flex items-center justify-center`}>
-              {React.createElement(icons.trendingUp, { size: 20, className: theme.primaryText })}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        <div 
+          className={`${classes.card.container}`}
+          style={{ 
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            borderRadius: `${layout.borderRadius}px`
+          }}
+        >
+          <div className={`${classes.card.body}`}>
+            <div 
+              className={`${classes.icon.primary}`}
+              style={{ backgroundColor: `${colors.primary}10` }}
+            >
+              {React.createElement(icons.trendingUp, { 
+                size: 20, 
+                color: colors.primary
+              })}
             </div>
-            <div>
-              <h3 className={`${typography.body.small} font-semibold text-gray-900`}>
-                Rate Trend
-              </h3>
-              <p className={`${typography.body.xs} text-gray-600`}>
-                Last 30 days
-              </p>
+            <h3 
+              className={`${classes.heading.h5}`}
+              style={{ color: colors.text }}
+            >
+              Rate Trend
+            </h3>
+            <p 
+              className={`${classes.body.small}`}
+              style={{ color: colors.textSecondary }}
+            >
+              Last 30 days
+            </p>
+            <div className="flex items-center space-x-2 mt-2">
+              {React.createElement(icons.arrowUp, { size: 16, className: "text-green-500" })}
+              <span className="text-sm font-semibold text-green-600">
+                +0.125%
+              </span>
+              <span className="text-xs text-gray-600">
+                vs last month
+              </span>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {React.createElement(icons.arrowUp, { size: 16, className: "text-green-500" })}
-            <span className={`${typography.body.small} font-semibold text-green-600`}>
-              +0.125%
-            </span>
-            <span className={`${typography.body.xs} text-gray-600`}>
-              vs last month
-            </span>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`w-10 h-10 ${theme.primaryBg} rounded-full flex items-center justify-center`}>
-              {React.createElement(icons.clock, { size: 20, className: theme.primaryText })}
+        <div 
+          className={`${classes.card.container}`}
+          style={{ 
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            borderRadius: `${layout.borderRadius}px`
+          }}
+        >
+          <div className={`${classes.card.body}`}>
+            <div 
+              className={`${classes.icon.primary}`}
+              style={{ backgroundColor: `${colors.primary}10` }}
+            >
+              {React.createElement(icons.clock, { 
+                size: 20, 
+                color: colors.primary
+              })}
             </div>
-            <div>
-              <h3 className={`${typography.body.small} font-semibold text-gray-900`}>
-                Best Time
-              </h3>
-              <p className={`${typography.body.xs} text-gray-600`}>
-                To lock rates
-              </p>
+            <h3 
+              className={`${classes.heading.h5}`}
+              style={{ color: colors.text }}
+            >
+              Best Time
+            </h3>
+            <p 
+              className={`${classes.body.small}`}
+              style={{ color: colors.textSecondary }}
+            >
+              To lock rates
+            </p>
+            <div className="flex items-center space-x-2 mt-2">
+              {React.createElement(icons.calendar, { size: 16, className: "text-blue-500" })}
+              <span className="text-sm font-semibold text-blue-600">
+                Tuesday-Thursday
+              </span>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {React.createElement(icons.calendar, { size: 16, className: "text-blue-500" })}
-            <span className={`${typography.body.small} font-semibold text-blue-600`}>
-              Tuesday-Thursday
-            </span>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`w-10 h-10 ${theme.primaryBg} rounded-full flex items-center justify-center`}>
-              {React.createElement(icons.shield, { size: 20, className: theme.primaryText })}
+        <div 
+          className={`${classes.card.container}`}
+          style={{ 
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            borderRadius: `${layout.borderRadius}px`
+          }}
+        >
+          <div className={`${classes.card.body}`}>
+            <div 
+              className={`${classes.icon.primary}`}
+              style={{ backgroundColor: `${colors.primary}10` }}
+            >
+              {React.createElement(icons.shield, { 
+                size: 20, 
+                color: colors.primary
+              })}
             </div>
-            <div>
-              <h3 className={`${typography.body.small} font-semibold text-gray-900`}>
-                Rate Lock
-              </h3>
-              <p className={`${typography.body.xs} text-gray-600`}>
-                Protection period
-              </p>
+            <h3 
+              className={`${classes.heading.h5}`}
+              style={{ color: colors.text }}
+            >
+              Rate Lock
+            </h3>
+            <p 
+              className={`${classes.body.small}`}
+              style={{ color: colors.textSecondary }}
+            >
+              Protection period
+            </p>
+            <div className="flex items-center space-x-2 mt-2">
+              {React.createElement(icons.clock, { size: 16, className: "text-orange-500" })}
+              <span className="text-sm font-semibold text-orange-600">
+                30-60 days
+              </span>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {React.createElement(icons.clock, { size: 16, className: "text-orange-500" })}
-            <span className={`${typography.body.small} font-semibold text-orange-600`}>
-              30-60 days
-            </span>
           </div>
         </div>
       </div>

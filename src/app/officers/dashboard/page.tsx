@@ -132,7 +132,7 @@ export default function OfficersDashboardPage() {
             }}>
               Quick Actions
             </h3>
-            <div style={dashboard.grid.cols4}>
+            <div style={dashboard.grid.cols5}>
               <button style={{
                 ...dashboard.quickActionCard,
                 padding: '16px',
@@ -242,6 +242,36 @@ export default function OfficersDashboardPage() {
                   })}
                 </div>
                 <p style={dashboard.quickActionTitle}>Profile</p>
+              </button>
+
+              <button 
+                onClick={() => router.push('/officers/customizer')}
+                style={{
+                  ...dashboard.quickActionCard,
+                  padding: '16px',
+                  border: '1px solid #e5e7eb',
+                  textAlign: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.quickActionCardHover);
+                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                }}
+                onMouseLeave={(e) => {
+                  Object.assign(e.currentTarget.style, dashboard.quickActionCard);
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                }}
+              >
+                <div style={{
+                  ...dashboard.quickActionIcon,
+                  backgroundColor: '#fce7f3',
+                  margin: '0 auto 8px auto'
+                }}>
+                  {React.createElement(icons.edit, { 
+                    size: 20, 
+                    style: { color: '#ec4899' } 
+                  })}
+                </div>
+                <p style={dashboard.quickActionTitle}>Customizer</p>
               </button>
             </div>
           </div>

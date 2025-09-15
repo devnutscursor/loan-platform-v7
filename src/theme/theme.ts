@@ -170,12 +170,21 @@ export const colors = {
     900: '#78350f',
   },
   
-  // Text colors - FORCE BLACK FOR MAC COMPATIBILITY
+  // Text colors - Context-aware contrast system
   text: {
-    primary: '#000000', // FORCE BLACK - NO EXCEPTIONS
-    secondary: '#000000', // FORCE BLACK - NO EXCEPTIONS
-    muted: '#000000', // FORCE BLACK - NO EXCEPTIONS
-    light: '#000000', // FORCE BLACK - NO EXCEPTIONS
+    // Default text colors for white/light backgrounds
+    primary: '#000000', // Black text for white backgrounds
+    secondary: '#374151', // Dark gray for secondary text on white backgrounds
+    muted: '#6b7280', // Medium gray for muted text on white backgrounds
+    light: '#9ca3af', // Light gray for subtle text on white backgrounds
+    
+    // Text colors for colored/dark backgrounds
+    onPrimary: '#ffffff', // White text for primary colored backgrounds
+    onSecondary: '#ffffff', // White text for secondary colored backgrounds
+    onDark: '#ffffff', // White text for dark backgrounds
+    onColored: '#ffffff', // White text for any colored background
+    
+    // Legacy white reference for backward compatibility
     white: '#ffffff', // Pure white for dark backgrounds only
   },
   
@@ -218,31 +227,54 @@ export const typography = {
     relaxed: '1.75',
   },
   
-  // Typography Classes for consistent styling - Mac optimized
+  // Typography Classes for consistent styling - Context-aware contrast
   headings: {
+    // Default headings for white/light backgrounds
     h1: 'text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight',
     h2: 'text-3xl md:text-4xl lg:text-5xl font-bold text-black leading-tight',
     h3: 'text-2xl md:text-3xl lg:text-4xl font-bold text-black leading-tight',
     h4: 'text-xl md:text-2xl lg:text-3xl font-bold text-black leading-tight',
     h5: 'text-lg md:text-xl lg:text-2xl font-bold text-black leading-tight',
     h6: 'text-base md:text-lg lg:text-xl font-bold text-black leading-tight',
+    
+    // Headings for colored/dark backgrounds
+    h1OnColored: 'text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight',
+    h2OnColored: 'text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight',
+    h3OnColored: 'text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight',
+    h4OnColored: 'text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight',
+    h5OnColored: 'text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight',
+    h6OnColored: 'text-base md:text-lg lg:text-xl font-bold text-white leading-tight',
   },
   
   body: {
+    // Default body text for white/light backgrounds
     large: 'text-lg md:text-xl text-gray-900 leading-relaxed',
     base: 'text-base md:text-lg text-gray-900 leading-relaxed',
     small: 'text-sm md:text-base text-gray-900 leading-relaxed',
     xs: 'text-xs md:text-sm text-gray-900 leading-relaxed',
+    
+    // Body text for colored/dark backgrounds
+    largeOnColored: 'text-lg md:text-xl text-white leading-relaxed',
+    baseOnColored: 'text-base md:text-lg text-white leading-relaxed',
+    smallOnColored: 'text-sm md:text-base text-white leading-relaxed',
+    xsOnColored: 'text-xs md:text-sm text-white leading-relaxed',
   },
   
-  // Responsive text utilities - Mac optimized
+  // Responsive text utilities - Context-aware contrast
   responsive: {
-    // Mobile-first approach with responsive scaling
+    // Default responsive text for white/light backgrounds
     hero: 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight',
     title: 'text-2xl sm:text-3xl md:text-4xl font-bold text-black leading-tight',
     subtitle: 'text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 leading-relaxed',
     body: 'text-sm sm:text-base md:text-lg text-gray-900 leading-relaxed',
     caption: 'text-xs sm:text-sm text-gray-700 leading-normal',
+    
+    // Responsive text for colored/dark backgrounds
+    heroOnColored: 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight',
+    titleOnColored: 'text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight',
+    subtitleOnColored: 'text-lg sm:text-xl md:text-2xl font-semibold text-white leading-relaxed',
+    bodyOnColored: 'text-sm sm:text-base md:text-lg text-white leading-relaxed',
+    captionOnColored: 'text-xs sm:text-sm text-gray-200 leading-normal',
   },
   
   // Additional typography properties for components - Mac optimized
@@ -715,6 +747,11 @@ export const dashboard = {
       gridTemplateColumns: 'repeat(4, 1fr)',
       gap: spacing[4],
     },
+    cols5: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(5, 1fr)',
+      gap: spacing[4],
+    },
   },
   
   // Responsive breakpoints for grid
@@ -781,87 +818,520 @@ import {
 // Icons were moved to components/ui/Icon.tsx to centralize UI primitives.
 // Import icons from '@/components/ui/Icon' where needed.
 
-// Template-specific color schemes
-export const templates = {
+// Import efficient templates hook
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
+
+// Fallback templates for when database is unavailable
+const fallbackTemplates = {
   template1: {
-    // Template 1: Pink primary theme
-    primary: {
-      color: colors.primary[600], // Pink
-      hover: colors.primary[700],
-      light: colors.primary[50],
-      text: '#ffffff',
+    colors: {
+      primary: '#ec4899',
+      secondary: '#3b82f6',
+      background: '#ffffff',
+      text: '#111827',
+      textSecondary: '#6b7280',
+      border: '#e5e7eb',
     },
-    secondary: {
-      color: '#ffffff', // White background
-      hover: colors.gray[50],
-      border: colors.primary[600], // Pink border
-      text: colors.primary[600], // Pink text
-    },
-    navigation: {
-      active: colors.primary[600], // Pink
-      inactive: colors.gray[600],
-      hover: colors.gray[900],
-    },
-    buttons: {
-      applyNow: {
-        variant: 'primary',
-        className: 'px-8 py-4 text-lg font-semibold min-w-[200px] flex items-center justify-center space-x-2',
+    typography: {
+      fontFamily: 'Inter',
+      fontSize: 16,
+      fontWeight: {
+        normal: 400,
+        medium: 500,
+        semibold: 600,
+        bold: 700,
       },
-      contact: {
-        variant: 'secondary',
-        className: 'px-8 py-4 text-lg font-semibold min-w-[200px] bg-white text-blue-900 hover:bg-gray-50 border-white flex items-center justify-center space-x-2',
+    },
+    content: {
+      headline: 'Find the best loan for you',
+      subheadline: 'Compare today\'s rates and apply directly with our loan officers',
+      ctaText: 'Get rates',
+      ctaSecondary: 'Learn more',
+      companyName: 'LoanPro',
+      tagline: 'Real-time demo',
+    },
+    layout: {
+      alignment: 'center',
+      spacing: 18,
+      borderRadius: 8,
+      padding: {
+        small: 8,
+        medium: 16,
+        large: 24,
+        xlarge: 32,
+      },
+    },
+    advanced: {
+      customCSS: '',
+      accessibility: true,
+    },
+    classes: {
+      button: {
+        primary: 'bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md',
+        secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300',
+        outline: 'border-2 border-pink-200 hover:border-pink-300 text-pink-600 hover:text-pink-700 hover:bg-pink-50 px-6 py-3 rounded-lg font-medium transition-all duration-200',
+        ghost: 'text-pink-600 hover:text-pink-700 hover:bg-pink-50 px-4 py-2 rounded-lg font-medium transition-all duration-200',
+      },
+      card: {
+        container: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200',
+        header: 'px-6 py-4 border-b border-gray-200',
+        body: 'px-6 py-4',
+        footer: 'px-6 py-4 border-t border-gray-200 bg-gray-50',
+      },
+      heading: {
+        h1: 'text-3xl font-bold text-gray-900 mb-4',
+        h2: 'text-2xl font-bold text-gray-900 mb-3',
+        h3: 'text-xl font-semibold text-gray-900 mb-2',
+        h4: 'text-lg font-semibold text-gray-900 mb-2',
+        h5: 'text-base font-semibold text-gray-900 mb-2',
+        h6: 'text-sm font-semibold text-gray-900 mb-1',
+      },
+      body: {
+        large: 'text-lg text-gray-700 leading-relaxed',
+        base: 'text-base text-gray-700 leading-relaxed',
+        small: 'text-sm text-gray-600 leading-relaxed',
+        xs: 'text-xs text-gray-500 leading-normal',
+      },
+      input: {
+        base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200',
+        error: 'border-red-300 focus:ring-red-500 focus:border-red-500',
+        success: 'border-green-300 focus:ring-green-500 focus:border-green-500',
+      },
+      select: {
+        base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 bg-white',
+      },
+      status: {
+        success: 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium',
+        warning: 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium',
+        error: 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium',
+        info: 'bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium',
+      },
+      icon: {
+        primary: 'w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4',
+        secondary: 'w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-3',
+        small: 'w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center',
+      },
+      navigation: {
+        container: 'flex flex-wrap gap-2 p-4',
+        tab: {
+          base: 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer',
+          inactive: 'text-gray-600 hover:text-gray-800 hover:bg-gray-100',
+          active: 'bg-pink-600 text-white shadow-md',
+          hover: 'hover:bg-pink-50 hover:text-pink-700',
+        },
+      },
+      hero: {
+        background: 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900',
+        overlay: 'bg-gradient-to-br from-blue-900/90 via-blue-800/90 to-indigo-900/90',
+      },
+      sidebar: {
+        container: 'bg-white border-2 border-pink-200 rounded-lg p-6',
+        logo: {
+          background: 'bg-pink-600',
+          text: 'text-white',
+        },
       },
     },
   },
   template2: {
-    // Template 2: Dark purple primary theme
-    primary: {
-      color: colors.darkPurple[600], // Dark purple
-      hover: colors.darkPurple[700],
-      light: colors.darkPurple[50],
-      text: '#ffffff',
+    colors: {
+      primary: '#9333ea',
+      secondary: '#dc2626',
+      background: '#ffffff',
+      text: '#111827',
+      textSecondary: '#6b7280',
+      border: '#e5e7eb',
     },
-    secondary: {
-      color: '#ffffff', // White background
-      hover: colors.gray[50],
-      border: colors.darkPurple[600], // Purple border
-      text: colors.darkPurple[600], // Purple text
-    },
-    navigation: {
-      active: colors.darkPurple[800], // Dark purple
-      inactive: colors.gray[600],
-      hover: colors.gray[900],
-    },
-    buttons: {
-      applyNow: {
-        variant: 'secondary',
-        className: 'px-8 py-4 text-lg font-semibold min-w-[200px] bg-gray-300 text-gray-800 hover:bg-gray-400 border-gray-300 flex items-center justify-center space-x-2',
+    typography: {
+      fontFamily: 'Inter',
+      fontSize: 16,
+      fontWeight: {
+        normal: 400,
+        medium: 500,
+        semibold: 600,
+        bold: 700,
       },
-      contact: {
-        variant: 'primary',
-        className: 'px-8 py-4 text-lg font-semibold min-w-[200px] flex items-center justify-center space-x-2',
+    },
+    content: {
+      headline: 'Find the best loan for you',
+      subheadline: 'Compare today\'s rates and apply directly with our loan officers',
+      ctaText: 'Get rates',
+      ctaSecondary: 'Learn more',
+      companyName: 'LoanPro',
+      tagline: 'Real-time demo',
+    },
+    layout: {
+      alignment: 'center',
+      spacing: 18,
+      borderRadius: 8,
+      padding: {
+        small: 8,
+        medium: 16,
+        large: 24,
+        xlarge: 32,
+      },
+    },
+    advanced: {
+      customCSS: '',
+      accessibility: true,
+    },
+    classes: {
+      button: {
+        primary: 'bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md',
+        secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300',
+        outline: 'border-2 border-purple-200 hover:border-purple-300 text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-6 py-3 rounded-lg font-medium transition-all duration-200',
+        ghost: 'text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-lg font-medium transition-all duration-200',
+      },
+      card: {
+        container: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200',
+        header: 'px-6 py-4 border-b border-gray-200',
+        body: 'px-6 py-4',
+        footer: 'px-6 py-4 border-t border-gray-200 bg-gray-50',
+      },
+      heading: {
+        h1: 'text-3xl font-bold text-gray-900 mb-4',
+        h2: 'text-2xl font-bold text-gray-900 mb-3',
+        h3: 'text-xl font-semibold text-gray-900 mb-2',
+        h4: 'text-lg font-semibold text-gray-900 mb-2',
+        h5: 'text-base font-semibold text-gray-900 mb-2',
+        h6: 'text-sm font-semibold text-gray-900 mb-1',
+      },
+      body: {
+        large: 'text-lg text-gray-700 leading-relaxed',
+        base: 'text-base text-gray-700 leading-relaxed',
+        small: 'text-sm text-gray-600 leading-relaxed',
+        xs: 'text-xs text-gray-500 leading-normal',
+      },
+      input: {
+        base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200',
+        error: 'border-red-300 focus:ring-red-500 focus:border-red-500',
+        success: 'border-green-300 focus:ring-green-500 focus:border-green-500',
+      },
+      select: {
+        base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white',
+      },
+      status: {
+        success: 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium',
+        warning: 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium',
+        error: 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium',
+        info: 'bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium',
+      },
+      icon: {
+        primary: 'w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4',
+        secondary: 'w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-3',
+        small: 'w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center',
+      },
+      navigation: {
+        container: 'flex flex-wrap gap-2 p-4',
+        tab: {
+          base: 'px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer',
+          inactive: 'text-gray-600 hover:text-gray-800 hover:bg-gray-100',
+          active: 'bg-purple-600 text-white shadow-md',
+          hover: 'hover:bg-purple-50 hover:text-purple-700',
+        },
+      },
+      hero: {
+        background: 'bg-gradient-to-br from-red-900 via-red-800 to-rose-900',
+        overlay: 'bg-gradient-to-br from-red-900/90 via-red-800/90 to-rose-900/90',
+      },
+      sidebar: {
+        container: 'bg-white border-2 border-purple-200 rounded-lg p-6',
+        logo: {
+          background: 'bg-purple-600',
+          text: 'text-white',
+        },
       },
     },
   },
-} as const;
-
-// Template utility functions
-export const getTemplateStyles = (template: keyof typeof templates) => {
-  return templates[template];
 };
 
-export const getTemplateButtonStyles = (template: keyof typeof templates, buttonType: 'applyNow' | 'contact') => {
-  return templates[template].buttons[buttonType];
-};
-
-export const getTemplateNavigationStyles = (template: keyof typeof templates, isActive: boolean) => {
-  const navStyles = templates[template].navigation;
-  return {
-    borderColor: isActive ? navStyles.active : 'transparent',
-    color: isActive ? navStyles.active : navStyles.inactive,
-    hoverColor: navStyles.hover,
-    hoverBorder: colors.gray[300],
+// Template type definition
+export interface Template {
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+    textSecondary: string;
+    border: string;
   };
+  typography: {
+    fontFamily: string;
+    fontSize: number;
+    fontWeight: {
+      normal: number;
+      medium: number;
+      semibold: number;
+      bold: number;
+    };
+  };
+  content: {
+    headline: string;
+    subheadline: string;
+    ctaText: string;
+    ctaSecondary: string;
+    companyName: string;
+    tagline: string;
+  };
+  layout: {
+    alignment: string;
+    spacing: number;
+    borderRadius: number;
+    padding: {
+      small: number;
+      medium: number;
+      large: number;
+      xlarge: number;
+    };
+  };
+  advanced: {
+    customCSS: string;
+    accessibility: boolean;
+  };
+  classes: {
+    button: {
+      primary: string;
+      secondary: string;
+      outline: string;
+      ghost: string;
+    };
+    card: {
+      container: string;
+      header: string;
+      body: string;
+      footer: string;
+    };
+    heading: {
+      h1: string;
+      h2: string;
+      h3: string;
+      h4: string;
+      h5: string;
+      h6: string;
+    };
+    body: {
+      large: string;
+      base: string;
+      small: string;
+      xs: string;
+    };
+    input: {
+      base: string;
+      error: string;
+      success: string;
+    };
+    select: {
+      base: string;
+    };
+    status: {
+      success: string;
+      warning: string;
+      error: string;
+      info: string;
+    };
+    icon: {
+      primary: string;
+      secondary: string;
+      small: string;
+    };
+    navigation: {
+      container: string;
+      tab: {
+        base: string;
+        inactive: string;
+        active: string;
+        hover: string;
+      };
+    };
+    hero: {
+      background: string;
+      overlay: string;
+    };
+    sidebar: {
+      container: string;
+      logo: {
+        background: string;
+        text: string;
+      };
+    };
+  };
+}
+
+// Export template utilities
+export {
+  useEfficientTemplates,
+  fallbackTemplates
+};
+
+// DEPRECATED: Hardcoded templates removed - Use database templates via useEfficientTemplates()
+// All template data now comes from the database
+
+export const getTextClasses = (backgroundType: 'white' | 'light' | 'colored' | 'dark' = 'white') => {
+  switch (backgroundType) {
+    case 'white':
+    case 'light':
+      return {
+        heading: {
+          h1: typography.headings.h1,
+          h2: typography.headings.h2,
+          h3: typography.headings.h3,
+          h4: typography.headings.h4,
+          h5: typography.headings.h5,
+          h6: typography.headings.h6,
+        },
+        body: {
+          large: typography.body.large,
+          base: typography.body.base,
+          small: typography.body.small,
+          xs: typography.body.xs,
+        },
+        responsive: {
+          hero: typography.responsive.hero,
+          title: typography.responsive.title,
+          subtitle: typography.responsive.subtitle,
+          body: typography.responsive.body,
+          caption: typography.responsive.caption,
+        },
+      };
+    case 'colored':
+    case 'dark':
+      return {
+        heading: {
+          h1: typography.headings.h1OnColored,
+          h2: typography.headings.h2OnColored,
+          h3: typography.headings.h3OnColored,
+          h4: typography.headings.h4OnColored,
+          h5: typography.headings.h5OnColored,
+          h6: typography.headings.h6OnColored,
+        },
+        body: {
+          large: typography.body.largeOnColored,
+          base: typography.body.baseOnColored,
+          small: typography.body.smallOnColored,
+          xs: typography.body.xsOnColored,
+        },
+        responsive: {
+          hero: typography.responsive.heroOnColored,
+          title: typography.responsive.titleOnColored,
+          subtitle: typography.responsive.subtitleOnColored,
+          body: typography.responsive.bodyOnColored,
+          caption: typography.responsive.captionOnColored,
+        },
+      };
+    default:
+      return {
+        heading: {
+          h1: typography.headings.h1,
+          h2: typography.headings.h2,
+          h3: typography.headings.h3,
+          h4: typography.headings.h4,
+          h5: typography.headings.h5,
+          h6: typography.headings.h6,
+        },
+        body: {
+          large: typography.body.large,
+          base: typography.body.base,
+          small: typography.body.small,
+          xs: typography.body.xs,
+        },
+        responsive: {
+          hero: typography.responsive.hero,
+          title: typography.responsive.title,
+          subtitle: typography.responsive.subtitle,
+          body: typography.responsive.body,
+          caption: typography.responsive.caption,
+        },
+      };
+  }
+};
+
+// Template utility functions for backward compatibility
+// These functions provide access to template data from the template manager
+
+export const getTemplateColors = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.colors || fallbackTemplates.template1.colors;
+};
+
+export const getTemplateTypography = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.typography || fallbackTemplates.template1.typography;
+};
+
+export const getTemplateContent = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.content || fallbackTemplates.template1.content;
+};
+
+export const getTemplateLayout = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.layout || fallbackTemplates.template1.layout;
+};
+
+export const getTemplateAdvanced = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.advanced || fallbackTemplates.template1.advanced;
+};
+
+export const getTemplateStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes || fallbackTemplates.template1.classes;
+};
+
+export const getTemplateButtonStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes?.button || fallbackTemplates.template1.classes.button;
+};
+
+export const getTemplateNavigationStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes?.navigation || fallbackTemplates.template1.classes.navigation;
+};
+
+export const getTemplateHeroStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes?.hero || fallbackTemplates.template1.classes.hero;
+};
+
+export const getTemplateSidebarStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes?.sidebar || fallbackTemplates.template1.classes.sidebar;
+};
+
+export const getTemplateTabStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  return template?.classes?.navigation?.tab || fallbackTemplates.template1.classes.navigation.tab;
+};
+
+export const getUnifiedTabStyles = (templateId: 'template1' | 'template2' = 'template1') => {
+  const template = fallbackTemplates[templateId];
+  const fallbackTemplate = fallbackTemplates.template1;
+  
+  return {
+    container: template?.classes?.navigation?.container || fallbackTemplate.classes.navigation.container,
+    tab: {
+      base: template?.classes?.navigation?.tab?.base || fallbackTemplate.classes.navigation.tab.base,
+      inactive: template?.classes?.navigation?.tab?.inactive || fallbackTemplate.classes.navigation.tab.inactive,
+      active: template?.classes?.navigation?.tab?.active || fallbackTemplate.classes.navigation.tab.active,
+      hover: template?.classes?.navigation?.tab?.hover || fallbackTemplate.classes.navigation.tab.hover,
+    },
+    colors: template?.colors || fallbackTemplate.colors,
+    // Include all template classes for backward compatibility
+    ...template?.classes || fallbackTemplate.classes,
+  };
+};
+
+export const getTextColor = (backgroundType: 'white' | 'light' | 'colored' | 'dark' = 'white') => {
+  switch (backgroundType) {
+    case 'white':
+    case 'light':
+      return colors.text.primary;
+    case 'colored':
+    case 'dark':
+      return colors.text.onColored;
+    default:
+      return colors.text.primary;
+  }
 };
 
 // Export default theme object
@@ -877,10 +1347,21 @@ export const theme = {
   animations,
   zIndex,
   dashboard,
-  templates,
+  templates: fallbackTemplates,
+  getTextColor,
+  getTextClasses,
   getTemplateStyles,
+  getTemplateColors,
+  getTemplateTypography,
+  getTemplateContent,
+  getTemplateLayout,
+  getTemplateAdvanced,
   getTemplateButtonStyles,
   getTemplateNavigationStyles,
+  getTemplateHeroStyles,
+  getTemplateSidebarStyles,
+  getTemplateTabStyles,
+  getUnifiedTabStyles,
 } as const;
 
 export type Theme = typeof theme;

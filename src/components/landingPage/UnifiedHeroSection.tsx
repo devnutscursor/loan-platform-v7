@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
-import { typography, getTemplateButtonStyles } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import { icons } from '@/components/ui/Icon';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfileCache, type LoanOfficerProfile } from '@/hooks/use-profile-cache';
@@ -29,8 +29,14 @@ export default function UnifiedHeroSection({
   const { profile, loading, error, getProfile } = useProfileCache();
 
   useEffect(() => {
-    getProfile(user, authLoading);
-  }, [user, authLoading, getProfile]);
+    // Only fetch profile if we don't have the required props
+    if (!officerName || !email) {
+      console.log('🔄 UnifiedHeroSection: Fetching profile data');
+      getProfile(user, authLoading);
+    } else {
+      console.log('✅ UnifiedHeroSection: Using provided props, skipping profile fetch');
+    }
+  }, [user, authLoading, getProfile, officerName, email]);
 
   // Use props if provided, otherwise use fetched data
   const displayName = officerName || `${profile?.firstName || 'User'} ${profile?.lastName || 'Smith'}`;
@@ -47,24 +53,146 @@ export default function UnifiedHeroSection({
     user: user?.email
   });
 
-  const applyNowStyles = getTemplateButtonStyles(template, 'applyNow');
-  const contactStyles = getTemplateButtonStyles(template, 'contact');
+  const { getTemplateSync, fetchTemplate } = useEfficientTemplates();
+  const templateData = getTemplateSync(template);
+
+  // Fetch template data when component mounts (same as TemplateSelector)
+  useEffect(() => {
+    if (user && template) {
+      console.log('🔄 UnifiedHeroSection: Fetching template data for:', template);
+      fetchTemplate(template).then(() => {
+        console.log('✅ UnifiedHeroSection: Template data fetched successfully for:', template);
+      }).catch(error => {
+        console.error('❌ UnifiedHeroSection: Error fetching template:', error);
+      });
+    }
+  }, [user, template, fetchTemplate]);
+  
+  // Comprehensive template data usage
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
+  
+  const typography = templateData?.template?.typography || {
+    fontFamily: 'Inter',
+    fontSize: {
+      xs: 12,
+      sm: 14,
+      base: 16,
+      lg: 18,
+      xl: 20,
+      '2xl': 24,
+      '3xl': 30,
+      '4xl': 36,
+      '5xl': 48
+    },
+    fontWeight: {
+      normal: 400,
+      medium: 500,
+      semibold: 600,
+      bold: 700
+    }
+  };
+  
+  const layout = templateData?.template?.layout || {
+    alignment: 'center',
+    spacing: 18,
+    borderRadius: 8,
+    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
+  };
+  
+  const classes = templateData?.template?.classes || {
+    button: {
+      primary: 'px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-white',
+      secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300'
+    },
+    hero: {
+      background: 'bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600',
+      overlay: 'bg-black/20'
+    }
+  };
+  
+  // Helper function to get font size
+  const getFontSize = (size: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl') => {
+    if (typeof typography.fontSize === 'object') {
+      return typography.fontSize[size];
+    }
+    // Fallback sizes if fontSize is a number
+    const fallbackSizes = {
+      xs: 12, sm: 14, base: 16, lg: 18, xl: 20, '2xl': 24, '3xl': 30, '4xl': 36, '5xl': 48
+    };
+    return fallbackSizes[size];
+  };
+  
 
   // Show loading state
   if (loading) {
     return (
-      <section className={`relative overflow-hidden ${className}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900" />
-        <div className="relative py-20">
+      <section 
+        className={`relative overflow-hidden ${className}`}
+        style={{ fontFamily: typography.fontFamily }}
+      >
+        <div 
+          className="absolute inset-0"
+          style={{ backgroundColor: colors.secondary }}
+        />
+        <div 
+          className="relative"
+          style={{ padding: `${layout.padding.xlarge * 2}px 0` }}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
+            <div 
+              className="flex flex-col lg:flex-row items-center lg:items-start"
+              style={{ gap: `${layout.padding.xlarge}px` }}
+            >
               <div className="flex-shrink-0">
-                <div className="w-40 h-40 rounded-full bg-gray-300 animate-pulse" />
+                <div 
+                  className="rounded-full animate-pulse"
+                  style={{ 
+                    width: '160px', 
+                    height: '160px', 
+                    backgroundColor: `${colors.background}30` 
+                  }}
+                />
               </div>
-              <div className="text-center lg:text-left text-white space-y-6">
-                <div className="h-12 bg-gray-300 rounded animate-pulse" />
-                <div className="h-6 bg-gray-300 rounded animate-pulse w-1/2" />
-                <div className="h-8 bg-gray-300 rounded animate-pulse w-1/3" />
+              <div 
+                className="text-center lg:text-left"
+                style={{ 
+                  color: colors.background,
+                  fontSize: getFontSize('base'),
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: `${layout.spacing}px`
+                }}
+              >
+                <div 
+                  className="rounded animate-pulse"
+                  style={{ 
+                    height: '48px', 
+                    backgroundColor: `${colors.background}30` 
+                  }}
+                />
+                <div 
+                  className="rounded animate-pulse"
+                  style={{ 
+                    height: '24px', 
+                    width: '50%',
+                    backgroundColor: `${colors.background}30` 
+                  }}
+                />
+                <div 
+                  className="rounded animate-pulse"
+                  style={{ 
+                    height: '32px', 
+                    width: '33%',
+                    backgroundColor: `${colors.background}30` 
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -74,9 +202,15 @@ export default function UnifiedHeroSection({
   }
 
   return (
-    <section className={`relative overflow-hidden ${className}`}>
-      {/* Enhanced Background with Multiple Layers */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900" />
+    <section 
+      className={`relative overflow-hidden ${className}`}
+      style={{ fontFamily: typography.fontFamily }}
+    >
+      {/* Enhanced Background with Database Secondary Color */}
+      <div 
+        className="absolute inset-0"
+        style={{ backgroundColor: colors.secondary }}
+      />
       
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-20">
@@ -87,22 +221,77 @@ export default function UnifiedHeroSection({
       
       {/* Floating Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-5 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }} />
-        <div className="absolute top-20 right-20 w-16 h-16 bg-white bg-opacity-5 rounded-full animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }} />
-        <div className="absolute bottom-20 left-20 w-12 h-12 bg-white bg-opacity-5 rounded-full animate-bounce" style={{ animationDelay: '2s', animationDuration: '5s' }} />
+        <div 
+          className="absolute rounded-full animate-bounce"
+          style={{ 
+            top: '40px', 
+            left: '40px', 
+            width: '80px', 
+            height: '80px', 
+            backgroundColor: `${colors.background}05`,
+            animationDelay: '0s', 
+            animationDuration: '3s' 
+          }}
+        />
+        <div 
+          className="absolute rounded-full animate-bounce"
+          style={{ 
+            top: '80px', 
+            right: '80px', 
+            width: '64px', 
+            height: '64px', 
+            backgroundColor: `${colors.background}05`,
+            animationDelay: '1s', 
+            animationDuration: '4s' 
+          }}
+        />
+        <div 
+          className="absolute rounded-full animate-bounce"
+          style={{ 
+            bottom: '80px', 
+            left: '80px', 
+            width: '48px', 
+            height: '48px', 
+            backgroundColor: `${colors.background}05`,
+            animationDelay: '2s', 
+            animationDuration: '5s' 
+          }}
+        />
       </div>
       
       {/* Content Container */}
-      <div className="relative py-20">
+      <div 
+        className="relative"
+        style={{ padding: `${layout.padding.xlarge * 2}px 0` }}
+      >
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row items-center justify-between">
+        <div 
+          className="flex flex-col lg:flex-row items-center justify-between"
+          style={{ gap: `${layout.padding.xlarge}px` }}
+        >
           {/* Left Side - Enhanced Profile Information */}
-          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
+          <div 
+            className="flex flex-col lg:flex-row items-center lg:items-start"
+            style={{ gap: `${layout.padding.xlarge}px` }}
+          >
             {/* Enhanced Profile Photo with Glow Effect */}
             <div className="flex-shrink-0 relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-blue-500 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
-              <div className="relative w-40 h-40 rounded-full bg-white p-2 shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+              <div 
+                className="absolute inset-0 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
+                }}
+              />
+              <div 
+                className="relative rounded-full shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+                style={{ 
+                  width: '160px', 
+                  height: '160px', 
+                  backgroundColor: colors.background, 
+                  padding: `${layout.spacing}px` 
+                }}
+              >
                 {displayImage ? (
                   <Image
                     src={displayImage}
@@ -112,8 +301,19 @@ export default function UnifiedHeroSection({
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <span className="text-5xl font-bold text-gray-700">
+                  <div 
+                    className="w-full h-full rounded-full flex items-center justify-center"
+                    style={{ 
+                      background: `linear-gradient(to bottom right, ${colors.border}, ${colors.textSecondary}20)`
+                    }}
+                  >
+                    <span 
+                      style={{ 
+                        color: colors.textSecondary,
+                        fontSize: getFontSize('5xl'),
+                        fontWeight: typography.fontWeight.bold
+                      }}
+                    >
                       {displayName.split(' ').map(n => n[0]).join('')}
                     </span>
                   </div>
@@ -124,38 +324,125 @@ export default function UnifiedHeroSection({
             </div>
 
             {/* Enhanced Officer Information */}
-            <div className="text-center lg:text-left text-white space-y-6">
+            <div 
+              className="text-center lg:text-left"
+              style={{ 
+                color: colors.background,
+                fontSize: getFontSize('base'),
+                display: 'flex',
+                flexDirection: 'column',
+                gap: `${layout.spacing}px`
+              }}
+            >
               {/* Name and Title with Better Typography */}
-              <div className="space-y-3">
-                <h2 className={`${typography.responsive.hero} font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent`}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.spacing}px` }}>
+                <h2 
+                  style={{ 
+                    fontSize: getFontSize('4xl'),
+                    fontWeight: typography.fontWeight.bold,
+                    background: `linear-gradient(to right, ${colors.background}, ${colors.background}dd)`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
                   {displayName}
                 </h2>
               </div>
               
               {/* Enhanced Contact Details with Cards */}
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.padding.medium}px` }}>
                 {/* Contact Information Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div 
+                  className="grid grid-cols-1 sm:grid-cols-2"
+                  style={{ gap: `${layout.padding.medium}px` }}
+                >
                   {/* Phone Card - Only show if phone exists */}
                   {displayPhone && (
-                    <div className="flex items-center justify-center lg:justify-start space-x-3 p-3 bg-white bg-opacity-5 backdrop-blur-sm rounded-lg border border-white border-opacity-10 hover:bg-opacity-10 transition-all duration-300">
-                      <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                        {React.createElement(icons.phone, { size: 20, className: "text-blue-200" })}
+                    <div 
+                      className="flex items-center justify-center lg:justify-start backdrop-blur-sm rounded-lg border hover:bg-opacity-10 transition-all duration-300"
+                      style={{ 
+                        padding: `${layout.padding.medium}px`,
+                        backgroundColor: `${colors.background}05`,
+                        borderColor: `${colors.background}10`,
+                        gap: `${layout.spacing}px`
+                      }}
+                    >
+                      <div 
+                        className="rounded-full flex items-center justify-center"
+                        style={{ 
+                          width: '40px', 
+                          height: '40px', 
+                          backgroundColor: `${colors.secondary}20` 
+                        }}
+                      >
+                        {React.createElement(icons.phone, { size: 20, color: colors.secondary })}
                       </div>
                       <div>
-                        <p className="text-xs text-blue-200 uppercase tracking-wide">Phone</p>
-                        <p className={`${typography.body.large} font-semibold text-white`}>{displayPhone}</p>
+                        <p 
+                          style={{ 
+                            color: colors.secondary,
+                            fontSize: getFontSize('xs'),
+                            fontWeight: typography.fontWeight.medium,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                          }}
+                        >
+                          Phone
+                        </p>
+                        <p 
+                          style={{ 
+                            fontSize: getFontSize('lg'),
+                            fontWeight: typography.fontWeight.semibold,
+                            color: colors.background
+                          }}
+                        >
+                          {displayPhone}
+                        </p>
                       </div>
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-center lg:justify-start space-x-3 p-3 bg-white bg-opacity-5 backdrop-blur-sm rounded-lg border border-white border-opacity-10 hover:bg-opacity-10 transition-all duration-300">
-                    <div className="w-10 h-10 bg-pink-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                      {React.createElement(icons.email, { size: 20, className: "text-pink-200" })}
+                  <div 
+                    className="flex items-center justify-center lg:justify-start backdrop-blur-sm rounded-lg border hover:bg-opacity-10 transition-all duration-300"
+                    style={{ 
+                      padding: `${layout.padding.medium}px`,
+                      backgroundColor: `${colors.background}05`,
+                      borderColor: `${colors.background}10`,
+                      gap: `${layout.spacing}px`
+                    }}
+                  >
+                    <div 
+                      className="rounded-full flex items-center justify-center"
+                      style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        backgroundColor: `${colors.primary}20` 
+                      }}
+                    >
+                      {React.createElement(icons.email, { size: 20, color: colors.primary })}
                     </div>
                     <div>
-                      <p className="text-xs text-pink-200 uppercase tracking-wide">Email</p>
-                      <p className={`${typography.body.large} font-semibold text-white`}>{displayEmail}</p>
+                      <p 
+                        style={{ 
+                          color: colors.primary,
+                          fontSize: getFontSize('xs'),
+                          fontWeight: typography.fontWeight.medium,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
+                      >
+                        Email
+                      </p>
+                      <p 
+                        style={{ 
+                          fontSize: getFontSize('lg'),
+                          fontWeight: typography.fontWeight.semibold,
+                          color: colors.background
+                        }}
+                      >
+                        {displayEmail}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -164,14 +451,23 @@ export default function UnifiedHeroSection({
           </div>
 
           {/* Right Side - Enhanced Action Buttons */}
-          <div className="flex flex-col space-y-6 mt-12 lg:mt-0">
+          <div 
+            className="flex flex-col mt-12 lg:mt-0"
+            style={{ gap: `${layout.spacing}px` }}
+          >
             {/* Primary CTA Button */}
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
+              <div 
+                className="absolute inset-0 rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: `linear-gradient(to right, ${colors.primary}, ${colors.primary}dd)`
+                }}
+              />
               <Button
-                variant={applyNowStyles.variant as any}
+                variant="primary"
                 size="lg"
-                className={`${applyNowStyles.className} relative transform group-hover:scale-105 transition-all duration-300 shadow-2xl`}
+                className={`${classes.button.primary} relative transform group-hover:scale-105 transition-all duration-300 shadow-2xl`}
+                style={{ backgroundColor: colors.primary }}
               >
                 <span className="flex items-center space-x-3">
                   <span className="font-bold">Apply Now</span>
@@ -184,15 +480,28 @@ export default function UnifiedHeroSection({
             
             {/* Secondary CTA Button */}
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity duration-300" />
+              <div 
+                className="absolute inset-0 rounded-xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{ 
+                  background: `linear-gradient(to right, ${colors.secondary}, ${colors.secondary}dd)`
+                }}
+              />
               <Button
-                variant={contactStyles.variant as any}
+                variant="secondary"
                 size="lg"
-                className={`${contactStyles.className} relative transform group-hover:scale-105 transition-all duration-300 shadow-xl`}
+                className={`${classes.button.secondary} relative transform group-hover:scale-105 transition-all duration-300 shadow-xl`}
+                style={{ 
+                  backgroundColor: colors.background,
+                  borderColor: colors.primary,
+                  color: colors.primary
+                }}
               >
                 <span className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    {React.createElement(icons.contactOfficer, { size: 14, className: "text-white" })}
+                  <div 
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${colors.primary}20` }}
+                  >
+                    {React.createElement(icons.contactOfficer, { size: 14, color: colors.primary })}
                   </div>
                   <span className="font-semibold">Contact {displayName.split(' ')[0]}</span>
                 </span>
@@ -200,14 +509,62 @@ export default function UnifiedHeroSection({
             </div>
             
             {/* Trust Indicators */}
-            <div className="flex items-center justify-center lg:justify-start space-x-6 pt-4">
-              <div className="flex items-center space-x-2 text-blue-200">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-sm font-medium">Available Now</span>
+            <div 
+              className="flex items-center justify-center lg:justify-start"
+              style={{ 
+                gap: `${layout.padding.large}px`,
+                paddingTop: `${layout.padding.medium}px`
+              }}
+            >
+              <div 
+                className="flex items-center"
+                style={{ 
+                  color: colors.secondary,
+                  gap: `${layout.spacing}px`
+                }}
+              >
+                <div 
+                  className="rounded-full animate-pulse"
+                  style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    backgroundColor: '#10b981' 
+                  }}
+                />
+                <span 
+                  style={{ 
+                    fontSize: getFontSize('sm'),
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.secondary
+                  }}
+                >
+                  Available Now
+                </span>
               </div>
-              <div className="flex items-center space-x-2 text-blue-200">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                <span className="text-sm font-medium">Quick Response</span>
+              <div 
+                className="flex items-center"
+                style={{ 
+                  color: colors.secondary,
+                  gap: `${layout.spacing}px`
+                }}
+              >
+                <div 
+                  className="rounded-full animate-pulse"
+                  style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    backgroundColor: '#f59e0b' 
+                  }}
+                />
+                <span 
+                  style={{ 
+                    fontSize: getFontSize('sm'),
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.secondary
+                  }}
+                >
+                  Quick Response
+                </span>
               </div>
             </div>
           </div>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import MortgageSearchForm from '@/components/landingPage/MortgageSearchForm';
 import RateResults from '@/components/landingPage/RateResults';
 import { Button } from '@/components/ui/Button';
-import { getTemplateStyles } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import { icons } from '@/components/ui/Icon';
 
 interface SearchFormData {
@@ -464,7 +464,22 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   };
 
   // Get template-specific styles and content
-  const templateStyles = getTemplateStyles(template);
+  const { getTemplateSync } = useEfficientTemplates();
+  const templateData = getTemplateSync(template);
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
+  const unifiedStyles = templateData?.template?.classes || {
+    button: {
+      primary: 'px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-white',
+      secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 border border-gray-300'
+    }
+  };
   
   const getTemplateContent = () => {
     if (template === 'template1') {
@@ -490,27 +505,17 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     if (buttonType === 'primary') {
       return {
         variant: 'primary' as const,
-        className: 'h-16 text-base px-8 py-4 text-lg font-semibold',
-        style: { 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px',
-          backgroundColor: templateStyles.primary.color,
-          color: templateStyles.primary.text,
-          borderColor: templateStyles.primary.color,
-        }
+        className: `${unifiedStyles.button.primary} h-16 text-base px-8 py-4 text-lg font-semibold`,
+        style: { backgroundColor: colors.primary }
       };
     } else {
       return {
         variant: 'secondary' as const,
-        className: 'h-16 text-base px-8 py-4 text-lg font-semibold',
+        className: `${unifiedStyles.button.secondary} h-16 text-base px-8 py-4 text-lg font-semibold`,
         style: { 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px',
-          backgroundColor: templateStyles.secondary.color,
-          color: templateStyles.secondary.text,
-          borderColor: templateStyles.secondary.border,
+          backgroundColor: colors.background,
+          borderColor: colors.primary,
+          color: colors.primary
         }
       };
     }
@@ -523,7 +528,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">Select Your Loan Purpose</h3>
-            <p className="text-gray-800 mb-6 text-center">Choose the option that best describes your situation</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Choose the option that best describes your situation</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-credit-score', { loanPurpose: 'Purchase' })}
@@ -547,7 +552,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">What's Your Credit Score?</h3>
-            <p className="text-gray-800 mb-6 text-center">Your credit score helps determine which loan options are available to you</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Your credit score helps determine which loan options are available to you</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireStepChange('fha-loan', { creditScore: 'Below 580', loanType: 'FHA' })}
@@ -585,7 +590,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">Are You a Veteran or Active Military?</h3>
-            <p className="text-gray-800 mb-6 text-center">VA loans offer excellent benefits including no down payment requirements</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>VA loans offer excellent benefits including no down payment requirements</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'VA', vaFirstTimeUse: true })}
@@ -609,7 +614,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">Is the Property in a Rural Area?</h3>
-            <p className="text-gray-800 mb-6 text-center">USDA loans are available for properties in eligible rural areas</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>USDA loans are available for properties in eligible rural areas</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'USDA' })}
@@ -634,7 +639,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">How Much Can You Put Down?</h3>
-            <p className="text-gray-800 mb-6 text-center">Your down payment amount affects your loan options and monthly payments</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Your down payment amount affects your loan options and monthly payments</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'FHA' })}
@@ -658,7 +663,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">How Much Can You Put Down?</h3>
-            <p className="text-gray-800 mb-6 text-center">Your down payment amount affects your loan options and monthly payments</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Your down payment amount affects your loan options and monthly payments</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'Conventional', dpa: true })}
@@ -689,7 +694,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">Are You a Veteran?</h3>
-            <p className="text-gray-800 mb-6 text-center">Veterans have access to special refinance programs with great benefits</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Veterans have access to special refinance programs with great benefits</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireStepChange('refinance-veteran-purpose', { loanType: 'VA' })}
@@ -713,7 +718,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">What's Your Refinance Goal?</h3>
-            <p className="text-gray-800 mb-6 text-center">Choose your primary refinance objective</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Choose your primary refinance objective</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'VA', cashOut: true })}
@@ -739,7 +744,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">What's Your Refinance Goal?</h3>
-            <p className="text-gray-800 mb-6 text-center">Choose your primary refinance objective</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Choose your primary refinance objective</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'Conventional', cashOut: true })}
@@ -763,12 +768,12 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
       case 'fha-loan':
         return (
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-sm border-2 border-blue-200 p-6 mb-6">
-            <h3 className="text-xl font-semibold text-blue-950 mb-2 text-center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <div className={`${template === 'template1' ? 'bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200' : 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'} rounded-lg shadow-sm border-2 p-6 mb-6`}>
+            <h3 className="text-xl font-semibold mb-2 text-center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: colors.text }}>
               {React.createElement(icons.target, { size: 24 })}
               Recommended: FHA Loan
             </h3>
-            <p className="text-blue-900 mb-6 text-center">An FHA loan might be ideal for you, offering lower down payment requirements and more flexible credit guidelines.</p>
+            <p className="mb-6 text-center" style={{ color: colors.primary }}>An FHA loan might be ideal for you, offering lower down payment requirements and more flexible credit guidelines.</p>
             <div className="flex justify-center">
               <Button 
                 onClick={() => handleQuestionnaireComplete({ loanType: 'FHA' })}
@@ -786,7 +791,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-xl font-semibold text-black mb-2 text-center">Select Your Loan Purpose</h3>
-            <p className="text-gray-800 mb-6 text-center">Choose the option that best describes your situation</p>
+            <p className="mb-6 text-center" style={{ color: colors.text }}>Choose the option that best describes your situation</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-credit-score', { loanPurpose: 'Purchase' })}
@@ -811,7 +816,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   // Show landing page by default
   if (showLanding) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${className}`}>
+      <div className={`min-h-screen ${template === 'template1' ? 'bg-gradient-to-br from-pink-50 to-pink-100' : 'bg-gradient-to-br from-purple-50 to-purple-100'} ${className}`}>
         {/* Header */}
         {showHeader && (
           <header className="bg-white shadow-sm border-b">
@@ -820,7 +825,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 <div className="flex items-center">
                   <h1 className="text-2xl font-bold text-black">Mortgage Rate Comparison</h1>
                 </div>
-                <div className="text-sm text-gray-800">Powered by Optimal Blue</div>
+                <div className="text-sm" style={{ color: colors.text }}>Powered by Optimal Blue</div>
               </div>
             </div>
           </header>
@@ -831,9 +836,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-black mb-6">
               {getTemplateContent().title}
-              <span style={{ color: templateStyles.primary.color }}> Mortgage</span>
+              <span style={{ color: colors.primary }}> Mortgage</span>
             </h1>
-            <p className="text-xl text-gray-900 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: colors.text }}>
               {getTemplateContent().description}
             </p>
             
@@ -845,14 +850,14 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 }}
                 className="text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
                 style={{ 
-                  backgroundColor: templateStyles.primary.color,
-                  color: templateStyles.primary.text,
+                  backgroundColor: colors.primary,
+                  color: colors.background,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = templateStyles.primary.hover;
+                  e.currentTarget.style.backgroundColor = colors.secondary;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = templateStyles.primary.color;
+                  e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
                 {getTemplateContent().primaryButton}
@@ -861,15 +866,15 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 onClick={() => setShowLanding(false)}
                 className="bg-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors border-2"
                 style={{ 
-                  backgroundColor: templateStyles.secondary.color,
-                  color: templateStyles.secondary.text,
-                  borderColor: templateStyles.secondary.border,
+                  backgroundColor: colors.secondary,
+                  color: colors.background,
+                  borderColor: colors.secondary,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = templateStyles.secondary.hover;
+                  e.currentTarget.style.backgroundColor = colors.primary;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = templateStyles.secondary.color;
+                  e.currentTarget.style.backgroundColor = colors.secondary;
                 }}
               >
                 {getTemplateContent().secondaryButton}
@@ -882,7 +887,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         {showFooter && (
           <footer className="bg-white border-t mt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="text-center text-sm text-gray-900">
+              <div className="text-center text-sm" style={{ color: colors.text }}>
                 <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
                 <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
               </div>
@@ -911,19 +916,19 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                     }}
                     className="font-medium transition-colors duration-200"
                     style={{ 
-                      color: templateStyles.primary.color,
+                      color: colors.primary,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = templateStyles.primary.hover;
+                      e.currentTarget.style.color = colors.secondary;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = templateStyles.primary.color;
+                      e.currentTarget.style.color = colors.primary;
                     }}
                   >
                     ← Back to Home
                   </button>
                 </div>
-                <div className="text-sm text-gray-800">Powered by Optimal Blue</div>
+                <div className="text-sm" style={{ color: colors.text }}>Powered by Optimal Blue</div>
               </div>
             </div>
           </header>
@@ -935,8 +940,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
             {showLanding && (
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-black mb-2">{getTemplateContent().title}</h2>
-                <p className="text-lg text-gray-600 mb-4">{getTemplateContent().subtitle}</p>
-                <p className="text-gray-700 mb-8 max-w-2xl mx-auto">{getTemplateContent().description}</p>
+                <p className="text-lg mb-4" style={{ color: colors.textSecondary }}>{getTemplateContent().subtitle}</p>
+                <p className="mb-8 max-w-2xl mx-auto" style={{ color: colors.text }}>{getTemplateContent().description}</p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
                     onClick={() => setShowQuestionnaire(true)}
@@ -969,7 +974,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                   size="sm"
                   className="font-medium transition-colors duration-200"
                   style={{ 
-                    color: templateStyles.primary.color,
+                    color: colors.primary,
                   }}
                 >
                   ← Back
@@ -983,9 +988,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
             {/* Debug Info */}
             <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
               <h4 className="font-semibold mb-2 text-black">Debug Info:</h4>
-              <p className="text-gray-900"><strong>Current Step:</strong> {currentStep}</p>
-              <p className="text-gray-900"><strong>Answers:</strong> {JSON.stringify(questionnaireAnswers, null, 2)}</p>
-              <p className="text-gray-900"><strong>Step History:</strong> {stepHistory.join(' → ')}</p>
+              <p style={{ color: colors.text }}><strong>Current Step:</strong> {currentStep}</p>
+              <p style={{ color: colors.text }}><strong>Answers:</strong> {JSON.stringify(questionnaireAnswers, null, 2)}</p>
+              <p style={{ color: colors.text }}><strong>Step History:</strong> {stepHistory.join(' → ')}</p>
             </div>
           </div>
         </main>
@@ -994,7 +999,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         {showFooter && (
           <footer className="bg-white border-t mt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="text-center text-sm text-gray-900">
+              <div className="text-center text-sm" style={{ color: colors.text }}>
                 <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
                 <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
               </div>
@@ -1024,7 +1029,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                   Find Your Ideal Loan
                 </button>
               </div>
-              <div className="text-sm text-gray-800">
+              <div className="text-sm" style={{ color: colors.text }}>
                 Powered by Optimal Blue
               </div>
             </div>
@@ -1071,7 +1076,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       {showFooter && (
         <footer className="bg-white border-t mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center text-sm text-gray-900">
+            <div className="text-center text-sm" style={{ color: colors.text }}>
               <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
               <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
             </div>

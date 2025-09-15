@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, memo } from 'react';
-import { typography, colors, spacing, borderRadius, shadows, getTemplateStyles } from '@/theme/theme';
+import { spacing, borderRadius, shadows, typography, colors } from '@/theme/theme';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import Icon from '@/components/ui/Icon';
 
 interface SearchFormData {
@@ -47,7 +48,16 @@ interface MortgageSearchFormProps {
 }
 
 function MortgageSearchForm({ onSearch, loading, template = 'template1' }: MortgageSearchFormProps) {
-  const templateStyles = getTemplateStyles(template);
+  const { getTemplateSync } = useEfficientTemplates();
+  const templateData = getTemplateSync(template);
+  const templateColors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#3b82f6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
   
   const [formData, setFormData] = useState<SearchFormData>({
     zipCode: '75024',
@@ -142,9 +152,9 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
             fontSize: typography.fontSize.sm,
             fontWeight: typography.fontWeight.semibold,
             borderRadius: borderRadius.lg,
-            border: `1px solid ${activeTab === 'purchase' ? templateStyles.primary.color : colors.gray[300]}`,
-            backgroundColor: activeTab === 'purchase' ? templateStyles.primary.color : colors.gray[100],
-            color: activeTab === 'purchase' ? templateStyles.primary.text : colors.gray[700],
+            border: `1px solid ${activeTab === 'purchase' ? templateColors.primary : colors.gray[300]}`,
+            backgroundColor: activeTab === 'purchase' ? templateColors.primary : colors.gray[100],
+            color: activeTab === 'purchase' ? templateColors.background : colors.gray[700],
             cursor: 'pointer',
             transition: 'all 0.2s ease-in-out'
           }}
@@ -159,9 +169,9 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
             fontSize: typography.fontSize.sm,
             fontWeight: typography.fontWeight.semibold,
             borderRadius: borderRadius.lg,
-            border: `1px solid ${activeTab === 'refinance' ? templateStyles.primary.color : colors.gray[300]}`,
-            backgroundColor: activeTab === 'refinance' ? templateStyles.primary.color : colors.gray[100],
-            color: activeTab === 'refinance' ? templateStyles.primary.text : colors.gray[700],
+            border: `1px solid ${activeTab === 'refinance' ? templateColors.primary : colors.gray[300]}`,
+            backgroundColor: activeTab === 'refinance' ? templateColors.primary : colors.gray[100],
+            color: activeTab === 'refinance' ? templateColors.background : colors.gray[700],
             cursor: 'pointer',
             transition: 'all 0.2s ease-in-out'
           }}
@@ -232,7 +242,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
               <div style={{ 
                 marginTop: spacing.xs, 
                 fontSize: typography.fontSize.sm, 
-                color: colors.text.muted 
+                color: colors.gray[600] 
               }}>
                 {formData.ltv}% LTV
               </div>
@@ -252,7 +262,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 display: 'block', 
                 fontSize: typography.fontSize.sm, 
                 fontWeight: typography.fontWeight.medium, 
-                color: colors.text.secondary, 
+                color: colors.gray[600], 
                 marginBottom: spacing.sm 
               }}>
                 Down Payment
@@ -271,8 +281,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                     borderRight: 'none',
                     outline: 'none',
                     fontSize: typography.fontSize.base,
-                    color: colors.text.primary,
-                    backgroundColor: colors.white
+                    color: templateColors.text,
+                    backgroundColor: templateColors.background
                   }}
                   placeholder="Enter down payment"
                 />
@@ -294,7 +304,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 display: 'block', 
                 fontSize: typography.fontSize.sm, 
                 fontWeight: typography.fontWeight.medium, 
-                color: colors.text.secondary, 
+                color: colors.gray[600], 
                 marginBottom: spacing.sm 
               }}>
                 Credit Score
@@ -309,8 +319,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                   borderRadius: borderRadius.md,
                   outline: 'none',
                   fontSize: typography.fontSize.base,
-                  color: colors.text.primary,
-                  backgroundColor: colors.white
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background
                 }}
               >
                 <option value="500-850">Outstanding 800+</option>
@@ -334,7 +344,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 display: 'block', 
                 fontSize: typography.fontSize.sm, 
                 fontWeight: typography.fontWeight.medium, 
-                color: colors.text.secondary, 
+                color: colors.gray[600], 
                 marginBottom: spacing.sm 
               }}>
                 Mortgage Balance
@@ -350,8 +360,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                   borderRadius: borderRadius.md,
                   outline: 'none',
                   fontSize: typography.fontSize.base,
-                  color: colors.text.primary,
-                  backgroundColor: colors.white
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background
                 }}
                 placeholder="Enter mortgage balance"
               />
@@ -361,7 +371,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 display: 'block', 
                 fontSize: typography.fontSize.sm, 
                 fontWeight: typography.fontWeight.medium, 
-                color: colors.text.secondary, 
+                color: colors.gray[600], 
                 marginBottom: spacing.sm 
               }}>
                 Cash Out
@@ -377,8 +387,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                   borderRadius: borderRadius.md,
                   outline: 'none',
                   fontSize: typography.fontSize.base,
-                  color: colors.text.primary,
-                  backgroundColor: colors.white
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background
                 }}
                 placeholder="Enter cash out amount"
               />
@@ -388,7 +398,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 display: 'block', 
                 fontSize: typography.fontSize.sm, 
                 fontWeight: typography.fontWeight.medium, 
-                color: colors.text.secondary, 
+                color: colors.gray[600], 
                 marginBottom: spacing.sm 
               }}>
                 Credit Score
@@ -403,8 +413,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                   borderRadius: borderRadius.md,
                   outline: 'none',
                   fontSize: typography.fontSize.base,
-                  color: colors.text.primary,
-                  backgroundColor: colors.white
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background
                 }}
               >
                 <option value="500-850">Outstanding 800+</option>
@@ -430,7 +440,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
               display: 'block', 
               fontSize: typography.fontSize.sm, 
               fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary, 
+              color: colors.gray[600], 
               marginBottom: spacing.sm 
             }}>
               Property Type
@@ -445,8 +455,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 borderRadius: borderRadius.md,
                 outline: 'none',
                 fontSize: typography.fontSize.base,
-                color: colors.text.primary,
-                backgroundColor: colors.white
+                color: templateColors.text,
+                backgroundColor: templateColors.background
               }}
             >
               <option value="SingleFamily">Single Family Home</option>
@@ -461,7 +471,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
               display: 'block', 
               fontSize: typography.fontSize.sm, 
               fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary, 
+              color: colors.gray[600], 
               marginBottom: spacing.sm 
             }}>
               Residency Usage
@@ -476,8 +486,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 borderRadius: borderRadius.md,
                 outline: 'none',
                 fontSize: typography.fontSize.base,
-                color: colors.text.primary,
-                backgroundColor: colors.white
+                color: templateColors.text,
+                backgroundColor: templateColors.background
               }}
             >
               <option value="PrimaryResidence">Primary Home</option>
@@ -498,7 +508,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
               display: 'block', 
               fontSize: typography.fontSize.sm, 
               fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary, 
+              color: colors.gray[600], 
               marginBottom: spacing.sm 
             }}>
               Loan Type
@@ -513,8 +523,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 borderRadius: borderRadius.md,
                 outline: 'none',
                 fontSize: typography.fontSize.base,
-                color: colors.text.primary,
-                backgroundColor: colors.white
+                color: templateColors.text,
+                backgroundColor: templateColors.background
               }}
             >
               <option value="Conforming">Conforming</option>
@@ -529,7 +539,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
               display: 'block', 
               fontSize: typography.fontSize.sm, 
               fontWeight: typography.fontWeight.medium, 
-              color: colors.text.secondary, 
+              color: colors.gray[600], 
               marginBottom: spacing.sm 
             }}>
               Loan Term
@@ -544,8 +554,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 borderRadius: borderRadius.md,
                 outline: 'none',
                 fontSize: typography.fontSize.base,
-                color: colors.text.primary,
-                backgroundColor: colors.white
+                color: templateColors.text,
+                backgroundColor: templateColors.background
               }}
             >
               <option value="ThirtyYear">30 Year Fixed</option>
@@ -569,8 +579,8 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
                 width: '1rem',
                 border: `1px solid ${colors.gray[300]}`,
                 borderRadius: borderRadius.sm,
-                color: templateStyles.primary.color,
-                accentColor: templateStyles.primary.color
+                color: templateColors.primary,
+                accentColor: templateColors.primary
               }}
             />
             <label htmlFor="eligibleForLowerRate" style={{ 
@@ -594,14 +604,14 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
           <h4 style={{ 
             fontSize: typography.fontSize.sm, 
             fontWeight: typography.fontWeight.medium, 
-            color: colors.text.secondary, 
+              color: colors.gray[600],
             marginBottom: spacing.sm 
           }}>
             Current Form Values (Debug):
           </h4>
           <div style={{ 
             fontSize: typography.fontSize.xs, 
-            color: colors.text.muted, 
+              color: colors.gray[600],
             display: 'flex', 
             flexDirection: 'column', 
             gap: spacing.xs 
@@ -620,7 +630,7 @@ function MortgageSearchForm({ onSearch, loading, template = 'template1' }: Mortg
             disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: templateStyles.primary.color,
+              backgroundColor: templateColors.primary,
               color: '#ffffff',
               padding: `${spacing[3]} ${spacing[6]}`,
               borderRadius: borderRadius.md,

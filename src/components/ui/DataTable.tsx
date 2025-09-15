@@ -311,8 +311,8 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'>> = 
       render: (_, record) => (
         <div className="flex items-center">
           <div className="h-10 w-10 flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center">
-              <span className="text-sm font-medium text-pink-600">
+            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <span className="text-sm font-medium text-blue-600">
                 {record.firstName?.charAt(0)}{record.lastName?.charAt(0)}
               </span>
             </div>

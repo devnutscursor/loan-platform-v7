@@ -135,6 +135,7 @@ export default function LeadsPage() {
   const columns = [
     {
       key: 'name',
+      title: 'Borrower',
       label: 'Borrower',
       render: (value: any, lead: Lead) => (
         <div>
@@ -149,6 +150,7 @@ export default function LeadsPage() {
     },
     {
       key: 'phone',
+      title: 'Phone',
       label: 'Phone',
       render: (value: any, lead: Lead) => (
         <div style={{ fontSize: typography.fontSize.sm }}>
@@ -158,6 +160,7 @@ export default function LeadsPage() {
     },
     {
       key: 'loanDetails',
+      title: 'Loan Details',
       label: 'Loan Details',
       render: (value: any, lead: Lead) => (
         <div style={{ fontSize: typography.fontSize.sm }}>
@@ -181,6 +184,7 @@ export default function LeadsPage() {
     },
     {
       key: 'loanAmount',
+      title: 'Loan Amount',
       label: 'Loan Amount',
       render: (value: any, lead: Lead) => (
         <div style={{ fontSize: typography.fontSize.sm }}>
@@ -190,6 +194,7 @@ export default function LeadsPage() {
     },
     {
       key: 'status',
+      title: 'Status',
       label: 'Status',
       render: (value: any, lead: Lead) => (
         <StatusBadge 
@@ -200,6 +205,7 @@ export default function LeadsPage() {
     },
     {
       key: 'source',
+      title: 'Source',
       label: 'Source',
       render: (value: any, lead: Lead) => (
         <div style={{ fontSize: typography.fontSize.sm }}>
@@ -209,6 +215,7 @@ export default function LeadsPage() {
     },
     {
       key: 'createdAt',
+      title: 'Created',
       label: 'Created',
       render: (value: any, lead: Lead) => (
         <div style={{ fontSize: typography.fontSize.sm }}>
@@ -218,6 +225,7 @@ export default function LeadsPage() {
     },
     {
       key: 'actions',
+      title: 'Actions',
       label: 'Actions',
       render: (value: any, lead: Lead) => (
         <div style={{ display: 'flex', gap: spacing[2] }}>

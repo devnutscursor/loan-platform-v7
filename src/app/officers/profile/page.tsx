@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfileCache } from '@/hooks/use-profile-cache';
+import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
+import TemplateSelector from '@/components/TemplateSelector';
 import { ProfileManager } from '@/lib/profile-manager';
 import { typography } from '@/theme/theme';
 import { icons } from '@/components/ui/Icon';
@@ -76,9 +78,15 @@ SkeletonLoader.displayName = 'SkeletonLoader';
 export default function OfficersProfilePage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const { profile, refreshProfile, loading: profileLoading, getProfile } = useProfileCache();
+  const { 
+    isLoading: templatesLoading,
+    fetchTemplate,
+    getTemplateSync,
+    templateData
+  } = useEfficientTemplates();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('todays-rates');
-  const [selectedTemplate, setSelectedTemplate] = useState<'template1' | 'template2'>('template1');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('template1');
   
   // Form data state - initialize with profile data when available
   const [formData, setFormData] = useState({
@@ -105,6 +113,25 @@ export default function OfficersProfilePage() {
     console.log('🔄 Profile page: Triggering profile fetch', { user: user?.email, authLoading, profileLoading });
     getProfile(user, authLoading);
   }, [user, authLoading, getProfile]);
+
+  // Fetch template data when component mounts or template changes (same as TemplateSelector)
+  React.useEffect(() => {
+    console.log('🔄 Profile page useEffect triggered:', {
+      user: !!user,
+      authLoading,
+      selectedTemplate,
+      userEmail: user?.email
+    });
+    
+    if (user) {  // ← Only check for user, not authLoading (same as TemplateSelector)
+      console.log('🔄 Profile page: Fetching template data for:', selectedTemplate);
+      fetchTemplate(selectedTemplate).then(() => {
+        console.log('✅ Profile page: Template data fetched successfully for:', selectedTemplate);
+      }).catch(error => {
+        console.error('❌ Profile page: Error fetching template:', error);
+      });
+    }
+  }, [user, selectedTemplate, fetchTemplate]);  // ← Removed authLoading dependency
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,8 +165,9 @@ export default function OfficersProfilePage() {
     console.log('Tab changed to:', tabId);
   }, []);
 
-  const handleTemplateToggle = React.useCallback(() => {
-    setSelectedTemplate(prev => prev === 'template1' ? 'template2' : 'template1');
+  const handleTemplateChange = React.useCallback((templateSlug: string) => {
+    setSelectedTemplate(templateSlug);
+    console.log('Template changed to:', templateSlug);
   }, []);
 
   const handleRefreshProfile = React.useCallback(async () => {
@@ -181,11 +209,14 @@ export default function OfficersProfilePage() {
     profileLoading,
     hasUser: !!user,
     hasProfile: !!profile,
-    userEmail: user?.email
+    userEmail: user?.email,
+    selectedTemplate,
+    templateDataKeys: Object.keys(templateData),
+    currentTemplateData: templateData[selectedTemplate]
   });
 
-  // Show loading state while profile is being fetched
-  if (profileLoading || authLoading) {
+  // Show loading state while profile is being fetched (but not authLoading since TemplateSelector works)
+  if (profileLoading || templatesLoading) {
     return (
       <RouteGuard allowedRoles={['employee']}>
         <DashboardLayout 
@@ -194,16 +225,30 @@ export default function OfficersProfilePage() {
         >
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4`} style={{ borderColor: selectedTemplate === 'template2' ? '#9333ea' : '#ec4899' }}></div>
               <p className="text-gray-600">Loading profile data...</p>
               <p className="text-sm text-gray-500 mt-2">
-                Auth: {authLoading ? 'Loading' : 'Ready'} | Profile: {profileLoading ? 'Loading' : 'Ready'}
+                Auth: {authLoading ? 'Loading' : 'Ready'} | Profile: {profileLoading ? 'Loading' : 'Ready'} | Templates: {templatesLoading ? 'Loading' : 'Ready'}
               </p>
             </div>
           </div>
         </DashboardLayout>
       </RouteGuard>
     );
+  }
+
+  // Check if template data is available for the selected template
+  const currentTemplateData = templateData[selectedTemplate];
+  console.log('🔍 Profile page template data check:', {
+    selectedTemplate,
+    templateDataKeys: Object.keys(templateData),
+    currentTemplateData: !!currentTemplateData,
+    templateData
+  });
+  
+  // If no template data, show a warning but still render (components will use fallbacks)
+  if (!currentTemplateData) {
+    console.warn('⚠️ Profile page: No template data available, components will use fallback styling');
   }
 
   return (
@@ -213,42 +258,12 @@ export default function OfficersProfilePage() {
         subtitle="Manage your professional profile and mortgage rates"
       >
         <div className="min-h-screen bg-white">
-          {/* Template Toggle Button */}
+          {/* Template Selection Panel */}
           <div className="fixed top-20 right-4 z-50">
-            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2">
-              <div className="flex items-center space-x-4">
-                {/* Template Toggle */}
-                <div className="flex items-center space-x-2">
-                  <span className={`text-sm font-medium ${selectedTemplate === 'template1' ? 'text-pink-600' : 'text-gray-500'}`}>
-                    Template 1
-                  </span>
-                  <button
-                    onClick={handleTemplateToggle}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
-                      selectedTemplate === 'template2' ? 'bg-pink-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        selectedTemplate === 'template2' ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                  <span className={`text-sm font-medium ${selectedTemplate === 'template2' ? 'text-pink-600' : 'text-gray-500'}`}>
-                    Template 2
-                  </span>
-                </div>
-                
-                {/* Refresh Profile Button */}
-                <button
-                  onClick={handleRefreshProfile}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                  title="Refresh profile data (clears cache)"
-                >
-                  🔄 Refresh Profile
-                </button>
-              </div>
-            </div>
+            <TemplateSelector 
+              onTemplateChange={handleTemplateChange}
+              className="w-80"
+            />
           </div>
 
           {/* Unified Template Rendering with Suspense */}
@@ -258,25 +273,26 @@ export default function OfficersProfilePage() {
               officerName={officerInfo.officerName}
               phone={officerInfo.phone || undefined}
               email={officerInfo.email}
-              template={selectedTemplate}
+              template={selectedTemplate as 'template1' | 'template2'}
             />
 
             {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content - Takes up 2/3 of the width */}
-                <div className="lg:col-span-2">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
+                {/* Main Content - Takes up 3/4 of the width on XL screens */}
+                <div className="xl:col-span-3">
                   <LandingPageTabs
                     activeTab={activeTab}
                     onTabChange={handleTabChange}
-                    selectedTemplate={selectedTemplate}
+                    selectedTemplate={selectedTemplate as 'template1' | 'template2'}
+                    className="w-full"
                   />
                 </div>
 
-                {/* Right Sidebar - Takes up 1/3 of the width */}
-                <div className="lg:col-span-1">
-                  <div className="sticky top-8">
-                    <UnifiedRightSidebar template={selectedTemplate} />
+                {/* Right Sidebar - Takes up 1/4 of the width on XL screens */}
+                <div className="xl:col-span-1">
+                  <div className="sticky top-6 lg:top-8">
+                    <UnifiedRightSidebar template={selectedTemplate as 'template1' | 'template2'} />
                   </div>
                 </div>
               </div>

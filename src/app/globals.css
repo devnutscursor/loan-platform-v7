@@ -24,3 +24,49 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom scrollbar styles for tab navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Custom scale utilities */
+.scale-102 {
+  transform: scale(1.02);
+}
+
+/* Smooth scrolling for tab navigation */
+.tab-scroll-container {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced tab animations */
+@keyframes tab-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.6);
+  }
+}
+
+@keyframes tab-glow-purple {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.6);
+  }
+}
+
+.tab-glow-pink {
+  animation: tab-glow 2s ease-in-out infinite;
+}
+
+.tab-glow-purple {
+  animation: tab-glow-purple 2s ease-in-out infinite;
+}
