@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { theme } from '@/theme/theme';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -34,8 +34,9 @@ export const Input: React.FC<InputProps> = ({
   id,
   ...props
 }) => {
-  // Generate unique ID if not provided
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  // Use React's useId for stable, unique IDs that work with SSR
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   // Size classes
   const sizeClasses = {

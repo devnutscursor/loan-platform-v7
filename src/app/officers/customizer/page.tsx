@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
-import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import { useProfileCache } from '@/hooks/use-profile-cache';
 import { TemplateProvider } from '@/contexts/TemplateContext';
+import { useTemplateSelection } from '@/contexts/TemplateSelectionContext';
+import { useTemplate, useGlobalTemplates } from '@/contexts/GlobalTemplateContext';
+import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Icon from '@/components/ui/Icon';
@@ -22,6 +24,29 @@ interface Template {
   layout?: any;
   advanced?: any;
   classes?: any;
+  headerModifications?: {
+    officerName?: string;
+    phone?: string;
+    email?: string;
+    avatar?: string;
+    applyNowText?: string;
+    applyNowLink?: string;
+  };
+  bodyModifications?: {
+    enabledTabs?: string[];
+    activeTab?: string;
+  };
+  rightSidebarModifications?: {
+    companyName?: string;
+    logo?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+  };
 }
 import { 
   Palette, 
@@ -45,23 +70,28 @@ interface CustomizerState {
   selectedTemplate: string;
   customSettings: Partial<Template>;
   isPreviewMode: boolean;
-  activeSection: 'colors' | 'typography' | 'content' | 'layout' | 'advanced';
+  activeSection: 'general' | 'header' | 'body' | 'rightSidebar';
+  showSectionDetails: boolean;
 }
 
 export default function CustomizerPage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, getProfile } = useProfileCache();
-  const { getTemplate, getTemplateSync, isLoading: templatesLoading, error: templatesError, saveTemplateSettings } = useEfficientTemplates();
+  const { selectedTemplate, setSelectedTemplate, isLoading: templateSelectionLoading } = useTemplateSelection();
+  const { templateData, isLoading: templateLoading, isFallback } = useTemplate(selectedTemplate);
+  const { refreshTemplate } = useGlobalTemplates();
   
   const [customizerState, setCustomizerState] = useState<CustomizerState>({
-    selectedTemplate: 'template1',
+    selectedTemplate: selectedTemplate, // Use global selection
     customSettings: {},
     isPreviewMode: false,
-    activeSection: 'colors'
+    activeSection: 'general',
+    showSectionDetails: false
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const loadedTemplateRef = useRef<string | null>(null);
 
   // Get officer information from profile cache
   const officerInfo = React.useMemo(() => {
@@ -90,18 +120,90 @@ export default function CustomizerPage() {
     };
   }, [profile, user]);
 
+  // Update customizer state when global template selection changes
+  React.useEffect(() => {
+    setCustomizerState(prev => ({
+      ...prev,
+      selectedTemplate: selectedTemplate
+    }));
+  }, [selectedTemplate]);
+
   // Trigger profile fetching when user/auth state changes
   React.useEffect(() => {
     console.log('🔄 Customizer: Triggering profile fetch', { user: user?.email, authLoading, profileLoading });
     getProfile(user, authLoading);
   }, [user, authLoading, getProfile]);
 
-  // Get current template data
-  const templateData = getTemplateSync(customizerState.selectedTemplate);
+  // Get current template data from global state
   const currentTemplate = templateData?.template;
   
+  // Debug template loading
+  React.useEffect(() => {
+    console.log('🔄 Customizer: Template loading state:', {
+      templateLoading,
+      isFallback,
+      hasTemplateData: !!templateData,
+      hasCurrentTemplate: !!currentTemplate,
+      selectedTemplate,
+      templateDataKeys: templateData ? Object.keys(templateData) : [],
+      templateId: templateData?.template?.id,
+      isCustomized: templateData?.metadata?.isCustomized
+    });
+  }, [templateLoading, isFallback, templateData, currentTemplate, selectedTemplate]);
+  
   // Deep merge template with custom settings for real-time preview
-  const mergedTemplate = currentTemplate ? (() => {
+  const mergedTemplate = React.useMemo(() => {
+    if (!currentTemplate || isFallback || templateLoading) {
+      console.log('⚠️ Customizer: No current template, using fallback, or still loading - using fallback');
+      return {
+        id: 'fallback',
+        slug: customizerState.selectedTemplate,
+        name: 'Fallback Template',
+        colors: {
+          primary: '#ec4899',
+          secondary: '#3b82f6',
+          background: '#ffffff',
+          text: '#111827',
+          textSecondary: '#6b7280',
+          border: '#e5e7eb'
+        },
+        typography: {
+          fontFamily: 'Inter',
+          fontSize: 16,
+          fontWeight: {
+            light: 300,
+            normal: 400,
+            medium: 500,
+            semibold: 600,
+            bold: 700
+          }
+        },
+        content: {
+          headline: 'Welcome to Our Service',
+          subheadline: 'Get started with our amazing platform today.',
+          ctaText: 'Get Started',
+          ctaSecondary: 'Learn More',
+          companyName: 'Your Company',
+          tagline: 'Your trusted partner'
+        },
+        layout: {
+          alignment: 'center',
+          spacing: 16,
+          borderRadius: 8,
+          padding: 24
+        },
+        advanced: {
+          customCSS: '',
+          accessibility: true
+        },
+        classes: {},
+        // Add empty modification objects for real-time updates
+        headerModifications: {},
+        bodyModifications: {},
+        rightSidebarModifications: {}
+      };
+    }
+
     const merged = JSON.parse(JSON.stringify(currentTemplate)); // Deep clone
     
     // Deep merge custom settings
@@ -118,77 +220,122 @@ export default function CustomizerPage() {
     
     deepMerge(merged, customizerState.customSettings);
     console.log('🔄 Customizer: Merged template:', merged);
+    console.log('🔄 Customizer: Custom settings used:', customizerState.customSettings);
+    console.log('🔄 Customizer: Merged template keys:', Object.keys(merged));
+    console.log('🔄 Customizer: Current template modification fields:', {
+      headerModifications: (currentTemplate as any)?.headerModifications,
+      bodyModifications: (currentTemplate as any)?.bodyModifications,
+      rightSidebarModifications: (currentTemplate as any)?.rightSidebarModifications,
+      timestamp: new Date().toISOString()
+    });
     return merged;
-  })() : null;
+  }, [currentTemplate, customizerState.customSettings, customizerState.selectedTemplate, isFallback, templateLoading]);
 
-  // Load saved settings from efficient templates hook
+  // Load saved settings when template data changes
   useEffect(() => {
-    const templateData = getTemplateSync(customizerState.selectedTemplate);
-    console.log('🔄 Customizer: Loading saved settings:', templateData);
+    const templateId = templateData?.template?.id;
+    const isCustomized = templateData?.metadata?.isCustomized;
     
-    if (templateData?.template && templateData.metadata?.isCustomized) {
-      // Load user's custom settings if they exist
-      const userSettings = templateData.template;
-      console.log('🔄 Customizer: Found user customizations:', userSettings);
+    console.log('🔄 Customizer: Template loading effect triggered:', {
+      templateId,
+      isCustomized,
+      isFallback,
+      loadedTemplateRef: loadedTemplateRef.current,
+      templateLoading,
+      hasTemplateData: !!templateData
+    });
+    
+    // Only load if we have a different template or if this is the first load
+    // Check that we're not using fallback data AND that we're not still loading
+    if (templateId && templateId !== loadedTemplateRef.current && !isFallback && !templateLoading) {
+      loadedTemplateRef.current = templateId;
       
-      setCustomizerState(prev => ({
-        ...prev,
-        customSettings: {
-          colors: userSettings.colors || {},
-          typography: userSettings.typography || {},
-          content: userSettings.content || {},
-          layout: userSettings.layout || {},
-          advanced: userSettings.advanced || {},
-          classes: userSettings.classes || {}
-        }
-      }));
-    } else {
-      // Reset to empty settings if no customizations found
-      console.log('🔄 Customizer: No customizations found, resetting settings');
-      setCustomizerState(prev => ({
-        ...prev,
-        customSettings: {}
-      }));
+      if (isCustomized) {
+        // Load user's custom settings if they exist
+        const userSettings = templateData.template;
+        console.log('🔄 Customizer: Found user customizations:', userSettings);
+        console.log('🔄 Customizer: User settings modification fields:', {
+          headerModifications: (userSettings as any)?.headerModifications,
+          bodyModifications: (userSettings as any)?.bodyModifications,
+          rightSidebarModifications: (userSettings as any)?.rightSidebarModifications
+        });
+        
+        setCustomizerState(prev => ({
+          ...prev,
+          customSettings: {
+            colors: userSettings.colors || {},
+            typography: userSettings.typography || {},
+            content: userSettings.content || {},
+            layout: userSettings.layout || {},
+            advanced: userSettings.advanced || {},
+            classes: userSettings.classes || {},
+            headerModifications: (userSettings as any).headerModifications || {},
+            bodyModifications: (userSettings as any).bodyModifications || {},
+            rightSidebarModifications: (userSettings as any).rightSidebarModifications || {}
+          }
+        }));
+      } else {
+        // Template exists but no customizations - reset to empty settings
+        console.log('🔄 Customizer: Template exists but no customizations, resetting settings');
+        setCustomizerState(prev => ({
+          ...prev,
+          customSettings: {}
+        }));
+      }
     }
-  }, [customizerState.selectedTemplate, getTemplateSync]);
-
-  // Fetch initial template when component mounts or template changes
-  useEffect(() => {
-    if (customizerState.selectedTemplate) {
-      console.log('🔄 Customizer: Fetching template:', customizerState.selectedTemplate);
-      getTemplate(customizerState.selectedTemplate).catch(error => {
-        console.error('Error fetching initial template:', error);
-      });
-    }
-  }, [customizerState.selectedTemplate, getTemplate]);
+  }, [templateData?.template?.id, templateData?.metadata?.isCustomized, isFallback, templateLoading]); // Use stable identifiers instead of the whole object
 
   // Handle template selection
   const handleTemplateSelect = useCallback(async (templateSlug: string) => {
+    // Update global template selection
+    setSelectedTemplate(templateSlug);
+    
+    // Reset loaded template ref to allow loading new template
+    loadedTemplateRef.current = null;
+    
+    // Reset custom settings when switching templates
     setCustomizerState(prev => ({
       ...prev,
-      selectedTemplate: templateSlug,
-      customSettings: {} // Reset custom settings when switching templates
+      customSettings: {}
     }));
     
-    // Fetch the template if not already cached
-    try {
-      await getTemplate(templateSlug);
-    } catch (error) {
-      console.error('Error fetching template:', error);
-    }
-  }, [getTemplate]);
+    // Templates should already be preloaded, no need to fetch again
+    console.log('🔄 Customizer: Template selected:', templateSlug);
+  }, [setSelectedTemplate]);
 
   // Handle section change
   const handleSectionChange = useCallback((section: CustomizerState['activeSection']) => {
     setCustomizerState(prev => ({
       ...prev,
-      activeSection: section
+      activeSection: section,
+      showSectionDetails: true
+    }));
+  }, []);
+
+  // Handle back to sections view
+  const handleBackToSections = useCallback(() => {
+    setCustomizerState(prev => ({
+      ...prev,
+      showSectionDetails: false
     }));
   }, []);
 
   // Handle setting changes
   const handleSettingChange = useCallback((path: string, value: any) => {
     console.log('🔄 Customizer: Setting change:', { path, value });
+    
+    // Validate URLs for social media fields
+    if (path.includes('facebook') || path.includes('twitter') || path.includes('linkedin') || path.includes('instagram')) {
+      if (value && typeof value === 'string' && value.trim()) {
+        // Basic URL validation
+        try {
+          new URL(value);
+        } catch (e) {
+          console.warn('⚠️ Customizer: Invalid URL provided:', value);
+          // Don't prevent the change, but log the warning
+        }
+      }
+    }
     
     setCustomizerState(prev => {
       const newSettings = { ...prev.customSettings } as any;
@@ -211,6 +358,8 @@ export default function CustomizerPage() {
       current[finalKey] = value;
       
       console.log('🔄 Customizer: Updated settings:', newSettings);
+      console.log('🔄 Customizer: Previous customSettings:', prev.customSettings);
+      console.log('🔄 Customizer: New customSettings:', newSettings);
       
       return {
         ...prev,
@@ -229,40 +378,101 @@ export default function CustomizerPage() {
 
   // Save template
   const handleSave = useCallback(async () => {
-    if (!user || !currentTemplate) return;
+    if (!user || !customizerState.selectedTemplate) return;
     
     setIsSaving(true);
+    
+    // Add timeout to prevent hanging
+    const saveTimeout = setTimeout(() => {
+      console.warn('⚠️ Customizer: Save operation timed out');
+      setIsSaving(false);
+      setSaveMessage('Save operation timed out - please try again');
+      setTimeout(() => setSaveMessage(null), 5000);
+    }, 30000); // 30 second timeout (increased from 10)
+    
     try {
       console.log('🔄 Customizer: Saving template settings:', {
-        templateSlug: currentTemplate.slug,
+        templateSlug: customizerState.selectedTemplate,
         customSettings: customizerState.customSettings
       });
       
-      // Save the custom settings with proper structure
-      const settingsToSave = {
-        colors: customizerState.customSettings.colors || {},
-        typography: customizerState.customSettings.typography || {},
-        content: customizerState.customSettings.content || {},
-        layout: customizerState.customSettings.layout || {},
-        advanced: customizerState.customSettings.advanced || {},
-        classes: customizerState.customSettings.classes || {}
-      };
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session found');
+      }
+
+      console.log('🔄 Customizer: Sending API request...');
+      console.log('🔄 Customizer: Request payload:', {
+        templateSlug: customizerState.selectedTemplate,
+        customSettings: customizerState.customSettings,
+        isPublished: false
+      });
       
-      await saveTemplateSettings(
-        currentTemplate.slug,
-        settingsToSave,
-        false // isPublished
-      );
+      const startTime = Date.now();
+      const response = await fetch('/api/templates/user', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateSlug: customizerState.selectedTemplate,
+          customSettings: customizerState.customSettings,
+          isPublished: false
+        })
+      });
       
-      setSaveMessage('Template saved successfully!');
-      setTimeout(() => setSaveMessage(null), 3000);
+      const endTime = Date.now();
+      console.log(`🔄 Customizer: API response received in ${endTime - startTime}ms:`, response.status, response.statusText);
+      
+      const result = await response.json();
+      console.log('🔄 Customizer: API result:', result);
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save template');
+      }
+
+      if (result.success) {
+        setSaveMessage('Template saved successfully!');
+        setTimeout(() => setSaveMessage(null), 3000);
+        console.log('✅ Customizer: Template saved successfully');
+        
+        // Invalidate client-side cache for this template
+        if (typeof window !== 'undefined' && user) {
+          const cacheKey = `template_${user.id}_${customizerState.selectedTemplate}`;
+          localStorage.removeItem(cacheKey);
+          console.log('🗑️ Customizer: Invalidated client cache for:', cacheKey);
+        }
+        
+        // Force immediate context update by calling refreshTemplate
+        // This ensures all components get the updated data instantly
+        try {
+          await refreshTemplate(customizerState.selectedTemplate);
+          console.log('✅ Customizer: Template refreshed successfully, context updated');
+          
+          // Also refresh the efficient templates cache to ensure LandingPageTabs gets updated data
+          if (typeof window !== 'undefined') {
+            // Clear efficient templates cache
+            const efficientCacheKey = `template_${user.id}_${customizerState.selectedTemplate}`;
+            localStorage.removeItem(efficientCacheKey);
+            console.log('🗑️ Customizer: Cleared efficient templates cache for:', efficientCacheKey);
+          }
+        } catch (error) {
+          console.error('❌ Customizer: Error refreshing template data:', error);
+        }
+      } else {
+        throw new Error(result.error || 'API returned unsuccessful response');
+      }
+      
     } catch (error) {
       console.error('❌ Customizer: Error saving template:', error);
       setSaveMessage('Error saving template');
     } finally {
+      clearTimeout(saveTimeout);
       setIsSaving(false);
     }
-  }, [user, currentTemplate, customizerState.customSettings, saveTemplateSettings]);
+  }, [user, customizerState.selectedTemplate, customizerState.customSettings, refreshTemplate]);
 
   // Reset to original
   const handleReset = useCallback(() => {
@@ -273,7 +483,7 @@ export default function CustomizerPage() {
   }, []);
 
   // Loading state
-  if (authLoading || templatesLoading || profileLoading) {
+  if (authLoading || templateLoading || profileLoading || templateSelectionLoading) {
     return (
       <RouteGuard allowedRoles={['employee']}>
         <DashboardLayout 
@@ -291,42 +501,15 @@ export default function CustomizerPage() {
     );
   }
 
-  // Error state
-  if (templatesError) {
-    return (
-      <RouteGuard allowedRoles={['employee']}>
-        <DashboardLayout 
-          title="Template Customizer" 
-          subtitle="Error loading templates"
-        >
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="text-red-600 mb-4">
-                <Icon name="warning" size={48} />
-              </div>
-              <p className="text-red-600 mb-4">
-                Error loading: {templatesError}
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                <Icon name="refresh" size={16} className="mr-2" />
-                Retry
-              </Button>
-            </div>
-          </div>
-        </DashboardLayout>
-      </RouteGuard>
-    );
-  }
-
   return (
     <RouteGuard allowedRoles={['employee']}>
       <DashboardLayout 
         title="Template Customizer" 
         subtitle="Customize your loan officer profile template in real-time"
       >
-        <div className="min-h-screen bg-gray-50">
+        <div className="h-screen flex flex-col bg-gray-50">
           {/* Header Controls */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <h1 className="text-2xl font-bold text-gray-900">Template Customizer</h1>
@@ -338,8 +521,7 @@ export default function CustomizerPage() {
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                   >
                     {['template1', 'template2'].map(templateSlug => {
-                      const templateData = getTemplateSync(templateSlug);
-                      const templateName = templateData?.template?.name || (templateSlug === 'template1' ? 'Red Theme' : 'Purple Theme');
+                      const templateName = templateSlug === 'template1' ? 'Red Theme' : 'Purple Theme';
                       
                       return (
                         <option key={templateSlug} value={templateSlug}>
@@ -396,55 +578,112 @@ export default function CustomizerPage() {
             )}
           </div>
 
-          {/* Main Content */}
-          <div className="flex h-[calc(100vh-120px)]">
-            {/* Left Sidebar - Sections */}
-            <div className={`w-80 bg-white border-r border-gray-200 transition-all duration-300 ${
+          {/* Main Content - Takes remaining height */}
+          <div className="flex flex-1 min-h-0">
+            {/* Left Sidebar - Sections or Section Details */}
+            <div className={`w-80 bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
               customizerState.isPreviewMode ? '-ml-80' : 'ml-0'
             }`}>
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Customization Sections</h2>
-                
-                <div className="space-y-2">
-                  {[
-                    { id: 'colors', label: 'Colors', icon: Palette, description: 'Primary colors, backgrounds, text' },
-                    { id: 'typography', label: 'Typography', icon: Type, description: 'Fonts, sizes, weights' },
-                    { id: 'content', label: 'Content', icon: Settings, description: 'Text, headlines, CTAs' },
-                    { id: 'layout', label: 'Layout', icon: Layout, description: 'Spacing, alignment, borders' },
-                    { id: 'advanced', label: 'Advanced', icon: Settings, description: 'Custom CSS, accessibility' }
-                  ].map(section => (
-                    <button
-                      key={section.id}
-                      onClick={() => handleSectionChange(section.id as CustomizerState['activeSection'])}
-                      className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                        customizerState.activeSection === section.id
-                          ? ''
-                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                      }`}
-                      style={customizerState.activeSection === section.id ? {
-                        backgroundColor: `${mergedTemplate?.colors?.primary || '#ec4899'}10`,
-                        borderColor: mergedTemplate?.colors?.primary || '#ec4899',
-                        color: mergedTemplate?.colors?.primary || '#ec4899'
-                      } : {}}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <section.icon size={20} />
-                        <div>
-                          <div className="font-medium">{section.label}</div>
-                          <div className="text-sm text-gray-500">{section.description}</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+              {!customizerState.showSectionDetails ? (
+                // Main Sections View
+                <div className="h-full flex flex-col">
+                  <div className="p-6 flex-shrink-0">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Customization Sections</h2>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto px-6 pb-6">
+                    <div className="space-y-2">
+                      {[
+                        { id: 'general', label: 'General Settings', icon: Settings, description: 'Colors, typography, layout, advanced' },
+                        { id: 'header', label: 'Header Modifications', icon: Layout, description: 'Officer name, avatar, contact info, Apply Now link' },
+                        { id: 'body', label: 'Body Section', icon: Type, description: 'Tab management and content preview' },
+                        { id: 'rightSidebar', label: 'Right Sidebar Mods', icon: Palette, description: 'Social media, company info, reviews' }
+                      ].map(section => (
+                        <button
+                          key={section.id}
+                          onClick={() => handleSectionChange(section.id as CustomizerState['activeSection'])}
+                          className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                            customizerState.activeSection === section.id
+                              ? ''
+                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                          }`}
+                          style={customizerState.activeSection === section.id ? {
+                            backgroundColor: `${mergedTemplate?.colors?.primary || '#ec4899'}10`,
+                            borderColor: mergedTemplate?.colors?.primary || '#ec4899',
+                            color: mergedTemplate?.colors?.primary || '#ec4899'
+                          } : {}}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <section.icon size={20} />
+                            <div>
+                              <div className="font-medium">{section.label}</div>
+                              <div className="text-sm text-gray-500">{section.description}</div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // Section Details View
+                <div className="h-full flex flex-col">
+                  {/* Back Button Header */}
+                  <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                    <button
+                      onClick={handleBackToSections}
+                      className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <ChevronLeft size={20} />
+                      <span className="font-medium">Back to Sections</span>
+                    </button>
+                    <h2 className="text-lg font-semibold text-gray-900 mt-2">
+                      {customizerState.activeSection.charAt(0).toUpperCase() + customizerState.activeSection.slice(1)} Settings
+                    </h2>
+                  </div>
+                  
+                  {/* Section Content */}
+                  <div className="flex-1 overflow-auto p-4">
+                    <div className="space-y-6">
+                      {customizerState.activeSection === 'general' && (
+                        <GeneralSettings 
+                          template={mergedTemplate} 
+                          onChange={(path, value) => handleSettingChange(path, value)}
+                        />
+                      )}
+                      
+                      {customizerState.activeSection === 'header' && (
+                        <HeaderModifications 
+                          template={mergedTemplate} 
+                          officerInfo={officerInfo}
+                          onChange={(path, value) => handleSettingChange(`headerModifications.${path}`, value)}
+                        />
+                      )}
+                      
+                      {customizerState.activeSection === 'body' && (
+                        <BodyModifications 
+                          template={mergedTemplate} 
+                          onChange={(path, value) => handleSettingChange(`bodyModifications.${path}`, value)}
+                        />
+                      )}
+                      
+                      {customizerState.activeSection === 'rightSidebar' && (
+                        <RightSidebarModifications 
+                          template={mergedTemplate} 
+                          onChange={(path, value) => handleSettingChange(`rightSidebarModifications.${path}`, value)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Center - Live Preview */}
-            <div className="flex-1 bg-gray-100 overflow-auto">
-              <div className="p-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
-                  {mergedTemplate && (
+            {/* Center - Live Preview (Full Width) */}
+            <div className="flex-1 bg-gray-100 overflow-hidden">
+              <div className="h-full overflow-auto">
+                <div className="p-6">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full">
                     <TemplateProvider
                       templateData={mergedTemplate}
                       isCustomizerMode={true}
@@ -462,6 +701,7 @@ export default function CustomizerPage() {
                           phone={officerInfo.phone || undefined}
                           email={officerInfo.email}
                           template={customizerState.selectedTemplate as 'template1' | 'template2'}
+                          templateCustomization={mergedTemplate}
                         />
                         
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
@@ -472,67 +712,22 @@ export default function CustomizerPage() {
                                 onTabChange={() => {}}
                                 selectedTemplate={customizerState.selectedTemplate as 'template1' | 'template2'}
                                 className="w-full"
+                                templateCustomization={mergedTemplate}
                               />
                             </div>
                             <div className="xl:col-span-1">
                               <div className="sticky top-6 lg:top-8">
-                                <UnifiedRightSidebar template={customizerState.selectedTemplate as 'template1' | 'template2'} />
+                                <UnifiedRightSidebar 
+                                  template={customizerState.selectedTemplate as 'template1' | 'template2'} 
+                                  templateCustomization={mergedTemplate}
+                                />
                               </div>
                             </div>
                           </div>
                         </div>
                       </React.Suspense>
                     </TemplateProvider>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar - Settings */}
-            <div className={`w-80 bg-white border-l border-gray-200 transition-all duration-300 ${
-              customizerState.isPreviewMode ? '-mr-80' : 'mr-0'
-            }`}>
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  {customizerState.activeSection.charAt(0).toUpperCase() + customizerState.activeSection.slice(1)} Settings
-                </h2>
-                
-                {/* Settings Content */}
-                <div className="space-y-6">
-                  {customizerState.activeSection === 'colors' && (
-                    <ColorsSettings 
-                      template={mergedTemplate} 
-                      onChange={(path, value) => handleSettingChange(`colors.${path}`, value)}
-                    />
-                  )}
-                  
-                  {customizerState.activeSection === 'typography' && (
-                    <TypographySettings 
-                      template={mergedTemplate} 
-                      onChange={(path, value) => handleSettingChange(`typography.${path}`, value)}
-                    />
-                  )}
-                  
-                  {customizerState.activeSection === 'content' && (
-                    <ContentSettings 
-                      template={mergedTemplate} 
-                      onChange={(path, value) => handleSettingChange(`content.${path}`, value)}
-                    />
-                  )}
-                  
-                  {customizerState.activeSection === 'layout' && (
-                    <LayoutSettings 
-                      template={mergedTemplate} 
-                      onChange={(path, value) => handleSettingChange(`layout.${path}`, value)}
-                    />
-                  )}
-                  
-                  {customizerState.activeSection === 'advanced' && (
-                    <AdvancedSettings 
-                      template={mergedTemplate} 
-                      onChange={(path, value) => handleSettingChange(`advanced.${path}`, value)}
-                    />
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -547,6 +742,339 @@ export default function CustomizerPage() {
 interface SettingsProps {
   template: Template | null;
   onChange: (path: string, value: any) => void;
+}
+
+interface HeaderModificationsProps extends SettingsProps {
+  officerInfo: {
+    officerName: string;
+    phone?: string;
+    email: string;
+  };
+}
+
+// General Settings Component (combines all current settings)
+function GeneralSettings({ template, onChange }: SettingsProps) {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['colors']));
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  if (!template) return null;
+
+  const sections = [
+    { id: 'colors', label: 'Colors', icon: Palette, component: ColorsSettings },
+    { id: 'typography', label: 'Typography', icon: Type, component: TypographySettings },
+    { id: 'content', label: 'Content', icon: Settings, component: ContentSettings },
+    { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings },
+    { id: 'advanced', label: 'Advanced', icon: Settings, component: AdvancedSettings }
+  ];
+
+  return (
+    <div className="space-y-2">
+      {sections.map(section => {
+        const isExpanded = expandedSections.has(section.id);
+        const SectionComponent = section.component;
+        
+        return (
+          <div key={section.id} className="border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection(section.id)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <section.icon size={20} className="text-gray-600" />
+                <span className="font-medium text-gray-900">{section.label}</span>
+              </div>
+              <ChevronRight 
+                size={20} 
+                className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+              />
+            </button>
+            
+            {isExpanded && (
+              <div className="border-t border-gray-200 p-4 bg-gray-50">
+                <SectionComponent 
+                  template={template} 
+                  onChange={(path, value) => onChange(`${section.id}.${path}`, value)} 
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Header Modifications Component
+function HeaderModifications({ template, officerInfo, onChange }: HeaderModificationsProps) {
+  if (!template) return null;
+
+  const headerMods = template.headerModifications || {};
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Personal Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Officer Name</label>
+            <input
+              type="text"
+              value={headerMods.officerName || officerInfo.officerName}
+              onChange={(e) => onChange('officerName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={headerMods.phone || officerInfo.phone || ''}
+              onChange={(e) => onChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <input
+              type="email"
+              value={headerMods.email || officerInfo.email}
+              onChange={(e) => onChange('email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image URL</label>
+            <input
+              type="url"
+              value={headerMods.avatar || ''}
+              onChange={(e) => onChange('avatar', e.target.value)}
+              placeholder="https://example.com/profile.jpg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Apply Now Button</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Apply Now Link</label>
+            <input
+              type="url"
+              value={headerMods.applyNowLink || ''}
+              onChange={(e) => onChange('applyNowLink', e.target.value)}
+              placeholder="https://example.com/apply"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+            <input
+              type="text"
+              value={headerMods.applyNowText || 'Apply Now'}
+              onChange={(e) => onChange('applyNowText', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Body Modifications Component
+function BodyModifications({ template, onChange }: SettingsProps) {
+  if (!template) return null;
+
+  const bodyMods = template.bodyModifications || {};
+  const availableTabs = [
+    { id: 'todays-rates', label: "Today's Rates" },
+    { id: 'get-custom-rate', label: 'Get My Custom Rate' },
+    { id: 'document-checklist', label: 'Document Checklist' },
+    { id: 'apply-now', label: 'Apply Now' },
+    { id: 'my-home-value', label: 'My Home Value' },
+    { id: 'find-my-home', label: 'Find My Home' },
+    { id: 'learning-center', label: 'Learning Center' }
+  ];
+
+  const enabledTabs = bodyMods.enabledTabs || availableTabs.map(tab => tab.id);
+  const activeTab = bodyMods.activeTab || 'todays-rates';
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Tab Management</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Default Active Tab</label>
+            <select
+              value={activeTab}
+              onChange={(e) => onChange('activeTab', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            >
+              {availableTabs.map(tab => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Enabled Tabs</label>
+            <div className="space-y-2">
+              {availableTabs.map(tab => (
+                <label key={tab.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={enabledTabs.includes(tab.id)}
+                    onChange={(e) => {
+                      const newEnabledTabs = e.target.checked
+                        ? [...enabledTabs, tab.id]
+                        : enabledTabs.filter((id: string) => id !== tab.id);
+                      onChange('enabledTabs', newEnabledTabs);
+                    }}
+                    className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                  />
+                  <span className="text-sm text-gray-700">{tab.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Right Sidebar Modifications Component
+function RightSidebarModifications({ template, onChange }: SettingsProps) {
+  if (!template) return null;
+
+  const sidebarMods = template.rightSidebarModifications || {};
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Company Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+            <input
+              type="text"
+              value={sidebarMods.companyName || 'Your Brand™'}
+              onChange={(e) => onChange('companyName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo URL</label>
+            <input
+              type="url"
+              value={sidebarMods.logo || ''}
+              onChange={(e) => onChange('logo', e.target.value)}
+              placeholder="https://example.com/logo.png"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={sidebarMods.phone || '(555) 123-4567'}
+              onChange={(e) => onChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <input
+              type="email"
+              value={sidebarMods.email || 'info@yourbrand.com'}
+              onChange={(e) => onChange('email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <textarea
+              value={sidebarMods.address || '123 Main St. City'}
+              onChange={(e) => onChange('address', e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Social Media Links</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Facebook URL</label>
+            <input
+              type="url"
+              value={sidebarMods.facebook || ''}
+              onChange={(e) => onChange('facebook', e.target.value)}
+              placeholder="https://facebook.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Twitter URL</label>
+            <input
+              type="url"
+              value={sidebarMods.twitter || ''}
+              onChange={(e) => onChange('twitter', e.target.value)}
+              placeholder="https://twitter.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn URL</label>
+            <input
+              type="url"
+              value={sidebarMods.linkedin || ''}
+              onChange={(e) => onChange('linkedin', e.target.value)}
+              placeholder="https://linkedin.com/company/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Instagram URL</label>
+            <input
+              type="url"
+              value={sidebarMods.instagram || ''}
+              onChange={(e) => onChange('instagram', e.target.value)}
+              placeholder="https://instagram.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ColorsSettings({ template, onChange }: SettingsProps) {

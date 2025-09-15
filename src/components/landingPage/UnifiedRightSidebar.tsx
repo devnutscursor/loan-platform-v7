@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import Image from 'next/image';
 import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
 import { useAuth } from '@/hooks/use-auth';
 import { icons } from '@/components/ui/Icon';
@@ -8,15 +9,129 @@ import { icons } from '@/components/ui/Icon';
 interface UnifiedRightSidebarProps {
   template?: 'template1' | 'template2';
   className?: string;
+  // Template customization data
+  templateCustomization?: {
+    rightSidebarModifications?: {
+      companyName?: string;
+      logo?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      facebook?: string;
+      twitter?: string;
+      linkedin?: string;
+      instagram?: string;
+    };
+  };
 }
 
 export default function UnifiedRightSidebar({
   template = 'template1',
-  className = ""
+  className = "",
+  templateCustomization
 }: UnifiedRightSidebarProps) {
   const { user } = useAuth();
   const { getTemplateSync, fetchTemplate } = useEfficientTemplates();
   const templateData = getTemplateSync(template);
+
+  // Debug when templateCustomization changes
+  React.useEffect(() => {
+    console.log('🔄 UnifiedRightSidebar: templateCustomization updated:', {
+      templateCustomization,
+      rightSidebarModifications: templateCustomization?.rightSidebarModifications,
+      timestamp: new Date().toISOString()
+    });
+  }, [templateCustomization]);
+
+  // Get customization data from template or props
+  const getCompanyName = () => {
+    console.log('🔄 UnifiedRightSidebar: Getting company name:', {
+      templateCustomization,
+      rightSidebarModifications: templateCustomization?.rightSidebarModifications,
+      companyName: templateCustomization?.rightSidebarModifications?.companyName
+    });
+    
+    if (templateCustomization?.rightSidebarModifications?.companyName) {
+      console.log('✅ UnifiedRightSidebar: Using customized company name:', templateCustomization.rightSidebarModifications.companyName);
+      return templateCustomization.rightSidebarModifications.companyName;
+    }
+    console.log('⚠️ UnifiedRightSidebar: Using default company name');
+    return 'Your Brand™';
+  };
+
+  const getCompanyLogo = () => {
+    console.log('🔄 UnifiedRightSidebar: Getting company logo:', {
+      logo: templateCustomization?.rightSidebarModifications?.logo
+    });
+    
+    if (templateCustomization?.rightSidebarModifications?.logo) {
+      console.log('✅ UnifiedRightSidebar: Using customized logo');
+      return templateCustomization.rightSidebarModifications.logo;
+    }
+    console.log('⚠️ UnifiedRightSidebar: Using default initials');
+    return null; // Use default initials
+  };
+
+  const getPhone = () => {
+    console.log('🔄 UnifiedRightSidebar: Getting phone:', {
+      phone: templateCustomization?.rightSidebarModifications?.phone
+    });
+    
+    if (templateCustomization?.rightSidebarModifications?.phone) {
+      console.log('✅ UnifiedRightSidebar: Using customized phone:', templateCustomization.rightSidebarModifications.phone);
+      return templateCustomization.rightSidebarModifications.phone;
+    }
+    console.log('⚠️ UnifiedRightSidebar: Using default phone');
+    return '(555) 123-4567';
+  };
+
+  const getEmail = () => {
+    console.log('🔄 UnifiedRightSidebar: Getting email:', {
+      email: templateCustomization?.rightSidebarModifications?.email
+    });
+    
+    if (templateCustomization?.rightSidebarModifications?.email) {
+      console.log('✅ UnifiedRightSidebar: Using customized email:', templateCustomization.rightSidebarModifications.email);
+      return templateCustomization.rightSidebarModifications.email;
+    }
+    console.log('⚠️ UnifiedRightSidebar: Using default email');
+    return 'info@yourbrand.com';
+  };
+
+  const getAddress = () => {
+    console.log('🔄 UnifiedRightSidebar: Getting address:', {
+      address: templateCustomization?.rightSidebarModifications?.address
+    });
+    
+    if (templateCustomization?.rightSidebarModifications?.address && 
+        templateCustomization.rightSidebarModifications.address.trim() !== '') {
+      console.log('✅ UnifiedRightSidebar: Using customized address:', templateCustomization.rightSidebarModifications.address);
+      return templateCustomization.rightSidebarModifications.address;
+    }
+    console.log('⚠️ UnifiedRightSidebar: Using default address');
+    return '123 Main St, City, State 12345';
+  };
+
+  // Memoize social links to avoid multiple calls
+  const socialLinks = React.useMemo(() => {
+    const socialMods = templateCustomization?.rightSidebarModifications || {};
+    console.log('🔄 UnifiedRightSidebar: Getting social links:', socialMods);
+    console.log('🔄 UnifiedRightSidebar: templateCustomization:', templateCustomization);
+    
+    const links = {
+      facebook: socialMods.facebook || '',
+      twitter: socialMods.twitter || '',
+      linkedin: socialMods.linkedin || '',
+      instagram: socialMods.instagram || ''
+    };
+    
+    console.log('✅ UnifiedRightSidebar: Social links:', links);
+    console.log('✅ UnifiedRightSidebar: Will show Facebook?', !!links.facebook);
+    console.log('✅ UnifiedRightSidebar: Will show Twitter?', !!links.twitter);
+    console.log('✅ UnifiedRightSidebar: Will show LinkedIn?', !!links.linkedin);
+    console.log('✅ UnifiedRightSidebar: Will show Instagram?', !!links.instagram);
+    return links;
+  }, [templateCustomization?.rightSidebarModifications]);
 
   // Fetch template data when component mounts (same as TemplateSelector)
   useEffect(() => {
@@ -99,6 +214,15 @@ export default function UnifiedRightSidebar({
     }
   };
 
+  // Debug social links rendering
+  console.log('🔄 UnifiedRightSidebar: Rendering social links:', {
+    facebook: socialLinks.facebook,
+    twitter: socialLinks.twitter,
+    linkedin: socialLinks.linkedin,
+    instagram: socialLinks.instagram,
+    allSocialLinks: socialLinks
+  });
+
   return (
     <div 
       className={`rounded-lg border shadow-sm ${className}`}
@@ -116,33 +240,46 @@ export default function UnifiedRightSidebar({
         gap: `${layout.spacing}px`,
         marginBottom: `${layout.padding.large}px`
       }}>
-        <div 
-          style={{ 
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: `${colors.primary}20`
-          }}
-        >
-        <span 
-          style={{ 
-            color: colors.primary,
-            fontSize: getFontSize('lg'),
-            fontWeight: typography.fontWeight.bold
-          }}
-        >
-          YB
-        </span>
-        </div>
+        {getCompanyLogo() ? (
+          <Image 
+            src={getCompanyLogo()!} 
+            alt={getCompanyName()}
+            width={48}
+            height={48}
+            style={{ 
+              borderRadius: '50%',
+              objectFit: 'cover'
+            }}
+          />
+        ) : (
+          <div 
+            style={{ 
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: `${colors.primary}20`
+            }}
+          >
+            <span 
+              style={{ 
+                color: colors.primary,
+                fontSize: getFontSize('lg'),
+                fontWeight: typography.fontWeight.bold
+              }}
+            >
+              {getCompanyName().charAt(0)}
+            </span>
+          </div>
+        )}
         <h3 style={{ 
           color: colors.text,
           fontSize: getFontSize('lg'),
           fontWeight: typography.fontWeight.semibold
         }}>
-          Your Brand™
+          {getCompanyName()}
         </h3>
       </div>
 
@@ -257,7 +394,7 @@ export default function UnifiedRightSidebar({
             fontWeight: typography.fontWeight.normal
           }}>
             {React.createElement(icons.phone, { size: 16, color: colors.textSecondary })}
-            <span>(555) 123-4567</span>
+            <span>{getPhone()}</span>
           </p>
           <p style={{ 
             display: 'flex', 
@@ -268,7 +405,7 @@ export default function UnifiedRightSidebar({
             fontWeight: typography.fontWeight.normal
           }}>
             {React.createElement(icons.email, { size: 16, color: colors.textSecondary })}
-            <span>info@yourbrand.com</span>
+            <span>{getEmail()}</span>
           </p>
           <p style={{ 
             display: 'flex', 
@@ -279,7 +416,7 @@ export default function UnifiedRightSidebar({
             fontWeight: typography.fontWeight.normal
           }}>
             {React.createElement(icons.location, { size: 16, color: colors.textSecondary })}
-            <span>123 Main St, City, State 12345</span>
+            <span>{getAddress()}</span>
           </p>
         </div>
       </div>
@@ -298,74 +435,98 @@ export default function UnifiedRightSidebar({
           display: 'flex', 
           gap: `${layout.spacing}px`
         }}>
-          <div 
-            style={{ 
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.primary,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            {React.createElement(icons.facebook, { size: 16, color: colors.background })}
-          </div>
-          <div 
-            style={{ 
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.primary,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            {React.createElement(icons.twitter, { size: 16, color: colors.background })}
-          </div>
-          <div 
-            style={{ 
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.primary,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            {React.createElement(icons.linkedin, { size: 16, color: colors.background })}
-          </div>
-          <div 
-            style={{ 
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.primary,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            {React.createElement(icons.instagram, { size: 16, color: colors.background })}
-          </div>
+          {socialLinks.facebook && (
+            <a 
+              href={socialLinks.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary,
+                cursor: 'pointer',
+                transition: 'opacity 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {React.createElement(icons.facebook, { size: 16, color: colors.background })}
+            </a>
+          )}
+          {socialLinks.twitter && (
+            <a 
+              href={socialLinks.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary,
+                cursor: 'pointer',
+                transition: 'opacity 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {React.createElement(icons.twitter, { size: 16, color: colors.background })}
+            </a>
+          )}
+          {socialLinks.linkedin && (
+            <a 
+              href={socialLinks.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary,
+                cursor: 'pointer',
+                transition: 'opacity 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {React.createElement(icons.linkedin, { size: 16, color: colors.background })}
+            </a>
+          )}
+          {socialLinks.instagram && (
+            <a 
+              href={socialLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary,
+                cursor: 'pointer',
+                transition: 'opacity 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {React.createElement(icons.instagram, { size: 16, color: colors.background })}
+            </a>
+          )}
         </div>
       </div>
     </div>

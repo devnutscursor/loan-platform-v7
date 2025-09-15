@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase/client';
 import { TemplateContext } from '@/contexts/TemplateContext';
@@ -27,6 +27,8 @@ export function useEfficientTemplates() {
   const [templateData, setTemplateData] = useState<Record<string, EfficientTemplateData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fetchingTemplates, setFetchingTemplates] = useState<Set<string>>(new Set());
+  const hasPreloadedRef = useRef(false);
 
   // Debug logging
   console.log('🔍 useEfficientTemplates hook state:', {
@@ -50,6 +52,25 @@ export function useEfficientTemplates() {
       return templateData[templateSlug];
     }
 
+    // Check if we're already fetching this template to prevent duplicate requests
+    if (fetchingTemplates.has(templateSlug)) {
+      console.log('⏳ EfficientTemplates: Already fetching template, waiting:', templateSlug);
+      // Wait for the existing request to complete
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (templateData[templateSlug]) {
+            clearInterval(checkInterval);
+            resolve(templateData[templateSlug]);
+          } else if (!fetchingTemplates.has(templateSlug)) {
+            clearInterval(checkInterval);
+            resolve(null);
+          }
+        }, 100);
+      });
+    }
+
+    // Mark this template as being fetched
+    setFetchingTemplates(prev => new Set(prev).add(templateSlug));
     setIsLoading(true);
     setError(null);
 
@@ -102,8 +123,14 @@ export function useEfficientTemplates() {
       throw err;
     } finally {
       setIsLoading(false);
+      // Remove from fetching set
+      setFetchingTemplates(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(templateSlug);
+        return newSet;
+      });
     }
-  }, [user, templateData]);
+  }, [user, templateData, fetchingTemplates]);
 
   // Get a specific template (from cache or fetch if needed)
   const getTemplate = useCallback(async (templateSlug: string) => {
@@ -146,6 +173,27 @@ export function useEfficientTemplates() {
   const refreshTemplate = useCallback(async (templateSlug: string) => {
     return await fetchTemplate(templateSlug, true);
   }, [fetchTemplate]);
+
+  // Preload all templates for better performance
+  const preloadTemplates = useCallback(async () => {
+    if (!user) return;
+    
+    const templatesToPreload = ['template1', 'template2'];
+    const promises = templatesToPreload.map(templateSlug => {
+      // Check current state at the time of execution
+      if (!templateData[templateSlug] && !fetchingTemplates.has(templateSlug)) {
+        return fetchTemplate(templateSlug);
+      }
+      return Promise.resolve();
+    });
+    
+    try {
+      await Promise.all(promises);
+      console.log('✅ EfficientTemplates: All templates preloaded');
+    } catch (error) {
+      console.error('❌ EfficientTemplates: Error preloading templates:', error);
+    }
+  }, [user, fetchTemplate]);
 
   // Save template settings
   const saveTemplateSettings = useCallback(async (templateSlug: string, customSettings: any, isPublished = false) => {
@@ -215,15 +263,55 @@ export function useEfficientTemplates() {
 
   // Auto-fetch templates when user changes
   useEffect(() => {
-    if (!authLoading && user) {
-      console.log('🔍 EfficientTemplates: User loaded, ready to fetch templates');
+    if (!authLoading && user && !hasPreloadedRef.current) {
+      console.log('🔍 EfficientTemplates: User loaded, preloading templates');
+      hasPreloadedRef.current = true;
+      // Preload templates when user is available
+      preloadTemplates().catch(error => {
+        console.error('❌ EfficientTemplates: Error preloading templates:', error);
+      });
     } else if (!authLoading && !user) {
       console.log('🔍 EfficientTemplates: No user, clearing data');
+      hasPreloadedRef.current = false;
       setTemplateData({});
       setIsLoading(false);
       setError(null);
     }
   }, [user, authLoading]);
+
+  // Listen for storage changes to refresh templates when other tabs/components update them
+  useEffect(() => {
+    if (!user) return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith(`template_${user.id}_`) && e.newValue === null) {
+        // Template cache was cleared, refresh the template
+        const templateSlug = e.key.replace(`template_${user.id}_`, '');
+        console.log('🔄 EfficientTemplates: Template cache cleared, refreshing:', templateSlug);
+        fetchTemplate(templateSlug, true).catch(error => {
+          console.error('❌ EfficientTemplates: Error refreshing template after cache clear:', error);
+        });
+      }
+    };
+
+    const handleTemplateRefresh = (e: CustomEvent) => {
+      const { slug, userId } = e.detail;
+      if (userId === user.id) {
+        console.log('🔄 EfficientTemplates: Template refresh event received, refreshing:', slug);
+        fetchTemplate(slug, true).catch(error => {
+          console.error('❌ EfficientTemplates: Error refreshing template after refresh event:', error);
+        });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('templateRefreshed', handleTemplateRefresh as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('templateRefreshed', handleTemplateRefresh as EventListener);
+    };
+  }, [user, fetchTemplate]);
 
   return {
     // Data
@@ -238,6 +326,7 @@ export function useEfficientTemplates() {
     getTemplateSync,
     fetchTemplate,
     refreshTemplate,
+    preloadTemplates,
     saveTemplateSettings,
     clearCache,
     

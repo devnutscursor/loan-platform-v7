@@ -53,6 +53,13 @@ interface LandingPageTabsProps {
   onTabChange: (tabId: TabId) => void;
   selectedTemplate: 'template1' | 'template2';
   className?: string;
+  // Template customization data for instant updates
+  templateCustomization?: {
+    bodyModifications?: {
+      enabledTabs?: string[];
+      activeTab?: string;
+    };
+  };
 }
 
 const tabs: Tab[] = [
@@ -104,11 +111,39 @@ export default function LandingPageTabs({
   activeTab,
   onTabChange,
   selectedTemplate,
-  className = ''
+  className = '',
+  templateCustomization
 }: LandingPageTabsProps) {
   const { user } = useAuth();
   const { getTemplateSync, fetchTemplate } = useEfficientTemplates();
   const templateData = getTemplateSync(selectedTemplate);
+
+  // Get enabled tabs from customization or use all tabs
+  const enabledTabs = templateCustomization?.bodyModifications?.enabledTabs || tabs.map(tab => tab.id);
+  const filteredTabs = tabs.filter(tab => enabledTabs.includes(tab.id));
+  
+  // Get active tab from customization or use prop
+  const effectiveActiveTab = templateCustomization?.bodyModifications?.activeTab || activeTab;
+
+  // Debug template customization
+  React.useEffect(() => {
+    console.log('🔄 LandingPageTabs: Template customization updated:', {
+      templateCustomization,
+      enabledTabs,
+      effectiveActiveTab,
+      timestamp: new Date().toISOString()
+    });
+  }, [templateCustomization, enabledTabs, effectiveActiveTab]);
+
+  // Force refresh template data when templateCustomization changes (indicates database update)
+  React.useEffect(() => {
+    if (templateCustomization && user && selectedTemplate) {
+      console.log('🔄 LandingPageTabs: Template customization changed, refreshing template data');
+      fetchTemplate(selectedTemplate, true).catch(error => {
+        console.error('❌ LandingPageTabs: Error refreshing template after customization change:', error);
+      });
+    }
+  }, [templateCustomization, user, selectedTemplate, fetchTemplate]);
 
   // Fetch template data when component mounts (same as TemplateSelector)
   useEffect(() => {
@@ -177,7 +212,7 @@ export default function LandingPageTabs({
   };
   
   const renderTabContent = () => {
-    switch (activeTab) {
+    switch (effectiveActiveTab) {
       case 'todays-rates':
         return <TodaysRatesTab selectedTemplate={selectedTemplate} />;
       
@@ -250,8 +285,8 @@ export default function LandingPageTabs({
               gap: `${layout.spacing}px`
             }}
           >
-            {tabs.map((tab, index) => {
-              const isActive = activeTab === tab.id;
+            {filteredTabs.map((tab, index) => {
+              const isActive = effectiveActiveTab === tab.id;
               return (
                 <button
                   key={tab.id}

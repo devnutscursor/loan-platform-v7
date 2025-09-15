@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "../styles/mac-text-optimization.css";
 import { NotificationProvider } from "@/components/ui/Notification";
+import { TemplateSelectionProvider } from "@/contexts/TemplateSelectionContext";
+import { GlobalTemplateProvider } from "@/contexts/GlobalTemplateContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +33,11 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <NotificationProvider>
-          {children}
+          <TemplateSelectionProvider>
+            <GlobalTemplateProvider>
+              {children}
+            </GlobalTemplateProvider>
+          </TemplateSelectionProvider>
         </NotificationProvider>
       </body>
     </html>

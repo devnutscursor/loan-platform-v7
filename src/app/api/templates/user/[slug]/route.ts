@@ -6,7 +6,56 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// GET /api/templates/user/[slug] - Get specific user template with customizations
+// Enhanced in-memory cache for template data
+const templateCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - longer cache for better performance
+const MAX_CACHE_SIZE = 1000; // Prevent memory leaks
+
+// Helper function to get cache key
+function getCacheKey(slug: string, userId: string): string {
+  return `${slug}:${userId}`;
+}
+
+// Helper function to get cached data
+function getCachedTemplate(cacheKey: string) {
+  const cached = templateCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('✅ User Template API: Using cached data for:', cacheKey);
+    return cached.data;
+  }
+  if (cached) {
+    templateCache.delete(cacheKey);
+  }
+  return null;
+}
+
+// Helper function to set cached data with size management
+function setCachedTemplate(cacheKey: string, data: any) {
+  // Clean up expired entries first
+  const now = Date.now();
+  for (const [key, value] of templateCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      templateCache.delete(key);
+    }
+  }
+  
+  // Prevent cache from growing too large
+  if (templateCache.size >= MAX_CACHE_SIZE) {
+    // Remove oldest entries (simple LRU approximation)
+    const entries = Array.from(templateCache.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = entries.slice(0, Math.floor(MAX_CACHE_SIZE * 0.2)); // Remove 20%
+    toRemove.forEach(([key]) => templateCache.delete(key));
+  }
+  
+  templateCache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+  console.log('💾 User Template API: Cached data for:', cacheKey, `(cache size: ${templateCache.size})`);
+}
+
+// GET /api/templates/user/[slug] - Get specific user template (customized or default)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -54,7 +103,14 @@ export async function GET(
       slug
     });
 
-    // Get user's company information using Supabase client instead of Drizzle
+    // Check cache first
+    const cacheKey = getCacheKey(slug, targetUserId);
+    const cachedData = getCachedTemplate(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+
+    // Get user's company information
     const { data: userCompanyData, error: userCompanyError } = await supabase
       .from('user_companies')
       .select(`
@@ -89,119 +145,112 @@ export async function GET(
     const companyName = (userCompany.companies as any).name;
     const userRole = userCompany.role;
 
-    // Get the base template using Supabase client
-    const { data: baseTemplateData, error: templateError } = await supabase
+    // First, try to get user's customized template
+    const { data: userTemplateData, error: userTemplateError } = await supabase
       .from('templates')
       .select('*')
       .eq('slug', slug)
+      .eq('user_id', targetUserId)
+      .eq('is_default', false)
       .eq('is_active', true)
       .limit(1);
 
-    if (templateError) {
-      console.error('❌ User Template API: Template query error:', templateError);
+    if (userTemplateError) {
+      console.error('❌ User Template API: User template query error:', userTemplateError);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch template' },
+        { success: false, error: 'Failed to fetch user template' },
         { status: 500 }
       );
     }
 
-    if (!baseTemplateData || baseTemplateData.length === 0) {
-      console.log('⚠️ User Template API: Template not found:', slug);
-      return NextResponse.json(
-        { success: false, error: 'Template not found' },
-        { status: 404 }
-      );
+    let finalTemplate;
+    let isCustomized = false;
+
+    if (userTemplateData && userTemplateData.length > 0) {
+      // User has a customized version
+      finalTemplate = userTemplateData[0];
+      isCustomized = true;
+      console.log('🔍 User Template API: Found user customized template');
+    } else {
+      // Fall back to default template
+      const { data: defaultTemplateData, error: defaultTemplateError } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_default', true)
+        .is('user_id', null)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (defaultTemplateError) {
+        console.error('❌ User Template API: Default template query error:', defaultTemplateError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch default template' },
+          { status: 500 }
+        );
+      }
+
+      if (!defaultTemplateData || defaultTemplateData.length === 0) {
+        console.log('⚠️ User Template API: Template not found:', slug);
+        return NextResponse.json(
+          { success: false, error: 'Template not found' },
+          { status: 404 }
+        );
+      }
+
+      finalTemplate = defaultTemplateData[0];
+      isCustomized = false;
+      console.log('🔍 User Template API: Using default template');
     }
 
-    // Get user's custom settings for this specific template using Supabase client
-    const { data: userPageSettingsData, error: settingsError } = await supabase
-      .from('page_settings')
-      .select('*')
-      .eq('officer_id', targetUserId)
-      .eq('template', slug)
-      .limit(1);
+    // Transform database field names to camelCase for frontend
+    const transformedTemplate = {
+      ...finalTemplate,
+      headerModifications: finalTemplate.header_modifications || {},
+      bodyModifications: finalTemplate.body_modifications || {},
+      rightSidebarModifications: finalTemplate.right_sidebar_modifications || {}
+    };
 
-    if (settingsError) {
-      console.error('❌ User Template API: Settings query error:', settingsError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch user settings' },
-        { status: 500 }
-      );
-    }
-
-    console.log('🔍 User Template API: User settings for template:', {
-      templateSlug: slug,
-      hasCustomSettings: userPageSettingsData && userPageSettingsData.length > 0,
-      isPublished: userPageSettingsData && userPageSettingsData.length > 0 ? userPageSettingsData[0].is_published : false
+    console.log('🔍 User Template API: Final template modification fields:', {
+      header_modifications: finalTemplate.header_modifications,
+      body_modifications: finalTemplate.body_modifications,
+      right_sidebar_modifications: finalTemplate.right_sidebar_modifications
     });
 
-    // Merge base template with user's custom settings
-    let finalTemplate = baseTemplateData[0];
-    
-    if (userPageSettingsData && userPageSettingsData.length > 0) {
-      const userSettings = userPageSettingsData[0];
-      
-      // Merge template with user's custom settings
-      finalTemplate = {
-        ...baseTemplateData[0],
-        // Override template properties with user's custom settings
-        colors: {
-          ...(baseTemplateData[0].colors as any || {}),
-          ...((userSettings.settings as any)?.colors || {})
-        },
-        typography: {
-          ...(baseTemplateData[0].typography as any || {}),
-          ...((userSettings.settings as any)?.typography || {})
-        },
-        content: {
-          ...(baseTemplateData[0].content as any || {}),
-          ...((userSettings.settings as any)?.content || {})
-        },
-        layout: {
-          ...(baseTemplateData[0].layout as any || {}),
-          ...((userSettings.settings as any)?.layout || {})
-        },
-        advanced: {
-          ...(baseTemplateData[0].advanced as any || {}),
-          ...((userSettings.settings as any)?.advanced || {})
-        },
-        classes: {
-          ...(baseTemplateData[0].classes as any || {}),
-          ...((userSettings.settings as any)?.classes || {})
-        }
-      };
-    } else {
-      // No custom settings, return base template
-      finalTemplate = {
-        ...baseTemplateData[0]
-      };
-    }
+    console.log('🔍 User Template API: Transformed template modification fields:', {
+      headerModifications: transformedTemplate.headerModifications,
+      bodyModifications: transformedTemplate.bodyModifications,
+      rightSidebarModifications: transformedTemplate.rightSidebarModifications
+    });
 
     // Prepare response
     const response = {
       success: true,
       data: {
-        template: finalTemplate,
+        template: transformedTemplate,
         userInfo: {
           userId: targetUserId,
           companyId,
           companyName,
           userRole,
-          hasCustomSettings: userPageSettingsData && userPageSettingsData.length > 0
+          hasCustomSettings: isCustomized
         },
         metadata: {
           templateSlug: slug,
-          isCustomized: userPageSettingsData && userPageSettingsData.length > 0,
-          isPublished: userPageSettingsData && userPageSettingsData.length > 0 ? userPageSettingsData[0].is_published : false
+          isCustomized,
+          isPublished: false // We'll add this later if needed
         }
       }
     };
 
     console.log('✅ User Template API: Response prepared:', {
       templateSlug: slug,
-      hasCustomSettings: userPageSettingsData && userPageSettingsData.length > 0,
-      isPublished: userPageSettingsData && userPageSettingsData.length > 0 ? userPageSettingsData[0].is_published : false
+      isCustomized,
+      templateId: finalTemplate.id
     });
+
+    // Cache the response
+    setCachedTemplate(cacheKey, response);
 
     return NextResponse.json(response);
 

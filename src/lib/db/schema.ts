@@ -66,15 +66,17 @@ export const userCompanies = pgTable('user_companies', {
   userCompanyIdx: index('user_company_unique_idx').on(table.userId, table.companyId),
 }));
 
-// Templates table - Updated to match theme.ts structure
+// Templates table - Updated to match theme.ts structure with user ownership
 export const templates = pgTable('templates', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
+  slug: text('slug').notNull(),
   description: text('description'),
   previewImage: text('preview_image'),
   isActive: boolean('is_active').default(true),
   isPremium: boolean('is_premium').default(false),
+  isDefault: boolean('is_default').default(false), // true for default templates, false for user customizations
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // null for default templates, user ID for customizations
   
   // Template structure matching theme.ts
   colors: jsonb('colors').notNull().default('{}'), // { primary, secondary, background, text, textSecondary, border }
@@ -84,11 +86,19 @@ export const templates = pgTable('templates', {
   advanced: jsonb('advanced').notNull().default('{}'), // { customCSS, accessibility }
   classes: jsonb('classes').notNull().default('{}'), // Generated CSS classes
   
+  // New customization sections
+  headerModifications: jsonb('header_modifications').default('{}'), // { officerName, avatar, phone, email, applyNowLink, personalInfo }
+  bodyModifications: jsonb('body_modifications').default('{}'), // { activeTab, enabledTabs, tabOrder, tabSettings }
+  rightSidebarModifications: jsonb('right_sidebar_modifications').default('{}'), // { socialMedia, companyName, logo, contactInfo, reviews }
+  
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => ({
   slugIdx: index('template_slug_idx').on(table.slug),
   isActiveIdx: index('template_active_idx').on(table.isActive),
+  isDefaultIdx: index('template_default_idx').on(table.isDefault),
+  userIdIdx: index('template_user_idx').on(table.userId),
+  userSlugIdx: index('template_user_slug_idx').on(table.userId, table.slug),
 }));
 
 // Page Settings table

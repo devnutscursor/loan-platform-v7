@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createPersonalTemplatesForUser } from '@/lib/template-manager';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -161,6 +162,17 @@ export async function POST(request: NextRequest) {
           success: false,
           message: 'Failed to create company relationship. Please try again.'
         }, { status: 500 });
+      }
+
+      // Create personal templates for the loan officer
+      try {
+        console.log('🎨 Creating personal templates for new loan officer:', inviteResult.user.id);
+        await createPersonalTemplatesForUser(inviteResult.user.id, firstName, lastName);
+        console.log('✅ Personal templates created successfully');
+      } catch (templateError) {
+        console.error('❌ Error creating personal templates:', templateError);
+        // Don't fail the entire invite process if template creation fails
+        // The user can still be created and templates can be created later
       }
 
       return NextResponse.json({

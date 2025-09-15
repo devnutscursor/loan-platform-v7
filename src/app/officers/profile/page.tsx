@@ -5,11 +5,8 @@ import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfileCache } from '@/hooks/use-profile-cache';
-import { useEfficientTemplates } from '@/hooks/use-efficient-templates';
-import TemplateSelector from '@/components/TemplateSelector';
-import { ProfileManager } from '@/lib/profile-manager';
-import { typography } from '@/theme/theme';
-import { icons } from '@/components/ui/Icon';
+import { useTemplateSelection } from '@/contexts/TemplateSelectionContext';
+import { useTemplate, useGlobalTemplates } from '@/contexts/GlobalTemplateContext';
 
 // Lazy load unified components
 const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
@@ -78,15 +75,11 @@ SkeletonLoader.displayName = 'SkeletonLoader';
 export default function OfficersProfilePage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const { profile, refreshProfile, loading: profileLoading, getProfile } = useProfileCache();
-  const { 
-    isLoading: templatesLoading,
-    fetchTemplate,
-    getTemplateSync,
-    templateData
-  } = useEfficientTemplates();
+  const { selectedTemplate, isLoading: templateSelectionLoading } = useTemplateSelection();
+  const { templateData, isLoading: templateLoading, isFallback } = useTemplate(selectedTemplate);
+  const { refreshTemplate } = useGlobalTemplates();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('todays-rates');
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('template1');
   
   // Form data state - initialize with profile data when available
   const [formData, setFormData] = useState({
@@ -114,24 +107,49 @@ export default function OfficersProfilePage() {
     getProfile(user, authLoading);
   }, [user, authLoading, getProfile]);
 
-  // Fetch template data when component mounts or template changes (same as TemplateSelector)
+  // Debug template data
   React.useEffect(() => {
-    console.log('🔄 Profile page useEffect triggered:', {
-      user: !!user,
-      authLoading,
-      selectedTemplate,
-      userEmail: user?.email
+    console.log('🔄 Profile page: Template data debug:', {
+      templateLoading,
+      isFallback,
+      hasTemplateData: !!templateData,
+      templateDataKeys: templateData ? Object.keys(templateData) : [],
+      templateId: templateData?.template?.id,
+      rightSidebarModifications: templateData?.template?.rightSidebarModifications,
+      companyName: templateData?.template?.rightSidebarModifications?.companyName,
+      socialLinks: templateData?.template?.rightSidebarModifications,
+      timestamp: new Date().toISOString()
     });
-    
-    if (user) {  // ← Only check for user, not authLoading (same as TemplateSelector)
-      console.log('🔄 Profile page: Fetching template data for:', selectedTemplate);
-      fetchTemplate(selectedTemplate).then(() => {
-        console.log('✅ Profile page: Template data fetched successfully for:', selectedTemplate);
-      }).catch(error => {
-        console.error('❌ Profile page: Error fetching template:', error);
-      });
-    }
-  }, [user, selectedTemplate, fetchTemplate]);  // ← Removed authLoading dependency
+  }, [templateData, templateLoading, isFallback]);
+
+  // Refresh template data when page becomes visible or focused (user navigates back from customizer)
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && selectedTemplate) {
+        console.log('🔄 Profile page: Page became visible, refreshing template data');
+        refreshTemplate(selectedTemplate).catch(error => {
+          console.error('❌ Profile page: Error refreshing template:', error);
+        });
+      }
+    };
+
+    const handleFocus = () => {
+      if (selectedTemplate) {
+        console.log('🔄 Profile page: Window focused, refreshing template data');
+        refreshTemplate(selectedTemplate).catch(error => {
+          console.error('❌ Profile page: Error refreshing template:', error);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [selectedTemplate]); // Remove refreshTemplate from dependencies
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,14 +179,12 @@ export default function OfficersProfilePage() {
   }, [profile]);
 
   const handleTabChange = React.useCallback((tabId: TabId) => {
+    console.log('🔄 Profile page: Tab change requested:', tabId);
     setActiveTab(tabId);
-    console.log('Tab changed to:', tabId);
+    console.log('✅ Profile page: Tab changed to:', tabId);
   }, []);
 
-  const handleTemplateChange = React.useCallback((templateSlug: string) => {
-    setSelectedTemplate(templateSlug);
-    console.log('Template changed to:', templateSlug);
-  }, []);
+  // Template selection is now handled globally in the customizer
 
   const handleRefreshProfile = React.useCallback(async () => {
     if (user) {
@@ -207,16 +223,19 @@ export default function OfficersProfilePage() {
   console.log('🔍 Profile page render state:', {
     authLoading,
     profileLoading,
+    templateLoading,
+    templateSelectionLoading,
     hasUser: !!user,
     hasProfile: !!profile,
     userEmail: user?.email,
     selectedTemplate,
-    templateDataKeys: Object.keys(templateData),
-    currentTemplateData: templateData[selectedTemplate]
+    isFallback,
+    templateDataKeys: Object.keys(templateData?.template || {}),
+    templateColors: templateData?.template?.colors
   });
 
-  // Show loading state while profile is being fetched (but not authLoading since TemplateSelector works)
-  if (profileLoading || templatesLoading) {
+  // Show loading state while essential data is being fetched
+  if (profileLoading || templateLoading || templateSelectionLoading) {
     return (
       <RouteGuard allowedRoles={['employee']}>
         <DashboardLayout 
@@ -225,10 +244,10 @@ export default function OfficersProfilePage() {
         >
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
-              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4`} style={{ borderColor: selectedTemplate === 'template2' ? '#9333ea' : '#ec4899' }}></div>
+              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4`} style={{ borderColor: templateData?.template?.colors?.primary || '#ec4899' }}></div>
               <p className="text-gray-600">Loading profile data...</p>
               <p className="text-sm text-gray-500 mt-2">
-                Auth: {authLoading ? 'Loading' : 'Ready'} | Profile: {profileLoading ? 'Loading' : 'Ready'} | Templates: {templatesLoading ? 'Loading' : 'Ready'}
+                Auth: {authLoading ? 'Loading' : 'Ready'} | Profile: {profileLoading ? 'Loading' : 'Ready'} | Template: {templateLoading ? 'Loading' : 'Ready'} | Selection: {templateSelectionLoading ? 'Loading' : 'Ready'}
               </p>
             </div>
           </div>
@@ -237,19 +256,13 @@ export default function OfficersProfilePage() {
     );
   }
 
-  // Check if template data is available for the selected template
-  const currentTemplateData = templateData[selectedTemplate];
-  console.log('🔍 Profile page template data check:', {
+  // Template data is now managed globally and always available (with fallback)
+  console.log('🎨 Profile page using template:', {
     selectedTemplate,
-    templateDataKeys: Object.keys(templateData),
-    currentTemplateData: !!currentTemplateData,
-    templateData
+    templateName: templateData?.template?.name,
+    templateColors: templateData?.template?.colors,
+    isFallback
   });
-  
-  // If no template data, show a warning but still render (components will use fallbacks)
-  if (!currentTemplateData) {
-    console.warn('⚠️ Profile page: No template data available, components will use fallback styling');
-  }
 
   return (
     <RouteGuard allowedRoles={['employee']}>
@@ -257,15 +270,22 @@ export default function OfficersProfilePage() {
         title="Loan Officer Profile" 
         subtitle="Manage your professional profile and mortgage rates"
       >
+        {/* Refresh Button */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={() => {
+              console.log('🔄 Profile page: Manual refresh triggered');
+              refreshTemplate(selectedTemplate).catch(error => {
+                console.error('❌ Profile page: Error refreshing template:', error);
+              });
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
+          >
+            🔄 Refresh Data
+          </button>
+        </div>
+        
         <div className="min-h-screen bg-white">
-          {/* Template Selection Panel */}
-          <div className="fixed top-20 right-4 z-50">
-            <TemplateSelector 
-              onTemplateChange={handleTemplateChange}
-              className="w-80"
-            />
-          </div>
-
           {/* Unified Template Rendering with Suspense */}
           <Suspense fallback={<SkeletonLoader />}>
             {/* Unified Hero Section */}
@@ -274,6 +294,7 @@ export default function OfficersProfilePage() {
               phone={officerInfo.phone || undefined}
               email={officerInfo.email}
               template={selectedTemplate as 'template1' | 'template2'}
+              templateCustomization={templateData?.template}
             />
 
             {/* Main Content Area */}
@@ -286,13 +307,17 @@ export default function OfficersProfilePage() {
                     onTabChange={handleTabChange}
                     selectedTemplate={selectedTemplate as 'template1' | 'template2'}
                     className="w-full"
+                    templateCustomization={templateData?.template}
                   />
                 </div>
 
                 {/* Right Sidebar - Takes up 1/4 of the width on XL screens */}
                 <div className="xl:col-span-1">
                   <div className="sticky top-6 lg:top-8">
-                    <UnifiedRightSidebar template={selectedTemplate as 'template1' | 'template2'} />
+                    <UnifiedRightSidebar 
+                      template={selectedTemplate as 'template1' | 'template2'} 
+                      templateCustomization={templateData?.template}
+                    />
                   </div>
                 </div>
               </div>

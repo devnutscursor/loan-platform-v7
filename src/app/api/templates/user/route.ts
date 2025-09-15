@@ -6,7 +6,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// GET /api/templates/user - Get templates with user-specific settings
+// GET /api/templates/user - Get user's templates (both default and customized)
 export async function GET(request: NextRequest) {
   try {
     // Get the authorization header
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Get user's company information using Supabase client
+    // Get user's company information
     const { data: userCompanyData, error: userCompanyError } = await supabase
       .from('user_companies')
       .select(`
@@ -79,125 +79,71 @@ export async function GET(request: NextRequest) {
       userRole
     });
 
-    // Get user's page settings using Supabase client
-    const { data: userPageSettingsData, error: settingsError } = await supabase
-      .from('page_settings')
-      .select('*')
-      .eq('officer_id', user.id)
-      .limit(1);
-
-    if (settingsError) {
-      console.error('❌ Templates User API: Settings query error:', settingsError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch user settings' },
-        { status: 500 }
-      );
-    }
-
-    console.log('🔍 Templates User API: User page settings:', {
-      hasSettings: userPageSettingsData && userPageSettingsData.length > 0,
-      template: userPageSettingsData && userPageSettingsData.length > 0 ? userPageSettingsData[0].template : null,
-      isPublished: userPageSettingsData && userPageSettingsData.length > 0 ? userPageSettingsData[0].is_published : false
-    });
-
-    // Get all available templates using Supabase client
-    const { data: allTemplatesData, error: templatesError } = await supabase
+    // Get user's customized templates (userId = user.id, isDefault = false)
+    const { data: userTemplatesData, error: userTemplatesError } = await supabase
       .from('templates')
       .select('*')
+      .eq('user_id', user.id)
+      .eq('is_default', false)
       .eq('is_active', true);
 
-    if (templatesError) {
-      console.error('❌ Templates User API: Templates query error:', templatesError);
+    if (userTemplatesError) {
+      console.error('❌ Templates User API: User templates query error:', userTemplatesError);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch templates' },
+        { success: false, error: 'Failed to fetch user templates' },
         { status: 500 }
       );
     }
 
-    console.log('🔍 Templates User API: Available templates:', {
-      count: allTemplatesData?.length || 0,
-      templates: allTemplatesData?.map(t => ({ slug: t.slug, name: t.name })) || []
-    });
-
-    // Get the base template and merge with user settings
-    const { data: baseTemplateData, error: baseTemplateError } = await supabase
+    // Get default templates (isDefault = true, userId = null)
+    const { data: defaultTemplatesData, error: defaultTemplatesError } = await supabase
       .from('templates')
       .select('*')
-      .eq('slug', 'template1')
-      .limit(1);
+      .eq('is_default', true)
+      .is('user_id', null)
+      .eq('is_active', true);
 
-    if (baseTemplateError) {
-      console.error('❌ Templates User API: Base template query error:', baseTemplateError);
+    if (defaultTemplatesError) {
+      console.error('❌ Templates User API: Default templates query error:', defaultTemplatesError);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch base template' },
+        { success: false, error: 'Failed to fetch default templates' },
         { status: 500 }
       );
     }
 
-    let userTemplate = null;
-    if (baseTemplateData && baseTemplateData.length > 0 && userPageSettingsData && userPageSettingsData.length > 0) {
-      // Merge base template with user settings
-      const userSettings = userPageSettingsData[0];
-      
-      if (baseTemplateData[0]) {
-        userTemplate = {
-          ...baseTemplateData[0],
-          // Override template properties with user's custom settings
-          colors: {
-            ...(baseTemplateData[0].colors as any || {}),
-            ...((userSettings.settings as any)?.colors || {})
-          },
-          typography: {
-            ...(baseTemplateData[0].typography as any || {}),
-            ...((userSettings.settings as any)?.typography || {})
-          },
-          content: {
-            ...(baseTemplateData[0].content as any || {}),
-            ...((userSettings.settings as any)?.content || {})
-          },
-          layout: {
-            ...(baseTemplateData[0].layout as any || {}),
-            ...((userSettings.settings as any)?.layout || {})
-          },
-          advanced: {
-            ...(baseTemplateData[0].advanced as any || {}),
-            ...((userSettings.settings as any)?.advanced || {})
-          },
-          classes: {
-            ...(baseTemplateData[0].classes as any || {}),
-            ...((userSettings.settings as any)?.classes || {})
-          },
-          // Add metadata about user customization
-          isUserCustomized: true,
-          userSettingsId: userSettings.id,
-          lastUpdated: userSettings.updated_at,
-          isPublished: userSettings.is_published
-        };
-      }
-    }
+    console.log('🔍 Templates User API: Templates found:', {
+      userTemplatesCount: userTemplatesData?.length || 0,
+      defaultTemplatesCount: defaultTemplatesData?.length || 0,
+      userTemplates: userTemplatesData?.map(t => ({ slug: t.slug, name: t.name })) || [],
+      defaultTemplates: defaultTemplatesData?.map(t => ({ slug: t.slug, name: t.name })) || []
+    });
 
-    // Prepare response with both user template and all available templates
+    // Prepare response
     const response = {
       success: true,
       data: {
-        userTemplate, // User's customized template (null if no custom settings)
-        availableTemplates: allTemplatesData || [], // All available templates for selection
+        userTemplates: userTemplatesData || [], // User's customized templates
+        defaultTemplates: defaultTemplatesData || [], // Default templates available to all users
         userInfo: {
           userId: user.id,
           email: user.email,
           companyId,
           companyName,
           userRole,
-          hasCustomSettings: userPageSettingsData && userPageSettingsData.length > 0
+          hasCustomTemplates: (userTemplatesData?.length || 0) > 0
         }
       },
-      count: allTemplatesData?.length || 0
+      count: {
+        userTemplates: userTemplatesData?.length || 0,
+        defaultTemplates: defaultTemplatesData?.length || 0,
+        total: (userTemplatesData?.length || 0) + (defaultTemplatesData?.length || 0)
+      }
     };
 
     console.log('✅ Templates User API: Response prepared:', {
-      hasUserTemplate: !!userTemplate,
-      availableTemplatesCount: allTemplatesData?.length || 0,
-      userHasCustomSettings: userPageSettingsData && userPageSettingsData.length > 0
+      userTemplatesCount: userTemplatesData?.length || 0,
+      defaultTemplatesCount: defaultTemplatesData?.length || 0,
+      userHasCustomTemplates: (userTemplatesData?.length || 0) > 0
     });
 
     return NextResponse.json(response);
@@ -215,12 +161,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/templates/user - Save user's template selection and settings
+// POST /api/templates/user - Save user's template customization directly to templates table
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('🔄 Templates User API: POST request started at:', new Date().toISOString());
+  
   try {
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Templates User API: No authorization header');
       return NextResponse.json(
         { success: false, error: 'Authorization header required' },
         { status: 401 }
@@ -250,7 +200,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's company information using Supabase client
+    console.log('🔍 Templates User API: Save request:', {
+      templateSlug,
+      userId: user.id,
+      hasCustomSettings: !!customSettings,
+      isPublished,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('🔍 Templates User API: Custom settings details:', {
+      colors: customSettings?.colors,
+      typography: customSettings?.typography,
+      content: customSettings?.content,
+      layout: customSettings?.layout,
+      advanced: customSettings?.advanced,
+      classes: customSettings?.classes,
+      headerModifications: customSettings?.headerModifications,
+      bodyModifications: customSettings?.bodyModifications,
+      rightSidebarModifications: customSettings?.rightSidebarModifications
+    });
+
+    // Get user's company information
     const { data: userCompanyData, error: userCompanyError } = await supabase
       .from('user_companies')
       .select('company_id')
@@ -275,147 +245,190 @@ export async function POST(request: NextRequest) {
 
     const companyId = userCompanyData[0].company_id;
 
-    // Get the template using Supabase client
-    const { data: templateData, error: templateError } = await supabase
+    // Get the default template to use as base
+    const { data: defaultTemplateData, error: defaultTemplateError } = await supabase
       .from('templates')
       .select('*')
       .eq('slug', templateSlug)
+      .eq('is_default', true)
+      .is('user_id', null)
       .eq('is_active', true)
       .limit(1);
 
-    if (templateError) {
-      console.error('❌ Templates User API: Template query error:', templateError);
+    if (defaultTemplateError) {
+      console.error('❌ Templates User API: Default template query error:', defaultTemplateError);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch template' },
+        { success: false, error: 'Failed to fetch default template' },
         { status: 500 }
       );
     }
 
-    if (!templateData || templateData.length === 0) {
+    if (!defaultTemplateData || defaultTemplateData.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Template not found' },
+        { success: false, error: 'Default template not found' },
         { status: 404 }
       );
     }
 
-    const template = templateData[0];
+    const defaultTemplate = defaultTemplateData[0];
 
-    // Check if user already has page settings using Supabase client
-    const { data: existingSettingsData, error: existingSettingsError } = await supabase
-      .from('page_settings')
+    // Check if user already has a customized version of this template
+    const { data: existingUserTemplateData, error: existingTemplateError } = await supabase
+      .from('templates')
       .select('*')
-      .eq('officer_id', user.id)
+      .eq('slug', templateSlug)
+      .eq('user_id', user.id)
+      .eq('is_default', false)
+      .eq('is_active', true)
       .limit(1);
 
-    if (existingSettingsError) {
-      console.error('❌ Templates User API: Existing settings query error:', existingSettingsError);
+    if (existingTemplateError) {
+      console.error('❌ Templates User API: Existing template query error:', existingTemplateError);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch existing settings' },
+        { success: false, error: 'Failed to check existing template' },
         { status: 500 }
       );
     }
 
-    let pageSettingsResult;
+    let result;
+    const now = new Date().toISOString();
 
-    // Step 1: Save/Update pageSettings table using Supabase client
-    if (existingSettingsData && existingSettingsData.length > 0) {
-      // Update existing settings
+    if (existingUserTemplateData && existingUserTemplateData.length > 0) {
+      // Update existing user template
       const { data: updateResult, error: updateError } = await supabase
-        .from('page_settings')
+        .from('templates')
         .update({
-          template_id: template.id,
-          template: templateSlug,
-          settings: customSettings || {},
-          is_published: isPublished ?? false,
-          published_at: isPublished ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString()
+          // Merge default template with custom settings
+          colors: {
+            ...(defaultTemplate.colors as any || {}),
+            ...(customSettings?.colors || {})
+          },
+          typography: {
+            ...(defaultTemplate.typography as any || {}),
+            ...(customSettings?.typography || {})
+          },
+          content: {
+            ...(defaultTemplate.content as any || {}),
+            ...(customSettings?.content || {})
+          },
+          layout: {
+            ...(defaultTemplate.layout as any || {}),
+            ...(customSettings?.layout || {})
+          },
+          advanced: {
+            ...(defaultTemplate.advanced as any || {}),
+            ...(customSettings?.advanced || {})
+          },
+          classes: {
+            ...(defaultTemplate.classes as any || {}),
+            ...(customSettings?.classes || {})
+          },
+          // Add the new modification fields (using correct database column names)
+          header_modifications: customSettings?.headerModifications || {},
+          body_modifications: customSettings?.bodyModifications || {},
+          right_sidebar_modifications: customSettings?.rightSidebarModifications || {},
+          updated_at: now
         })
-        .eq('officer_id', user.id)
+        .eq('id', existingUserTemplateData[0].id)
         .select();
 
       if (updateError) {
         console.error('❌ Templates User API: Update error:', updateError);
         return NextResponse.json(
-          { success: false, error: 'Failed to update settings' },
+          { success: false, error: 'Failed to update template' },
           { status: 500 }
         );
       }
 
-      pageSettingsResult = updateResult;
+      result = updateResult;
     } else {
-      // Create new settings
+      // Create new user template
       const { data: insertResult, error: insertError } = await supabase
-        .from('page_settings')
+        .from('templates')
         .insert({
-          company_id: companyId,
-          officer_id: user.id,
-          template_id: template.id,
-          template: templateSlug,
-          settings: customSettings || {},
-          is_published: isPublished ?? false,
-          published_at: isPublished ? new Date().toISOString() : null
+          name: `${defaultTemplate.name} (Customized)`,
+          slug: templateSlug,
+          description: defaultTemplate.description,
+          preview_image: defaultTemplate.preview_image,
+          is_active: true,
+          is_premium: defaultTemplate.is_premium,
+          is_default: false,
+          user_id: user.id,
+          // Merge default template with custom settings
+          colors: {
+            ...(defaultTemplate.colors as any || {}),
+            ...(customSettings?.colors || {})
+          },
+          typography: {
+            ...(defaultTemplate.typography as any || {}),
+            ...(customSettings?.typography || {})
+          },
+          content: {
+            ...(defaultTemplate.content as any || {}),
+            ...(customSettings?.content || {})
+          },
+          layout: {
+            ...(defaultTemplate.layout as any || {}),
+            ...(customSettings?.layout || {})
+          },
+          advanced: {
+            ...(defaultTemplate.advanced as any || {}),
+            ...(customSettings?.advanced || {})
+          },
+          classes: {
+            ...(defaultTemplate.classes as any || {}),
+            ...(customSettings?.classes || {})
+          },
+          // Add the new modification fields (using correct database column names)
+          header_modifications: customSettings?.headerModifications || {},
+          body_modifications: customSettings?.bodyModifications || {},
+          right_sidebar_modifications: customSettings?.rightSidebarModifications || {}
         })
         .select();
 
       if (insertError) {
         console.error('❌ Templates User API: Insert error:', insertError);
         return NextResponse.json(
-          { success: false, error: 'Failed to create settings' },
+          { success: false, error: 'Failed to create template' },
           { status: 500 }
         );
       }
 
-      pageSettingsResult = insertResult;
+      result = insertResult;
     }
 
-    // Step 2: User customizations are stored in pageSettings only
-    // Base templates remain unchanged - customizations are merged at fetch time
-
-    // Step 3: Create version history in pageSettingsVersions table using Supabase client
-    const versionNumber = `v${Date.now()}`;
-    const { data: versionResult, error: versionError } = await supabase
-      .from('page_settings_versions')
-      .insert({
-        page_settings_id: pageSettingsResult[0].id,
-        company_id: companyId,
-        officer_id: user.id,
-        template: templateSlug,
-        settings: customSettings || {},
-        version: versionNumber,
-        is_auto_generated: false
-      })
-      .select();
-
-    if (versionError) {
-      console.error('❌ Templates User API: Version creation error:', versionError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to create version history' },
-        { status: 500 }
-      );
-    }
-
-    console.log('✅ Templates User API: Complete save successful:', {
-      pageSettingsId: pageSettingsResult[0].id,
+    const endTime = Date.now();
+    console.log('✅ Templates User API: Template saved successfully in', endTime - startTime, 'ms:', {
       templateSlug,
-      versionNumber,
-      isPublished: isPublished ?? false
+      userId: user.id,
+      templateId: result[0].id,
+      isUpdate: existingUserTemplateData && existingUserTemplateData.length > 0
     });
 
+    // Invalidate server-side cache for this user's template
+    // Note: This is a simple approach - in production you might want to use Redis or similar
+    const cacheKey = `${templateSlug}:${user.id}`;
+    if (typeof global !== 'undefined' && (global as any).templateCache) {
+      (global as any).templateCache.delete(cacheKey);
+      console.log('🗑️ Templates User API: Invalidated server cache for:', cacheKey);
+    }
+
+    console.log('🔄 Templates User API: Sending response...');
     return NextResponse.json({
       success: true,
       data: {
-        pageSettings: pageSettingsResult[0],
-        version: versionResult[0]
+        template: result[0],
+        isUpdate: existingUserTemplateData && existingUserTemplateData.length > 0
       },
-      message: 'Template settings saved successfully with version history'
+      message: 'Template saved successfully'
     });
 
   } catch (error) {
-    console.error('Error saving template settings:', error);
+    console.error('Error saving template:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to save template settings',
+        error: 'Failed to save template',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

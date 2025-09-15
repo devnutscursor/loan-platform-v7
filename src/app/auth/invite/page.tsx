@@ -198,6 +198,37 @@ function InvitePageContent() {
         if (companyError) {
           throw companyError;
         }
+
+        // Create personal templates for the loan officer when they activate their account
+        try {
+          console.log('🎨 Creating personal templates for activated loan officer:', user.id);
+          const firstName = user.user_metadata?.first_name || '';
+          const lastName = user.user_metadata?.last_name || '';
+          
+          // Call API to create personal templates
+          const response = await fetch('/api/templates/create-personal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              firstName,
+              lastName
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Personal templates created successfully:', result.data.templatesCreated);
+          } else {
+            console.error('❌ Error creating personal templates:', await response.text());
+          }
+        } catch (templateError) {
+          console.error('❌ Error creating personal templates:', templateError);
+          // Don't fail the activation process if template creation fails
+        }
       } else {
         // Update company status to accepted and activate for company admin
         const { error: companyError } = await supabase
