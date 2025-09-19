@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
-import { leads, companies, users } from '@/lib/db/schema';
+import { db, leads, companies, users } from '@/lib/db';
 import { eq, desc } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
