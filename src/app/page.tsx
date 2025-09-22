@@ -39,7 +39,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 py-20">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Build Stunning Landing Pages
@@ -144,7 +144,7 @@ export default function HomePage() {
               Building the future of loan officer marketing
             </p>
             <div className="border-t border-gray-800 pt-8">
-              <p className="text-gray-400">
+              <p className="text-white">
                 © 2024 Loan Officer Platform. All rights reserved.
               </p>
             </div>

@@ -140,19 +140,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('purchase-credit-score')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.homePurchase size={20} color={colors.background} />
@@ -160,19 +151,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('refinance-veteran')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.homeRefinance size={20} color={colors.background} />
@@ -212,19 +194,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('fha-loan')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.rates size={20} color={colors.background} />
@@ -232,19 +205,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-down-payment-low')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.calculators size={20} color={colors.background} />
@@ -252,19 +216,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-down-payment-mid')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.trendingUp size={20} color={colors.background} />
@@ -272,19 +227,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-military')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.star size={20} color={colors.background} />
@@ -324,19 +270,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('fha-loan')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.calculators size={20} color={colors.background} />
@@ -344,19 +281,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('dpa-loan')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.calculators size={20} color={colors.background} />
@@ -389,48 +317,30 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('dpa-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Less than 3%
               </button>
               <button 
                 onClick={() => handleStepChange('fha-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 3-5%
               </button>
               <button 
                 onClick={() => handleStepChange('conventional-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 5% or more
@@ -469,19 +379,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('va-loan')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.star size={20} color={colors.background} />
@@ -489,19 +390,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-rural')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.cancel size={20} color={colors.background} />
@@ -534,32 +426,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('usda-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Yes
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-construction')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 No
@@ -591,32 +471,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('construction-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Yes
               </button>
               <button 
                 onClick={() => handleStepChange('purchase-selling-home')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 No
@@ -648,32 +516,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('bridge-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Yes
               </button>
               <button 
                 onClick={() => handleStepChange('conventional-loan')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 No
@@ -712,19 +568,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('refinance-veteran-purpose')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.star size={20} color={colors.background} />
@@ -732,19 +579,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
               </button>
               <button 
                 onClick={() => handleStepChange('refinance-non-veteran-purpose')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.cancel size={20} color={colors.background} />
@@ -777,32 +615,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('refinance-veteran-equity')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Access Equity
               </button>
               <button 
                 onClick={() => handleStepChange('va-irrrl')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Lower Rate
@@ -834,32 +660,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('heloc')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Open Line of Credit
               </button>
               <button 
                 onClick={() => handleStepChange('cash-out-refinance')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Cash Out Equity
@@ -891,32 +705,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('refinance-non-veteran-equity')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Access Equity
               </button>
               <button 
                 onClick={() => handleStepChange('refinance-lower-rate')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Lower Rate
@@ -948,32 +750,20 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('heloc')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Open Line of Credit
               </button>
               <button 
                 onClick={() => handleStepChange('cash-out-refinance')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Cash Out Equity
@@ -1005,64 +795,40 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <button 
                 onClick={() => handleStepChange('fha-streamline')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 FHA
               </button>
               <button 
                 onClick={() => handleStepChange('usda-streamline')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 USDA
               </button>
               <button 
                 onClick={() => handleStepChange('conventional-streamline')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Conventional
               </button>
               <button 
                 onClick={() => handleStepChange('rate-term-refinance')}
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 Other/Not Sure
@@ -1106,20 +872,10 @@ function Questionnaire({ template = 'template1' }: QuestionnaireProps) {
             }}>
               <Link 
                 href="/?loanType=Conventional" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                style={{
+                  backgroundColor:colors.primary,
+                  color: colors.background,
+                  borderColor: colors.primary
                 }}
               >
                 <icons.applyNow size={20} color={colors.background} />

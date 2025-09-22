@@ -477,7 +477,6 @@ export default function CustomizerPage() {
     <RouteGuard allowedRoles={['employee']}>
       <DashboardLayout 
         title="Template Customizer" 
-        subtitle="Customize your loan officer profile template in real-time"
       >
         <div className="h-screen flex flex-col bg-gray-50">
           {/* Header Controls */}
@@ -653,9 +652,9 @@ export default function CustomizerPage() {
 
             {/* Center - Live Preview (Full Width) */}
             <div className="flex-1 bg-gray-100 overflow-hidden">
-              <div className="h-full overflow-auto">
+              <div className="h-full overflow-auto overflow-x-auto">
                 <div className="p-6">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full w-full min-w-max">
                     <TemplateProvider
                       templateData={mergedTemplate}
                       isCustomizerMode={true}
