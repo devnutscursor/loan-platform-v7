@@ -30,13 +30,13 @@ async function updateToBooleanSelection() {
     
     // Update existing templates - set template1 as selected by default
     console.log('🔄 Updating existing templates...');
-    const updateResult = await db.execute(sql`
+    await db.execute(sql`
       UPDATE templates 
       SET is_selected = true 
       WHERE slug = 'template1' AND is_selected IS NULL
     `);
     
-    console.log(`✅ Updated ${updateResult.rowCount} template1 rows to be selected`);
+    console.log(`✅ Updated template1 rows to be selected`);
     
     // Create an index for better performance
     console.log('📊 Creating index...');

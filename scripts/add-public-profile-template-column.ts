@@ -15,13 +15,13 @@ async function addPublicProfileTemplateColumn() {
     
     // Update all existing templates to have template1 as default
     console.log('🔄 Updating existing templates...');
-    const updateResult = await db.execute(sql`
+    await db.execute(sql`
       UPDATE templates 
       SET public_profile_template = 'template1' 
       WHERE public_profile_template IS NULL
     `);
     
-    console.log(`✅ Updated ${updateResult.rowCount} existing templates`);
+    console.log(`✅ Updated existing templates`);
     
     // Add a check constraint to ensure only valid values
     console.log('🔒 Adding check constraint...');
