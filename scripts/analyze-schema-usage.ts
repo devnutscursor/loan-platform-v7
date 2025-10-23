@@ -166,3 +166,4 @@ console.log(`- Used columns: ${usedColumns.length}`);
 console.log(`- Unused columns: ${unusedColumns.length}`);
 
 console.log('\n✨ Analysis complete!');
+

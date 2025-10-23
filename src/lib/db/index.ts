@@ -9,15 +9,17 @@ if (!process.env.DATABASE_URL) {
 // Create the connection
 const connectionString = process.env.DATABASE_URL;
 const client = postgres(connectionString, {
-  max: 20,
+  max: 10, // Reduced for Vercel limits
   idle_timeout: 20,
-  connect_timeout: 30, // Increased timeout for Vercel
+  connect_timeout: 60, // Increased timeout for production
   max_lifetime: 60 * 30,
-  ssl: 'require', // Force SSL for Supabase
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
   prepare: false, // Disable prepared statements for better compatibility
   transform: {
     undefined: null, // Transform undefined to null
   },
+  onnotice: () => {}, // Suppress notices in production
+  debug: process.env.NODE_ENV === 'development',
 });
 
 // Create the database instance
