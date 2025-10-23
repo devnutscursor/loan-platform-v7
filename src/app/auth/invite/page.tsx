@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import Icon from '@/components/ui/Icon';
+import { Input } from '@/components/ui/Input';
+import { colors, spacing, borderRadius, shadows, typography } from '@/theme/theme';
+import { LiquidChromeBackground } from '@/components/ui/LiquidChromeBackground';
 
-export default function InvitePage() {
+function InvitePageContent() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,21 +23,39 @@ export default function InvitePage() {
   const router = useRouter();
   
   const companyId = searchParams.get('company');
+  const isOfficerInvite = searchParams.get('officer') === 'true';
 
   useEffect(() => {
-    // Check if user is already logged in from invite
+    // Listen for auth state changes to handle invite flow
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+        setUser(session.user);
+        await fetchCompanyInfo(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setError('Please check your email and click the invite link to continue.');
+      }
+    });
+
+    // Check if user is already logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
-        // Fetch company info
         await fetchCompanyInfo(user);
       } else {
-        setError('Please check your email and click the invite link to continue.');
+        // If no user is logged in, show the password creation form
+        // This handles the case where someone clicks an invite link
+        setUser({ email: 'invite@example.com' } as any); // Temporary user object
+        await fetchCompanyInfo(null);
       }
     };
 
     checkUser();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchCompanyInfo = async (currentUser: any) => {
@@ -41,33 +65,74 @@ export default function InvitePage() {
     }
 
     try {
-      const { data: company, error } = await supabase
-        .from('companies')
-        .select('name, admin_email, invite_status, invite_expires_at')
-        .eq('id', companyId)
-        .single();
+      if (isOfficerInvite) {
+        // For loan officer invites, check if the company exists and get its info
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('name, admin_email')
+          .eq('id', companyId)
+          .single();
 
-      if (error || !company) {
-        setError('Company not found or invite is invalid.');
-        return;
+        if (companyError || !company) {
+          setError('Company not found or invite is invalid.');
+          return;
+        }
+
+        // If user is logged in, check if they have access to this company
+        if (currentUser) {
+          const { data: userCompany, error: userError } = await supabase
+            .from('user_companies')
+            .select('is_active')
+            .eq('user_id', currentUser.id)
+            .eq('company_id', companyId)
+            .eq('role', 'employee')
+            .single();
+
+          if (userError || !userCompany) {
+            setError('You are not authorized to access this company.');
+            return;
+          }
+
+          if (userCompany.is_active) {
+            setError('You have already completed your setup. Please login to access your dashboard.');
+            return;
+          }
+        }
+
+        setCompanyInfo({
+          name: company.name,
+          email: company.admin_email
+        });
+      } else {
+        // For company admin invites, check companies table
+        const { data: company, error } = await supabase
+          .from('companies')
+          .select('name, admin_email, invite_status, invite_expires_at')
+          .eq('id', companyId)
+          .single();
+
+        if (error || !company) {
+          setError('Company not found or invite is invalid.');
+          return;
+        }
+
+        if (company.invite_status === 'accepted') {
+          setSuccess('This invite has already been accepted. You can login now.');
+          setTimeout(() => router.push('/auth'), 3000);
+          return;
+        }
+
+        if (company.invite_status === 'expired' || 
+            (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
+          setError('This invite has expired. Please contact your administrator for a new invite.');
+          return;
+        }
+
+        setCompanyInfo({
+          name: company.name,
+          email: company.admin_email || (currentUser ? currentUser.email : '')
+        });
       }
-
-      if (company.invite_status === 'accepted') {
-        setSuccess('This invite has already been accepted. You can login now.');
-        setTimeout(() => router.push('/auth'), 3000);
-        return;
-      }
-
-      if (company.invite_status === 'expired' || 
-          (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
-        setError('This invite has expired. Please contact your administrator for a new invite.');
-        return;
-      }
-
-      setCompanyInfo({
-        name: company.name,
-        email: company.admin_email || currentUser.email
-      });
     } catch (error) {
       setError('Failed to load company information.');
     }
@@ -88,14 +153,23 @@ export default function InvitePage() {
       return;
     }
 
-    if (!user) {
-      setError('You must be logged in to accept this invite.');
-      return;
-    }
-
     setLoading(true);
 
     try {
+      // For invite links, we need to handle the authentication differently
+      if (!user || user.email === 'invite@example.com') {
+        // This is an invite link - we need to get the user from the invite
+        const { data: { user: currentUser }, error: getUserError } = await supabase.auth.getUser();
+        
+        if (getUserError || !currentUser) {
+          setError('Please click the invite link from your email to continue.');
+          setLoading(false);
+          return;
+        }
+        
+        setUser(currentUser);
+      }
+
       // Update user password
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
@@ -105,47 +179,117 @@ export default function InvitePage() {
         throw updateError;
       }
 
-      // Update company status to accepted and activate
-      const { error: companyError } = await supabase
-        .from('companies')
-        .update({
-          invite_status: 'accepted',
-          admin_email_verified: true,
-          admin_user_id: user.id,
-          is_active: true, // Activate company when invite is accepted
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', companyId);
+      if (isOfficerInvite) {
+        // Update user and user-company to active for loan officer
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ is_active: true })
+          .eq('id', user.id);
 
-      if (companyError) {
-        throw companyError;
+        if (userError) {
+          throw userError;
+        }
+
+        // Update user_companies entry to active
+        const { error: companyError } = await supabase
+          .from('user_companies')
+          .update({ is_active: true })
+          .eq('user_id', user.id)
+          .eq('company_id', companyId);
+
+        if (companyError) {
+          console.error('❌ Error updating user_companies:', companyError);
+          throw companyError;
+        }
+
+        console.log('✅ User-company relationship activated successfully');
+
+        // Create personal templates for the loan officer when they activate their account
+        try {
+          console.log('🎨 Creating personal templates for activated loan officer:', user.id);
+          const firstName = user.user_metadata?.first_name || '';
+          const lastName = user.user_metadata?.last_name || '';
+          
+          // Validate user ID format
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          if (!uuidRegex.test(user.id)) {
+            throw new Error(`Invalid user ID format: ${user.id}`);
+          }
+          
+          // Call API to create personal templates
+          const response = await fetch('/api/templates/create-personal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              firstName,
+              lastName
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Personal templates created successfully:', result.data.templatesCreated);
+          } else {
+            const errorText = await response.text();
+            console.error('❌ Error creating personal templates:', errorText);
+            // Don't fail the activation process if template creation fails
+          }
+        } catch (templateError) {
+          console.error('❌ Error creating personal templates:', templateError);
+          // Don't fail the activation process if template creation fails
+        }
+      } else {
+        // Update company status to accepted and activate for company admin
+        const { error: companyError } = await supabase
+          .from('companies')
+          .update({
+            invite_status: 'accepted',
+            admin_email_verified: true,
+            admin_user_id: user.id,
+            is_active: true, // Activate company when invite is accepted
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', companyId);
+
+        if (companyError) {
+          throw companyError;
+        }
       }
 
-      // Add user to users table
+      // Add user to users table with correct role
       await supabase
         .from('users')
         .upsert({
           id: user.id,
           email: user.email!,
-          first_name: '',
-          last_name: '',
-          role: 'company_admin',
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          role: isOfficerInvite ? 'employee' : 'company_admin',
           is_active: true
         });
 
-      // Link user to company
+      // Link user to company with correct role
       await supabase
         .from('user_companies')
         .upsert({
           user_id: user.id,
           company_id: companyId,
-          role: 'admin'
+          role: isOfficerInvite ? 'employee' : 'admin',
+          is_active: true
         });
 
       setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard...');
       
       setTimeout(() => {
-        router.push('/admin/employees');
+        if (isOfficerInvite) {
+          router.push('/officers/dashboard');
+        } else {
+          router.push('/admin/dashboard');
+        }
       }, 2000);
 
     } catch (error) {
@@ -156,130 +300,268 @@ export default function InvitePage() {
     }
   };
 
-  if (!user) {
+  if (!user || user.email === 'invite@example.com') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+        <LiquidChromeBackground />
+        
+        {/* Header */}
+        <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#005b7c] to-[#01bcc6] bg-clip-text text-transparent">
+                  Loan Officer Platform
+                </h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => window.location.href = '/auth'}
+                  className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
+                >
+                  Back to Login
+                </button>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
-            <p className="text-gray-600 mb-4">Please check your email and click the invite link to continue with the setup.</p>
-            <p className="text-sm text-gray-500">If you don't see the email, check your spam folder.</p>
           </div>
-        </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">Check Your Email</h2>
+                <p className="text-[#005b7c]/80 text-lg mb-6">Please check your email and click the invite link to continue with the setup.</p>
+                <p className="text-sm text-[#005b7c]/60 mb-6">If you don't see the email, check your spam folder.</p>
+                <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    <strong>Note:</strong> Make sure to click the invite link from your email. The link will automatically sign you in.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   if (!companyId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+        <LiquidChromeBackground />
+        
+        {/* Header */}
+        <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#005b7c] to-[#01bcc6] bg-clip-text text-transparent">
+                  Loan Officer Platform
+                </h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => window.location.href = '/auth'}
+                  className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
+                >
+                  Back to Login
+                </button>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invite Link</h1>
-            <p className="text-gray-600">This invite link is invalid or missing required information.</p>
           </div>
-        </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">Invalid Invite Link</h2>
+                <p className="text-[#005b7c]/80 text-lg">This invite link is invalid or missing required information.</p>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+      <LiquidChromeBackground />
+      
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#005b7c] to-[#01bcc6] bg-clip-text text-transparent">
+                Loan Officer Platform
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => window.location.href = '/auth'}
+                className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
+              >
+                Back to Login
+              </button>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Setup</h1>
-          <p className="text-gray-600">Create a password to access your company dashboard.</p>
-          {companyInfo && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700">
-                <strong>Company:</strong> {companyInfo.name}<br />
-                <strong>Email:</strong> {companyInfo.email}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          {/* Setup Card */}
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-4xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">
+                Complete Your Setup
+              </h2>
+              <p className="text-[#005b7c]/80 text-lg">
+                {isOfficerInvite 
+                  ? 'Create a password to access your loan officer dashboard.' 
+                  : 'Create a password to access your company dashboard.'
+                }
+              </p>
+              {companyInfo && (
+                <div className="mt-6 p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-[#01bcc6]/20">
+                  <p className="text-[#005b7c] font-medium">
+                    <strong>Company:</strong> {companyInfo.name}<br />
+                    <strong>Email:</strong> {companyInfo.email}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="mb-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-red-700 font-medium">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-6 bg-green-50 border-2 border-green-200 p-4 rounded-xl shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-green-700 font-medium">{success}</p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-[#005b7c] mb-3">
+                  Create Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-[#01bcc6]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
+                    placeholder="Enter your password"
+                    required
+                    minLength={8}
+                    disabled={loading}
+                  />
+                </div>
+                <p className="text-xs text-[#005b7c]/60 mt-2">Password must be at least 8 characters long</p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#005b7c] mb-3">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-[#01bcc6]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
+                    placeholder="Confirm your password"
+                    required
+                    minLength={8}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-[#01bcc6] to-[#008eab] hover:from-[#008eab] hover:to-[#005b7c] text-white py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {loading ? 'Setting up account...' : 'Complete Setup & Go to Dashboard'}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-[#005b7c]/70">
+                Need help?{' '}
+                <a href="mailto:support@loanplatform.com" className="text-[#01bcc6] hover:text-[#008eab] font-medium transition-colors duration-200">
+                  Contact Support
+                </a>
               </p>
             </div>
-          )}
+          </div>
         </div>
+      </main>
+    </div>
+  );
+}
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700 text-sm">{success}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Create Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              placeholder="Enter your password"
-              required
-              minLength={8}
-              disabled={loading}
-            />
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters long</p>
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              placeholder="Confirm your password"
-              required
-              minLength={8}
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-pink-600 text-white py-3 px-6 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {loading ? 'Setting up account...' : 'Complete Setup & Go to Dashboard'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Need help?{' '}
-            <a href="mailto:support@loanplatform.com" className="text-pink-600 hover:underline">
-              Contact Support
-            </a>
-          </p>
+export default function InvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+        <LiquidChromeBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#01bcc6]"></div>
         </div>
       </div>
-    </div>
+    }>
+      <InvitePageContent />
+    </Suspense>
   );
 }
