@@ -432,36 +432,60 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
     {
       key: 'status',
       title: 'Status',
-      dataIndex: 'isActive',
+      dataIndex: 'inviteStatus',
       render: (value, record) => {
+        const status = value || record.inviteStatus || 'pending';
         const isDeactivated = record.deactivated === true;
+        const expiresAt = record.inviteExpiresAt;
 
-        // If deactivated, show deactivated status
+        // If deactivated, show deactivated status regardless of invite status
         if (isDeactivated) {
           return (
-            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-              <Icon name="error" className="w-3 h-3 mr-1" />
-              Deactivated
-            </span>
+            <div>
+              <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                <Icon name="error" className="w-3 h-3 mr-1" />
+                Deactivated
+              </span>
+            </div>
           );
         }
 
         return (
-          <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
-            value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-          }`}>
-            {value ? (
-              <>
-                <Icon name="checkCircle" className="w-3 h-3 mr-1" />
-                Active
-              </>
-            ) : (
-              <>
-                <Icon name="clock" className="w-3 h-3 mr-1" />
-                Inactive
-              </>
+          <div>
+            <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+              status === 'accepted' ? 'bg-green-100 text-green-800' :
+              status === 'sent' ? 'bg-blue-100 text-blue-800' :
+              status === 'expired' ? 'bg-red-100 text-red-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              {status === 'accepted' ? (
+                <>
+                  <Icon name="checkCircle" className="w-3 h-3 mr-1" />
+                  Active
+                </>
+              ) : status === 'sent' ? (
+                <>
+                  <Icon name="mail" className="w-3 h-3 mr-1" />
+                  Invite Sent
+                </>
+              ) : status === 'expired' ? (
+                <>
+                  <Icon name="clock" className="w-3 h-3 mr-1" />
+                  Expired
+                </>
+              ) : (
+                <>
+                  <Icon name="clock" className="w-3 h-3 mr-1" />
+                  Pending
+                </>
+              )}
+            </span>
+            {status === 'sent' && expiresAt && (
+              <div className="text-xs text-gray-500 mt-1">
+                Expires: {new Date(expiresAt).toLocaleString()}
+              </div>
             )}
-          </span>
+          </div>
         );
       },
     },

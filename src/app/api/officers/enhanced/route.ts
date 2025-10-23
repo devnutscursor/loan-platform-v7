@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     console.log(`🔄 Fetching enhanced officers data for company: ${companyId}`);
 
-    // Get officers with their basic info
+    // Get officers with their basic info (including pending invites)
     const { data: officersData, error: officersError } = await supabase
       .from('user_companies')
       .select(`
@@ -33,12 +33,14 @@ export async function GET(req: NextRequest) {
           first_name,
           last_name,
           nmls_number,
-          is_active
+          is_active,
+          invite_status,
+          invite_sent_at,
+          invite_expires_at
         )
       `)
       .eq('company_id', companyId)
-      .eq('role', 'employee')
-      .eq('is_active', true);
+      .eq('role', 'employee');
 
     if (officersError) {
       console.error('❌ Error fetching officers:', officersError);
@@ -125,6 +127,9 @@ export async function GET(req: NextRequest) {
         lastName: user.last_name || '',
         nmlsNumber: user.nmls_number || null,
         isActive: user.is_active && officerCompany.is_active,
+        inviteStatus: user.invite_status || null,
+        inviteSentAt: user.invite_sent_at || null,
+        inviteExpiresAt: user.invite_expires_at || null,
         createdAt: officerCompany.joined_at || user.created_at,
         totalLeads: leadsCount[officerId] || 0,
         hasPublicLink: hasPublicLink[officerId] || false,
