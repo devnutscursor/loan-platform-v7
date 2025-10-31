@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase/client';
 import { redisCache } from '@/lib/redis';
@@ -786,9 +786,12 @@ export function useUnifiedTemplates() {
 
 // Hook for getting a specific template (with fallback)
 export function useTemplate(slug: string) {
-  const { getTemplate, isLoading, isInitialized } = useUnifiedTemplates();
+  const { getTemplate, isLoading, isInitialized, templates } = useUnifiedTemplates();
   
-  const templateData = getTemplate(slug);
+  // Use slug and templates as dependencies to ensure we re-evaluate when slug changes or templates update
+  const templateData = useMemo(() => {
+    return getTemplate(slug);
+  }, [getTemplate, slug, templates]);
   
   // Provide fallback template data
   const fallbackTemplate: TemplateData = {

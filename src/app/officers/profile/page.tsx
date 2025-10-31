@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, lazy, Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
@@ -76,11 +77,46 @@ SkeletonLoader.displayName = 'SkeletonLoader';
 
 export default function OfficersProfilePage() {
   const { user, userRole, companyId, loading: authLoading } = useAuth();
+  const pathname = usePathname();
   const { selectedTemplate, setSelectedTemplate, isLoading: templateSelectionLoading } = useTemplateSelection();
   const { templateData, isLoading: templateLoading, isFallback } = useTemplate(selectedTemplate);
   // Avoid noisy console when template fallback is expected briefly
   const templateReady = !!templateData?.template && !isFallback && !templateLoading;
   const { refreshTemplate } = useGlobalTemplates();
+  
+  // Track the last pathname to detect navigation to this page
+  const lastPathnameRef = React.useRef<string | null>(null);
+  
+  // Ensure template data is fetched when navigating to this page
+  // This ensures fresh template data when navigating from other routes
+  React.useEffect(() => {
+    if (selectedTemplate && user && pathname === '/officers/profile') {
+      const isNavigatingToThisPage = lastPathnameRef.current !== pathname;
+      
+      if (isNavigatingToThisPage) {
+        // Navigated to this page - refresh template to ensure fresh data
+        console.log('🔄 Profile page: Navigation detected, refreshing template:', selectedTemplate);
+        refreshTemplate(selectedTemplate).catch((error) => {
+          console.error('❌ Error refreshing template:', error);
+        });
+        lastPathnameRef.current = pathname;
+      }
+    }
+  }, [pathname, selectedTemplate, user, refreshTemplate]);
+  
+  // Ensure template is refreshed when selectedTemplate changes (template dropdown)
+  React.useEffect(() => {
+    if (selectedTemplate && user && lastPathnameRef.current === pathname) {
+      // Only run if we're already on this page (not during initial navigation)
+      const currentTemplate = templateData?.template;
+      if (!currentTemplate || currentTemplate.slug !== selectedTemplate) {
+        console.log('🔄 Profile page: Template selection changed, refreshing:', selectedTemplate);
+        refreshTemplate(selectedTemplate).catch((error) => {
+          console.error('❌ Error refreshing template:', error);
+        });
+      }
+    }
+  }, [selectedTemplate, refreshTemplate, user, templateData?.template?.slug, pathname]);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('todays-rates');
   
@@ -378,6 +414,9 @@ export default function OfficersProfilePage() {
         
         // Also update the global template selection for consistency
         setSelectedTemplate(templateSlug);
+        
+        // Explicitly refresh the template to ensure colors update immediately
+        await refreshTemplate(templateSlug);
       } else {
         const errorResult = await response.json();
         console.error('❌ Failed to update public profile template:', errorResult);
