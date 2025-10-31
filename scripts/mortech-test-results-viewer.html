@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortech API Test Results Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #01bcc6 0%, #008eab 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .test-run-selector {
+            margin-left: auto;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #01bcc6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background: #e9ecef;
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            opacity: 0.5;
+            font-size: 0.75rem;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 15px 12px;
+            font-size: 0.875rem;
+            color: #212529;
+            vertical-align: top;
+        }
+
+        .test-name {
+            font-weight: 600;
+            color: #01bcc6;
+        }
+
+        .test-description {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .params {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .params .param-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+
+        .params .param-label {
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .rate {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #01bcc6;
+        }
+
+        .apr {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .monthly-payment {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .quote-count {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e7f5f5;
+            color: #01bcc6;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .no-quotes {
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        .quotes-detail {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+        }
+
+        .quote-item {
+            padding: 8px;
+            margin-bottom: 4px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #01bcc6;
+        }
+
+        .quote-item-header {
+            font-weight: 600;
+            color: #01bcc6;
+            margin-bottom: 4px;
+        }
+
+        .quote-item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .loading {
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .error {
+            padding: 20px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            margin: 20px;
+            border-radius: 4px;
+            color: #856404;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #01bcc6;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        .expand-btn:hover {
+            color: #008eab;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Mortech API Test Results Viewer</h1>
+            <p>Comprehensive view of all test scenarios and their results</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="testRunSelect">Test Run:</label>
+                <select id="testRunSelect" class="test-run-selector">
+                    <option value="">Select test run...</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="searchInput">Search:</label>
+                <input type="text" id="searchInput" placeholder="Search tests...">
+            </div>
+            <div class="control-group">
+                <label for="statusFilter">Status:</label>
+                <select id="statusFilter">
+                    <option value="">All</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Total Tests</h3>
+                <div class="value" id="totalTests">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Successful</h3>
+                <div class="value" id="successfulTests">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Failed</h3>
+                <div class="value" id="failedTests">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Quotes</h3>
+                <div class="value" id="totalQuotes">-</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name">Test Name</th>
+                        <th class="sortable" data-sort="description">Description</th>
+                        <th>Parameters</th>
+                        <th class="sortable" data-sort="quoteCount">Quotes</th>
+                        <th class="sortable" data-sort="rate">Rate %</th>
+                        <th class="sortable" data-sort="apr">APR %</th>
+                        <th class="sortable" data-sort="monthlyPayment">Monthly Payment</th>
+                        <th>All Quotes</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <tr>
+                        <td colspan="8" class="loading">Loading test results...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let filteredResults = [];
+        let currentSort = { column: null, direction: 'asc' };
+
+        let testRuns = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await discoverTestRuns();
+            setupEventListeners();
+        });
+
+        async function discoverTestRuns() {
+            const select = document.getElementById('testRunSelect');
+            select.innerHTML = '<option value="">Loading test runs...</option>';
+            
+            try {
+                // Try to discover test runs by checking the mortech-test-results directory
+                // We'll try common test run patterns or read from a directory listing
+                const possibleRuns = [
+                    'test-run-2025-10-29T11-08-08-018Z',
+                    'test-run-2025-10-29T11-01-54-058Z',
+                    'test-run-2025-10-29T10-59-38-103Z',
+                    'test-run-2025-10-29T10-54-11-884Z',
+                    'test-run-2025-10-29T10-35-55-880Z',
+                    'test-run-2025-10-29T10-23-46-342Z',
+                    'test-run-2025-10-29T10-17-25-735Z'
+                ];
+
+                // Try each test run to see which ones exist
+                testRuns = [];
+                for (const run of possibleRuns) {
+                    // Try paths relative to /scripts/ (where HTML is served from)
+                    const pathPatterns = [
+                        `mortech-test-results/${run}/summary.json`,
+                        `/scripts/mortech-test-results/${run}/summary.json`
+                    ];
+                    
+                    let found = false;
+                    for (const pathPattern of pathPatterns) {
+                        try {
+                            const response = await fetch(pathPattern, { method: 'HEAD' });
+                            if (response.ok) {
+                                testRuns.push(run);
+                                found = true;
+                                break;
+                            }
+                        } catch (e) {
+                            // Try next path
+                            continue;
+                        }
+                    }
+                }
+
+                select.innerHTML = '<option value="">Select test run...</option>';
+                testRuns.forEach(run => {
+                    const option = document.createElement('option');
+                    option.value = run;
+                    option.textContent = run;
+                    select.appendChild(option);
+                });
+                
+                // Select the most recent one by default
+                if (testRuns.length > 0) {
+                    select.value = testRuns[0];
+                    loadTestRun(testRuns[0]);
+                } else {
+                    select.innerHTML = '<option value="">No test runs found</option>';
+                }
+            } catch (error) {
+                console.error('Error discovering test runs:', error);
+                select.innerHTML = '<option value="">Error loading test runs</option>';
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('testRunSelect').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    loadTestRun(e.target.value);
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterResults();
+            });
+
+            document.getElementById('statusFilter').addEventListener('change', () => {
+                filterResults();
+            });
+
+            // Sortable columns
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.sort;
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+                    updateSortIndicators();
+                    sortResults();
+                    renderTable();
+                });
+            });
+        }
+
+        async function loadTestRun(testRun) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading test results...</td></tr>';
+
+            // Try multiple path patterns
+            // Note: HTML is served from /scripts/, so relative paths resolve from there
+            const pathPatterns = [
+                `mortech-test-results/${testRun}/summary.json`,
+                `/scripts/mortech-test-results/${testRun}/summary.json`
+            ];
+
+            let summary = null;
+            let summaryPath = null;
+
+            for (const pathPattern of pathPatterns) {
+                try {
+                    const response = await fetch(pathPattern);
+                    if (response.ok) {
+                        summary = await response.json();
+                        summaryPath = pathPattern.replace('/summary.json', '');
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`Tried ${pathPattern}, failed:`, error.message);
+                    continue;
+                }
+            }
+
+            if (!summary) {
+                const errorMsg = `Failed to load summary.json. Tried paths: ${pathPatterns.join(', ')}`;
+                tbody.innerHTML = `<tr><td colspan="8" class="error">${errorMsg}</td></tr>`;
+                console.error('Error loading test run:', errorMsg);
+                return;
+            }
+
+            try {
+                // Update stats
+                updateStats(summary);
+
+                // Load individual test files
+                const testFiles = summary.testResults.map(result => result.name);
+                testResults = [];
+
+                for (const testName of testFiles) {
+                    try {
+                        // Try the same path pattern that worked for summary
+                        const testPath = `${summaryPath}/${testName}.json`;
+                        const response = await fetch(testPath);
+                        if (response.ok) {
+                            const testData = await response.json();
+                            testResults.push(testData);
+                        }
+                    } catch (error) {
+                        console.error(`Failed to load ${testName}:`, error);
+                    }
+                }
+
+                filteredResults = [...testResults];
+                sortResults();
+                renderTable();
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="8" class="error">Error processing test results: ${error.message}</td></tr>`;
+                console.error('Error processing test run:', error);
+            }
+        }
+
+        function updateStats(summary) {
+            document.getElementById('totalTests').textContent = summary.totalTests;
+            document.getElementById('successfulTests').textContent = summary.successful;
+            document.getElementById('failedTests').textContent = summary.failed;
+            
+            const totalQuotes = summary.testResults.reduce((sum, result) => {
+                return sum + (result.quoteCount || 0);
+            }, 0);
+            document.getElementById('totalQuotes').textContent = totalQuotes;
+        }
+
+        function filterResults() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredResults = testResults.filter(test => {
+                const nameMatch = test.testCase.name.toLowerCase().includes(searchTerm) ||
+                                test.testCase.description.toLowerCase().includes(searchTerm);
+                
+                const statusMatch = !statusFilter || 
+                    (statusFilter === 'success' && test.response.success) ||
+                    (statusFilter === 'failed' && !test.response.success);
+
+                return nameMatch && statusMatch;
+            });
+
+            sortResults();
+            renderTable();
+        }
+
+        function sortResults() {
+            if (!currentSort.column) return;
+
+            filteredResults.sort((a, b) => {
+                let aVal, bVal;
+
+                switch (currentSort.column) {
+                    case 'name':
+                        aVal = a.testCase.name;
+                        bVal = b.testCase.name;
+                        break;
+                    case 'description':
+                        aVal = a.testCase.description;
+                        bVal = b.testCase.description;
+                        break;
+                    case 'quoteCount':
+                        aVal = a.response.quotes?.length || 0;
+                        bVal = b.response.quotes?.length || 0;
+                        break;
+                    case 'rate':
+                        aVal = a.response.quotes?.[0]?.rate || 0;
+                        bVal = b.response.quotes?.[0]?.rate || 0;
+                        break;
+                    case 'apr':
+                        aVal = a.response.quotes?.[0]?.apr || 0;
+                        bVal = b.response.quotes?.[0]?.apr || 0;
+                        break;
+                    case 'monthlyPayment':
+                        aVal = a.response.quotes?.[0]?.monthlyPayment || 0;
+                        bVal = b.response.quotes?.[0]?.monthlyPayment || 0;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (typeof aVal === 'string') {
+                    return currentSort.direction === 'asc' 
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                } else {
+                    return currentSort.direction === 'asc' 
+                        ? aVal - bVal
+                        : bVal - aVal;
+                }
+            });
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+                if (th.dataset.sort === currentSort.column) {
+                    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                }
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('resultsBody');
+            
+            if (filteredResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">No results found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredResults.map(test => {
+                const quotes = test.response.quotes || [];
+                const firstQuote = quotes[0];
+                const params = test.testCase.params;
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="test-name">${test.testCase.name}</div>
+                            <div class="badge ${test.response.success ? 'badge-success' : 'badge-failed'}">
+                                ${test.response.success ? 'Success' : 'Failed'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="test-description">${test.testCase.description}</div>
+                        </td>
+                        <td>
+                            <div class="params">
+                                <div class="param-row"><span class="param-label">Loan:</span> $${formatNumber(params.loan_amount)}</div>
+                                <div class="param-row"><span class="param-label">Property:</span> $${formatNumber(params.appraisedvalue)}</div>
+                                <div class="param-row"><span class="param-label">FICO:</span> ${params.fico}</div>
+                                <div class="param-row"><span class="param-label">Purpose:</span> ${params.loanpurpose}</div>
+                                <div class="param-row"><span class="param-label">Type:</span> ${params.proptype}</div>
+                                <div class="param-row"><span class="param-label">Occupancy:</span> ${params.occupancy}</div>
+                                <div class="param-row"><span class="param-label">Term:</span> ${params.loanProduct1}</div>
+                                ${params.propertyZip ? `<div class="param-row"><span class="param-label">Zip:</span> ${params.propertyZip}</div>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            ${quotes.length > 0 
+                                ? `<span class="quote-count">${quotes.length} quotes</span>`
+                                : '<span class="no-quotes">No quotes</span>'}
+                        </td>
+                        <td>
+                            ${firstQuote 
+                                ? `<span class="rate">${formatRate(firstQuote.rate)}%</span>`
+                                : '-'}
+                        </td>
+                        <td>
+                            ${firstQuote 
+                                ? `<span class="apr">${formatRate(firstQuote.apr)}%</span>`
+                                : '-'}
+                        </td>
+                        <td>
+                            ${firstQuote 
+                                ? `<span class="monthly-payment">${formatCurrency(firstQuote.monthlyPayment)}</span>`
+                                : '-'}
+                        </td>
+                        <td>
+                            ${quotes.length > 0 
+                                ? `<div class="quotes-detail">${quotes.map((quote, idx) => `
+                                    <div class="quote-item">
+                                        <div class="quote-item-header">Quote #${idx + 1} - ${quote.vendorProductName || quote.productDesc}</div>
+                                        <div class="quote-item-details">
+                                            <div><strong>Rate:</strong> ${formatRate(quote.rate)}%</div>
+                                            <div><strong>APR:</strong> ${formatRate(quote.apr)}%</div>
+                                            <div><strong>Monthly:</strong> ${formatCurrency(quote.monthlyPayment)}</div>
+                                            <div><strong>Points:</strong> ${formatPoints(quote.points)}</div>
+                                            <div><strong>Vendor:</strong> ${quote.vendorName}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}</div>`
+                                : '<span class="no-quotes">No quotes available</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        }
+
+        function formatRate(rate) {
+            return rate ? rate.toFixed(3) : '-';
+        }
+
+        function formatCurrency(amount) {
+            return amount ? new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount) : '-';
+        }
+
+        function formatPoints(points) {
+            return points ? points.toFixed(2) : '0.00';
+        }
+    </script>
+</body>
+</html>
+

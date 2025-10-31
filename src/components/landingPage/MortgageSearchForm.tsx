@@ -14,6 +14,7 @@ interface SearchFormData {
   propertyType: string;
   occupancy: string;
   loanType: string;
+  loanTerm: string; // Added loan term field
   eligibleForLowerRate: boolean;
   loanPurpose: string;
   // Refinance-specific fields
@@ -21,7 +22,7 @@ interface SearchFormData {
   mortgageBalance: string;
   cashOut: string;
   ltv: string;
-  // Additional fields for exact API match
+  // Additional fields for Mortech API
   firstName: string;
   lastName: string;
   vaFirstTimeUse: boolean;
@@ -38,6 +39,11 @@ interface SearchFormData {
   baseLoanAmount: number;
   loanLevelDebtToIncomeRatio: number;
   totalMonthlyQualifyingIncome: number;
+  // Custom Rate Options (Additional Options)
+  waiveEscrow: boolean;
+  militaryVeteran: boolean;
+  lockDays: string;
+  secondMortgageAmount: string;
   // ARM Loan Configuration
   amortizationTypes: string[];
   armFixedTerms: string[];
@@ -92,6 +98,7 @@ function MortgageSearchForm({
     propertyType: 'SingleFamily',
     occupancy: 'PrimaryResidence',
     loanType: 'Conventional',
+    loanTerm: '30', // Added loan term
     eligibleForLowerRate: false,
     loanPurpose: 'Purchase',
     // Refinance-specific fields
@@ -116,6 +123,11 @@ function MortgageSearchForm({
     baseLoanAmount: 150000,
     loanLevelDebtToIncomeRatio: 18,
     totalMonthlyQualifyingIncome: 9000,
+    // Custom Rate Options (Additional Options)
+    waiveEscrow: false,
+    militaryVeteran: false,
+    lockDays: '30',
+    secondMortgageAmount: '0',
     // ARM Loan Configuration - Explicitly enforce ARM loans
     amortizationTypes: ["Fixed", "ARM"],
     armFixedTerms: ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
@@ -123,6 +135,7 @@ function MortgageSearchForm({
   });
 
   const [activeTab, setActiveTab] = useState<'purchase' | 'refinance'>('purchase');
+  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
 
   const handleInputChange = (field: keyof SearchFormData, value: string | boolean) => {
     setFormData(prev => ({
@@ -403,13 +416,16 @@ function MortgageSearchForm({
                     boxSizing: 'border-box'
                   }}
                 >
-                  <option value="500-850">Outstanding 800+</option>
-                  <option value="780-799">Excellent 780 - 799</option>
-                  <option value="740-779">Very good 740 - 779</option>
-                  <option value="720-739">Fairly good 720 - 739</option>
-                  <option value="700-719">Good 700 - 719</option>
-                  <option value="680-699">Decent 680 - 699</option>
-                  <option value="660-679">Average 660 - 679</option>
+                  <option value="800+">800 or greater</option>
+                  <option value="780-799">780 - 799</option>
+                  <option value="760-779">760 - 779</option>
+                  <option value="740-759">740 - 759</option>
+                  <option value="720-739">720 - 739</option>
+                  <option value="700-719">700 - 719</option>
+                  <option value="680-699">680 - 699</option>
+                  <option value="660-679">660 - 679</option>
+                  <option value="640-659">640 - 659</option>
+                  <option value="620-639">620 - 639</option>
                 </select>
               </div>
             </>
@@ -477,7 +493,7 @@ function MortgageSearchForm({
           )}
         </div>
 
-        {/* Row 2: Property Type, Residency Usage, Loan Type */}
+        {/* Row 2: Property Type, Residency Usage, Loan Term */}
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: '1fr 1fr 1fr', 
@@ -510,10 +526,14 @@ function MortgageSearchForm({
                 boxSizing: 'border-box'
               }}
             >
-              <option value="SingleFamily">Single Family Home</option>
+              <option value="SingleFamily">Single Family</option>
+              <option value="AttachedCondo">Attached Condo</option>
+              <option value="DetachedCondo">Detached Condo</option>
               <option value="Townhouse">Townhome</option>
-              <option value="Condo">Condominium</option>
-              <option value="MultiFamily">Multi Unit Home</option>
+              <option value="2Unit">2 Unit</option>
+              <option value="3Unit">3 Unit</option>
+              <option value="4Unit">4 Unit</option>
+              <option value="1Unit">1 Unit</option>
               <option value="Manufactured">Manufactured Home</option>
             </select>
           </div>
@@ -543,9 +563,9 @@ function MortgageSearchForm({
                 boxSizing: 'border-box'
               }}
             >
-              <option value="PrimaryResidence">Primary Home</option>
-              <option value="SecondHome">Second Home</option>
-              <option value="Investment">Rental Home</option>
+              <option value="PrimaryResidence">Primary</option>
+              <option value="SecondHome">Secondary Home</option>
+              <option value="Investment">Investment</option>
             </select>
           </div>
           <div>
@@ -556,11 +576,11 @@ function MortgageSearchForm({
               color: colors.gray[600], 
               marginBottom: spacing.sm 
             }}>
-              Loan Type
+              Loan Term
             </label>
             <select
-              value={formData.loanType}
-              onChange={(e) => handleInputChange('loanType', e.target.value)}
+              value={formData.loanTerm}
+              onChange={(e) => handleInputChange('loanTerm', e.target.value)}
               style={{ 
                 width: '100%',
                 height: '40px',
@@ -574,13 +594,187 @@ function MortgageSearchForm({
                 boxSizing: 'border-box'
               }}
             >
-              <option value="Conforming">Conforming</option>
-              <option value="NonConforming">Non-Conforming</option>
-              <option value="FHA">FHA</option>
-              <option value="VA">VA</option>
-              <option value="USDA">USDA</option>
+              <option value="30">30 Year Fixed</option>
+              <option value="25">25 Year Fixed</option>
+              <option value="20">20 Year Fixed</option>
+              <option value="15">15 Year Fixed</option>
+              <option value="10">10 Year Fixed</option>
             </select>
           </div>
+        </div>
+
+        {/* Additional Options Section */}
+        <div style={{ marginTop: spacing[4] }}>
+          <button
+            type="button"
+            onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing[2],
+              background: 'none',
+              border: 'none',
+              color: templateColors.primary,
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.medium,
+              cursor: 'pointer',
+              padding: 0
+            }}
+          >
+            <span>{showAdditionalOptions ? '−' : '+'}</span>
+            Additional Options
+          </button>
+          
+          {showAdditionalOptions && (
+            <div style={{ 
+              marginTop: spacing[4],
+              padding: spacing[4],
+              border: `1px solid ${colors.gray[200]}`,
+              borderRadius: `${templateLayout.borderRadius}px`,
+              backgroundColor: colors.gray[50]
+            }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr 1fr 1fr', 
+                gap: spacing[4],
+                alignItems: 'end'
+              }}>
+                {/* Waive Escrow */}
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: typography.fontSize.sm, 
+                    fontWeight: typography.fontWeight.medium, 
+                    color: colors.gray[700], 
+                    marginBottom: spacing[2]
+                  }}>
+                    Waive Escrow
+                  </label>
+                  <select
+                    value={formData.waiveEscrow ? 'Yes' : 'No'}
+                    onChange={(e) => handleInputChange('waiveEscrow', e.target.value === 'Yes')}
+                    style={{ 
+                      width: '100%',
+                      height: '40px',
+                      padding: `${spacing[2]} ${spacing[3]}`,
+                      border: `1px solid ${colors.gray[300]}`,
+                      borderRadius: `${templateLayout.borderRadius}px`,
+                      outline: 'none',
+                      fontSize: typography.fontSize.base,
+                      color: templateColors.text,
+                      backgroundColor: templateColors.background,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+
+                {/* Military/Veteran */}
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: typography.fontSize.sm, 
+                    fontWeight: typography.fontWeight.medium, 
+                    color: colors.gray[700], 
+                    marginBottom: spacing[2]
+                  }}>
+                    Military/Veteran
+                  </label>
+                  <select
+                    value={formData.militaryVeteran ? 'Yes' : 'No'}
+                    onChange={(e) => handleInputChange('militaryVeteran', e.target.value === 'Yes')}
+                    style={{ 
+                      width: '100%',
+                      height: '40px',
+                      padding: `${spacing[2]} ${spacing[3]}`,
+                      border: `1px solid ${colors.gray[300]}`,
+                      borderRadius: `${templateLayout.borderRadius}px`,
+                      outline: 'none',
+                      fontSize: typography.fontSize.base,
+                      color: templateColors.text,
+                      backgroundColor: templateColors.background,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+
+                {/* Lock Days */}
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: typography.fontSize.sm, 
+                    fontWeight: typography.fontWeight.medium, 
+                    color: colors.gray[700], 
+                    marginBottom: spacing[2]
+                  }}>
+                    Lock Days
+                  </label>
+                  <select
+                    value={formData.lockDays}
+                    onChange={(e) => handleInputChange('lockDays', e.target.value)}
+                    style={{ 
+                      width: '100%',
+                      height: '40px',
+                      padding: `${spacing[2]} ${spacing[3]}`,
+                      border: `1px solid ${colors.gray[300]}`,
+                      borderRadius: `${templateLayout.borderRadius}px`,
+                      outline: 'none',
+                      fontSize: typography.fontSize.base,
+                      color: templateColors.text,
+                      backgroundColor: templateColors.background,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="30">30 days</option>
+                    <option value="45">45 days</option>
+                    <option value="60">60 days</option>
+                  </select>
+                </div>
+
+                {/* Second Mortgage Amount */}
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: typography.fontSize.sm, 
+                    fontWeight: typography.fontWeight.medium, 
+                    color: colors.gray[700], 
+                    marginBottom: spacing[2]
+                  }}>
+                    2nd Mortgage Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.secondMortgageAmount || '0'}
+                    onChange={(e) => {
+                      // Ensure we never send empty string - default to '0'
+                      const value = e.target.value === '' ? '0' : e.target.value;
+                      handleInputChange('secondMortgageAmount', value);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '40px',
+                      padding: `${spacing[2]} ${spacing[3]}`,
+                      border: `1px solid ${colors.gray[300]}`,
+                      borderRadius: `${templateLayout.borderRadius}px`,
+                      fontSize: typography.fontSize.base,
+                      outline: 'none',
+                      transition: 'border-color 0.2s ease-in-out',
+                      boxSizing: 'border-box',
+                      color: templateColors.text,
+                      backgroundColor: templateColors.background
+                    }}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Row 3: Eligible for Lower Rate and Update Button */}
@@ -665,7 +859,7 @@ function MortgageSearchForm({
             gap: spacing.xs 
           }}>
             <p><strong>Property:</strong> {formData.salesPrice} | {formData.zipCode} | {formData.county}, {formData.state}</p>
-            <p><strong>Loan:</strong> {formData.baseLoanAmount} | {formData.loanType} | FICO: {formData.creditScore}</p>
+            <p><strong>Loan:</strong> {formData.baseLoanAmount} | {formData.loanTerm}yr | FICO: {formData.creditScore}</p>
             <p><strong>Borrower:</strong> {formData.firstName} {formData.lastName} | Self-employed: {formData.selfEmployed ? 'Yes' : 'No'}</p>
             <p><strong>Income:</strong> ${formData.totalMonthlyQualifyingIncome}/month | DTI: {formData.loanLevelDebtToIncomeRatio}%</p>
           </div>

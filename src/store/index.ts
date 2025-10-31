@@ -7,6 +7,7 @@ import uiReducer from '@/store/slices/uiSlice';
 import obReducer from '@/store/slices/obSlice';
 import { templateApi } from '@/store/apis/templateApi';
 import { obApi } from '@/store/apis/obApi';
+import { mortechApi } from '@/store/apis/mortechApi';
 import { storage } from '@/store/persistStorage';
 import type { UiState } from '@/store/slices/uiSlice';
 import type { ObState } from '@/store/slices/obSlice';
@@ -36,6 +37,7 @@ export const store = configureStore({
     ob: persistedObReducer,
     [templateApi.reducerPath]: templateApi.reducer,
     [obApi.reducerPath]: obApi.reducer,
+    [mortechApi.reducerPath]: mortechApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -44,7 +46,8 @@ export const store = configureStore({
       },
     })
       .concat(templateApi.middleware)
-      .concat(obApi.middleware),
+      .concat(obApi.middleware)
+      .concat(mortechApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

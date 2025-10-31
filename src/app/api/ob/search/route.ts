@@ -218,9 +218,106 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as SearchBody;
     
+    console.log('⚠️ DEPRECATED: Optimal Blue API is deprecated. Redirecting to Mortech...');
     console.log('🔍 OB API: Request received');
     console.log('🔍 OB API: Body keys:', Object.keys(body));
     console.log('🔍 OB API: Loan terms in body:', body.loanTerms);
+
+    // Transform Optimal Blue request to Mortech format
+    const mortechRequest = {
+      loanAmount: Number(body.baseLoanAmount) || 150000,
+      propertyValue: Number(body.salesPrice) || 225000,
+      creditScore: parseCreditScore(body.representativeFICO as string) || 750,
+      propertyState: body.state || 'TX',
+      propertyZip: body.zipCode || '75024',
+      loanPurpose: (body.loanPurpose === 'Purchase' ? 'Purchase' : 'Refinance') as 'Purchase' | 'Refinance',
+      propertyType: (body.propertyType === 'SingleFamily' ? 'Single Family' : 'Single Family') as 'Single Family' | 'Condo' | 'Townhouse' | 'Multi-Family',
+      occupancy: (body.occupancy === 'PrimaryResidence' ? 'Primary' : 'Primary') as 'Primary' | 'Secondary' | 'Investment',
+      loanTerm: '30 year fixed', // Default to 30 year fixed
+      includeMI: true
+    };
+
+    console.log('🔄 Converting to Mortech request:', mortechRequest);
+
+    // Call Mortech API instead
+    try {
+      const mortechResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/mortech/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mortechRequest),
+      });
+
+      if (mortechResponse.ok) {
+        const mortechData = await mortechResponse.json();
+        console.log('✅ Mortech response received:', mortechData);
+        
+        // Transform Mortech response back to Optimal Blue format for compatibility
+        const transformedResponse = {
+          success: true,
+          data: {
+            products: mortechData.rates?.map((rate: any) => ({
+              apr: rate.apr,
+              productType: "StandardProducts",
+              armMargin: 0,
+              closingCost: rate.originationFee + rate.upfrontFee,
+              lastUpdate: new Date().toISOString(),
+              loanTerm: rate.loanTerm === '30' ? 'ThirtyYear' : 'FifteenYear',
+              lockPeriod: rate.lockTerm,
+              price: rate.points,
+              rate: rate.interestRate,
+              rebate: 0,
+              discount: 0,
+              principalAndInterest: rate.monthlyPayment,
+              monthlyMI: rate.monthlyPremium,
+              totalPayment: rate.monthlyPayment + rate.monthlyPremium,
+              amortizationTerm: rate.loanTerm === '30' ? 'ThirtyYear' : 'FifteenYear',
+              amortizationType: rate.loanType,
+              investorId: parseInt(rate.id),
+              investor: rate.lenderName,
+              loanType: rate.loanProgram.includes('FHA') ? 'FHA' : 'Conventional',
+              priceStatus: rate.pricingStatus,
+              pendingUpdate: false,
+              productCode: rate.id,
+              productId: parseInt(rate.id),
+              productName: rate.productName
+            })) || [],
+            totalLoanAmountDetails: {
+              totalLoanAmount: mortechRequest.loanAmount
+            },
+            cltv: 0,
+            ltv: Number(mortechRequest.loanAmount) && Number(mortechRequest.propertyValue) 
+              ? (Number(mortechRequest.loanAmount) / Number(mortechRequest.propertyValue)) * 100 
+              : 0,
+            hcltv: 0,
+            amiPercentage: 95.15,
+            amiPercentageFFIEC: 92.07,
+            searchId: "MORTECH_SEARCH_" + Date.now(),
+            searchTime: new Date().toISOString(),
+            customerInternalId: "MortechSearch",
+            isMockData: false,
+            source: 'mortech_api'
+          },
+          searchCriteria: body,
+          timestamp: new Date().toISOString(),
+          isMockData: false,
+          source: 'mortech_api',
+          deprecationNotice: 'Optimal Blue API is deprecated. This response is generated from Mortech API.'
+        };
+
+        return new Response(
+          JSON.stringify(transformedResponse),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      } else {
+        console.log('❌ Mortech API failed, falling back to mock data');
+        // Fall through to original Optimal Blue logic as fallback
+      }
+    } catch (mortechError) {
+      console.log('❌ Mortech API error, falling back to original logic:', mortechError);
+      // Fall through to original Optimal Blue logic as fallback
+    }
     
     if (DEBUG_OB) {
       console.log('=== INCOMING REQUEST TO API ROUTE ===');

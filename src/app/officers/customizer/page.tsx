@@ -87,6 +87,9 @@ export default function CustomizerPage() {
     showSectionDetails: false
   });
 
+  // State for active tab in preview
+  const [previewActiveTab, setPreviewActiveTab] = useState<'todays-rates' | 'get-custom-rate' | 'document-checklist' | 'apply-now' | 'my-home-value' | 'find-my-home' | 'learning-center'>('todays-rates');
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const loadedTemplateRef = useRef<string | null>(null);
@@ -916,47 +919,52 @@ export default function CustomizerPage() {
                                             { id: 'my-home-value', label: 'My Home Value', icon: 'home' },
                                             { id: 'find-my-home', label: 'Find My Home', icon: 'home' },
                                             { id: 'learning-center', label: 'Learning Center', icon: 'about' }
-                                          ].map((tab) => (
-                                            <button
-                                              key={tab.id}
-                                              className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
-                                                tab.id === 'todays-rates'
-                                                  ? 'shadow-sm'
-                                                  : 'hover:bg-gray-50'
-                                              }`}
-                                              style={{
-                                                backgroundColor: tab.id === 'todays-rates' 
-                                                  ? (customizerState.selectedTemplate === 'template2' 
-                                                      ? mergedTemplate?.colors?.primary || '#3b82f6'
-                                                      : `${mergedTemplate?.colors?.primary || '#3b82f6'}25`)
-                                                  : 'transparent',
-                                                color: tab.id === 'todays-rates' 
-                                                  ? (customizerState.selectedTemplate === 'template2' 
-                                                      ? mergedTemplate?.colors?.background || '#ffffff'
-                                                      : mergedTemplate?.colors?.primary || '#3b82f6')
-                                                  : mergedTemplate?.colors?.textSecondary || '#6b7280',
-                                                border: tab.id === 'todays-rates' 
-                                                  ? (customizerState.selectedTemplate === 'template2' 
-                                                      ? `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}`
-                                                      : `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}50`)
-                                                  : '1px solid transparent',
-                                                borderRadius: `${mergedTemplate?.layout?.borderRadius || 8}px`,
-                                                fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
-                                              }}
-                                            >
-                                              <Icon 
-                                                name={tab.icon as keyof typeof icons} 
-                                                className={`w-4 h-4 mr-3`}
-                                                color={tab.id === 'todays-rates' 
-                                                  ? (customizerState.selectedTemplate === 'template2' 
-                                                      ? mergedTemplate?.colors?.background || '#ffffff'
-                                                      : mergedTemplate?.colors?.primary || '#3b82f6')
-                                                  : mergedTemplate?.colors?.textSecondary || '#6b7280'
-                                                }
-                                              />
-                                              {tab.label}
-                                            </button>
-                                          ))}
+                                          ].map((tab) => {
+                                            const isActive = previewActiveTab === tab.id;
+                                            return (
+                                              <button
+                                                key={tab.id}
+                                                onClick={() => setPreviewActiveTab(tab.id as typeof previewActiveTab)}
+                                                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
+                                                  isActive
+                                                    ? 'shadow-sm'
+                                                    : 'hover:bg-gray-50'
+                                                }`}
+                                                style={{
+                                                  backgroundColor: isActive 
+                                                    ? (customizerState.selectedTemplate === 'template2' 
+                                                        ? mergedTemplate?.colors?.primary || '#3b82f6'
+                                                        : `${mergedTemplate?.colors?.primary || '#3b82f6'}25`)
+                                                    : 'transparent',
+                                                  color: isActive 
+                                                    ? (customizerState.selectedTemplate === 'template2' 
+                                                        ? mergedTemplate?.colors?.background || '#ffffff'
+                                                        : mergedTemplate?.colors?.primary || '#3b82f6')
+                                                    : mergedTemplate?.colors?.textSecondary || '#6b7280',
+                                                  border: isActive 
+                                                    ? (customizerState.selectedTemplate === 'template2' 
+                                                        ? `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}`
+                                                        : `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}50`)
+                                                    : '1px solid transparent',
+                                                  borderRadius: `${mergedTemplate?.layout?.borderRadius || 8}px`,
+                                                  fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
+                                                  cursor: 'pointer'
+                                                }}
+                                              >
+                                                <Icon 
+                                                  name={tab.icon as keyof typeof icons} 
+                                                  className={`w-4 h-4 mr-3`}
+                                                  color={isActive 
+                                                    ? (customizerState.selectedTemplate === 'template2' 
+                                                        ? mergedTemplate?.colors?.background || '#ffffff'
+                                                        : mergedTemplate?.colors?.primary || '#3b82f6')
+                                                    : mergedTemplate?.colors?.textSecondary || '#6b7280'
+                                                  }
+                                                />
+                                                {tab.label}
+                                              </button>
+                                            );
+                                          })}
                                         </nav>
                                       </div>
                                     </div>
@@ -970,8 +978,8 @@ export default function CustomizerPage() {
                                     }}
                                   >
                                     <LandingPageTabs
-                                      activeTab="todays-rates"
-                                      onTabChange={() => {}}
+                                      activeTab={previewActiveTab}
+                                      onTabChange={(tab) => setPreviewActiveTab(tab)}
                                       selectedTemplate={customizerState.selectedTemplate as 'template1' | 'template2'}
                                       className="w-full"
                                       templateCustomization={mergedTemplate}
@@ -991,8 +999,8 @@ export default function CustomizerPage() {
                                 >
                             <div className="xl:col-span-3">
                               <LandingPageTabs
-                                activeTab="todays-rates"
-                                onTabChange={() => {}}
+                                activeTab={previewActiveTab}
+                                onTabChange={(tab) => setPreviewActiveTab(tab)}
                                 selectedTemplate={customizerState.selectedTemplate as 'template1' | 'template2'}
                                 className="w-full"
                                 templateCustomization={mergedTemplate}
