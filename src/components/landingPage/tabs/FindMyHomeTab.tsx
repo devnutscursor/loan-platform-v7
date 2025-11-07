@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Script from 'next/script';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
@@ -178,25 +179,17 @@ button: {
       ...(safeTemplateClasses?.status || {}) 
     }
   };
-  const [searchCriteria, setSearchCriteria] = useState({
-    location: '',
-    priceMin: '',
-    priceMax: '',
-    bedrooms: '',
-    bathrooms: '',
-    propertyType: 'all'
-  });
-  const [showIframe, setShowIframe] = useState(false);
+  const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
 
-  const handleSearch = () => {
-    setShowIframe(true);
-  };
+  useEffect(() => {
+    // Check if IDX widget script is already loaded
+    if (typeof window !== 'undefined' && document.getElementById('idxwidgetsrc-122191')) {
+      setIdxWidgetLoaded(true);
+    }
+  }, []);
 
-  const handleInputChange = (field: string, value: string) => {
-    setSearchCriteria(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleScriptLoad = () => {
+    setIdxWidgetLoaded(true);
   };
 
   return (
@@ -204,6 +197,16 @@ button: {
       className={`w-full ${className}`}
       style={{ fontFamily: typography.fontFamily }}
     >
+      {/* IDX Widget Script */}
+      <Script
+        id="idxwidgetsrc-122191"
+        charset="UTF-8"
+        type="text/javascript"
+        src="//syncly360.idxbroker.com/idx/widgets/122191"
+        strategy="lazyOnload"
+        onLoad={handleScriptLoad}
+      />
+
       {/* Header */}
       <div 
         className={`${classes.card.header}`}
@@ -223,7 +226,59 @@ button: {
         </p>
       </div>
 
-      {!showIframe ? (
+      {/* IDX Widget Container */}
+      <div 
+        className="w-full mt-6"
+        style={{ 
+          minHeight: '600px',
+          borderRadius: `${layout.borderRadius}px`,
+          overflow: 'hidden',
+          backgroundColor: colors.background
+        }}
+      >
+        <div 
+          id="idxwidget-122191" 
+          className="w-full"
+          style={{
+            minHeight: '600px',
+            width: '100%'
+          }}
+        >
+          {!idxWidgetLoaded && (
+            <div className="flex items-center justify-center py-12" style={{ minHeight: '600px' }}>
+              <div className="text-center">
+                <div 
+                  className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
+                  style={{ borderColor: colors.primary }}
+                ></div>
+                <p style={{ color: colors.textSecondary }}>Loading property search...</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Global styles for IDX widget to ensure proper rendering */}
+      <style jsx global>{`
+        #idxwidget-122191 {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        #idxwidget-122191 iframe,
+        #idxwidget-122191 > div {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        /* Ensure IDX widget is responsive */
+        @media (max-width: 768px) {
+          #idxwidget-122191 {
+            overflow-x: auto;
+          }
+        }
+      `}</style>
+
+      {/* Legacy Search Form - Hidden but kept for reference */}
+      {false && (
         <>
           {/* Search Form */}
           <div className={`${classes.card.container} mb-8 mt-8`} style={{ borderRadius: `${layout.borderRadius}px` }}>
@@ -534,71 +589,6 @@ button: {
             </div>
           </div>
         </>
-      ) : (
-        /* Results View */
-        <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-          <div className={`${classes.card.header}`}>
-            <div className="flex items-center justify-between">
-              <h3 className={`${classes.heading.h3}`}>
-                Property Search Results
-              </h3>
-              <button
-                onClick={() => setShowIframe(false)}
-                style={{
-                  padding: `${layout.padding.small}px`,
-                  backgroundColor: 'transparent',
-                  color: colors.textSecondary,
-                  border: 'none',
-                  borderRadius: `${layout.borderRadius}px`,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `${colors.border}20`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Icon name="close" size={20} color={colors.textSecondary} />
-              </button>
-            </div>
-          </div>
-          
-          <div className={`${classes.card.body}`}>
-            <div className="text-center py-8">
-              <Icon name="home" size={48} className="text-gray-400 mx-auto mb-4" />
-              <h4 className={`${classes.heading.h4} text-gray-600 mb-2`}>
-                Property Search
-              </h4>
-              <p className={`${classes.body.base} text-gray-500 mb-4`}>
-                Use our advanced search filters to find your perfect home
-              </p>
-              <button
-                onClick={() => setShowIframe(false)}
-                style={{
-                  padding: `${layout.padding.medium}px ${layout.padding.large}px`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: `none !important`,
-                  borderRadius: `${layout.borderRadius}px`,
-                  fontSize: getFontSize('base'),
-                  fontWeight: typography.fontWeight.medium,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `${colors.secondary} !important`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = `${colors.primary} !important`;
-                }}
-              >
-                Back to Search
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

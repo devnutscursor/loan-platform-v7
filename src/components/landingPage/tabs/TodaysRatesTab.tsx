@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { typography } from '@/theme/theme';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
+import MortgageSearchForm from '@/components/landingPage/MortgageSearchForm';
 import RateResults from '@/components/landingPage/RateResults';
 
 interface TodaysRatesTabProps {
@@ -26,9 +26,49 @@ interface Rate {
   category?: 'featured' | '30yr-fixed' | '20yr-fixed' | '15yr-fixed' | 'arm';
 }
 
+interface SearchFormData {
+  zipCode: string;
+  salesPrice: string;
+  downPayment: string;
+  downPaymentPercent: string;
+  creditScore: string;
+  propertyType: string;
+  occupancy: string;
+  loanType: string;
+  loanTerm: string;
+  eligibleForLowerRate: boolean;
+  loanPurpose: string;
+  homeValue: string;
+  mortgageBalance: string;
+  cashOut: string;
+  ltv: string;
+  firstName: string;
+  lastName: string;
+  vaFirstTimeUse: boolean;
+  firstTimeHomeBuyer: boolean;
+  monthsReserves: number;
+  selfEmployed: boolean;
+  waiveEscrows: boolean;
+  county: string;
+  state: string;
+  numberOfStories: number;
+  numberOfUnits: string;
+  lienType: string;
+  borrowerPaidMI: string;
+  baseLoanAmount: number;
+  loanLevelDebtToIncomeRatio: number;
+  totalMonthlyQualifyingIncome: number;
+  waiveEscrow: boolean;
+  militaryVeteran: boolean;
+  lockDays: string;
+  secondMortgageAmount: string;
+  amortizationTypes: string[];
+  armFixedTerms: string[];
+  loanTerms: string[];
+}
+
 /**
- * TodaysRatesTab - Clean, simple component that fetches and displays current mortgage rates
- * NO caching, NO complex logic, just fetch and display based on market defaults
+ * TodaysRatesTab - Uses MortgageSearchForm UI (like old version) but with Mortech API logic
  */
 export default function TodaysRatesTab({
   selectedTemplate,
@@ -53,69 +93,159 @@ export default function TodaysRatesTab({
     border: '#e5e7eb'
   };
   
+  const layout = templateData?.template?.layout || {
+    alignment: 'center',
+    spacing: 18,
+    borderRadius: 8,
+    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
+  };
+  
   const [rates, setRates] = useState<Rate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string>('Loading...');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+  
+  // Map property type from form to Mortech format
+  const mapPropertyType = (type: string): string => {
+    const mapping: Record<string, string> = {
+      'SingleFamily': 'Single Family',
+      'Condo': 'Condo',
+      'Townhouse': 'Townhouse',
+      'MultiFamily': 'Multi-Family'
+    };
+    return mapping[type] || 'Single Family';
+  };
 
-  // Simple, user-editable filters (mirrors Get My Custom Rate)
-  const [filters, setFilters] = useState({
-    zipCode: '75024',
-    propertyValue: '500000',
-    loanAmount: '400000',
-    creditScore: '740',
-    propertyType: 'Single Family',
-    occupancy: 'Primary',
-    loanPurpose: 'Purchase',
-    loanTerm: '30',
-    waiveEscrow: false,
-    militaryVeteran: false,
-    lockDays: '',
-    secondMortgageAmount: ''
-  });
+  // Map occupancy from form to Mortech format
+  const mapOccupancy = (occ: string): string => {
+    const mapping: Record<string, string> = {
+      'PrimaryResidence': 'Primary',
+      'Secondary': 'Secondary',
+      'Investment': 'Investment'
+    };
+    return mapping[occ] || 'Primary';
+  };
 
-  // Simple fetch function - no caching, just fresh data
-  const fetchTodaysRates = async () => {
+  // Normalize loan term to Mortech format
+  const normalizeLoanTerm = (term: string): string => {
+    if (!term) return '30 year fixed';
+    if (term.includes('year fixed')) return term;
+    return `${term} year fixed`;
+  };
+
+  // Map credit score from form to numeric value
+  const mapCreditScore = (creditScore: string): number => {
+    if (creditScore.includes('+')) {
+      return parseInt(creditScore.replace('+', '')) || 800;
+    }
+    if (creditScore.includes('-')) {
+      const parts = creditScore.split('-');
+      return parseInt(parts[0]) || 740;
+    }
+    return parseInt(creditScore) || 740;
+  };
+
+  // Handle search form updates - transform to Mortech format
+  const handleSearchFormUpdate = useCallback(async (formData: SearchFormData) => {
     setIsLoading(true);
     setError(null);
     setValidationMessage(null);
     
     try {
-      // Validate: Loan cannot exceed property value
-      const pv = parseInt(filters.propertyValue || '0', 10);
-      const la = parseInt(filters.loanAmount || '0', 10);
-      if (pv > 0 && la > pv) {
-        setValidationMessage('⚠️ Loan amount cannot be more than the property value. Please adjust your loan amount.');
+      let loanAmount: number;
+      let propertyValue: number;
+      
+      if (formData.loanPurpose === 'Refinance') {
+        // For refinance: loan amount = mortgage balance (no cash out field)
+        const mortgageBalance = parseFloat(formData.mortgageBalance || '0');
+        loanAmount = mortgageBalance;
+        // Property value = loan amount (used for API, but not shown in form)
+        propertyValue = loanAmount;
+        
+        // Validation for refinance
+        if (mortgageBalance <= 0) {
+          setValidationMessage('⚠️ Please enter a valid loan amount.');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // For purchase: loan amount = sales price - down payment
+        const salesPrice = parseFloat(formData.salesPrice || '0');
+        const downPayment = parseFloat(formData.downPayment || '0');
+        loanAmount = salesPrice - downPayment;
+        propertyValue = salesPrice;
+        
+        // Validation for purchase
+        if (salesPrice > 0 && loanAmount > salesPrice) {
+          setValidationMessage('⚠️ Loan amount cannot be more than the property value. Please adjust your down payment or purchase price.');
+          setIsLoading(false);
+          return;
+        }
+        if (salesPrice <= 0) {
+          setValidationMessage('⚠️ Please enter a valid property value.');
+          setIsLoading(false);
+          return;
+        }
+        if (downPayment < 0) {
+          setValidationMessage('⚠️ Down payment cannot be negative.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Build Mortech API request from form data
+      const request: any = {
+        propertyZip: formData.zipCode || '75024',
+        appraisedvalue: propertyValue,
+        loan_amount: loanAmount,
+        fico: mapCreditScore(formData.creditScore),
+        loanpurpose: formData.loanPurpose as 'Purchase' | 'Refinance',
+        proptype: mapPropertyType(formData.propertyType),
+        occupancy: mapOccupancy(formData.occupancy),
+        loanProduct1: normalizeLoanTerm(formData.loanTerm || '30')
+      };
+      
+      // Validate required fields
+      if (!request.propertyZip || request.propertyZip.trim() === '') {
+        setValidationMessage('⚠️ Please enter a valid ZIP code.');
+        setIsLoading(false);
+        return;
+      }
+      if (request.appraisedvalue <= 0) {
+        setValidationMessage('⚠️ Please enter a valid property value.');
+        setIsLoading(false);
+        return;
+      }
+      if (request.loan_amount <= 0) {
+        setValidationMessage('⚠️ Please enter a valid loan amount.');
         setIsLoading(false);
         return;
       }
 
-      // Build request from filters (match test script format)
-      const marketDefaults: any = {
-        propertyZip: filters.zipCode,
-        appraisedvalue: pv,
-        loan_amount: la,
-        fico: parseInt(filters.creditScore || '740', 10),
-        loanpurpose: (filters.loanPurpose as 'Purchase' | 'Refinance') || 'Purchase',
-        proptype: filters.propertyType || 'Single Family',
-        occupancy: filters.occupancy || 'Primary',
-        loanProduct1: `${filters.loanTerm} year fixed`
-      };
+      // Optional fields - only include if explicitly set
+      if (formData.waiveEscrow === true) {
+        request.waiveEscrow = true;
+      }
+      if (formData.militaryVeteran === true) {
+        request.militaryVeteran = true;
+      }
+      if (formData.lockDays && formData.lockDays !== '30' && formData.lockDays !== '') {
+        request.lockDays = formData.lockDays;
+      }
+      if (formData.secondMortgageAmount && formData.secondMortgageAmount !== '0' && formData.secondMortgageAmount !== '') {
+        const amount = parseInt(formData.secondMortgageAmount);
+        if (!isNaN(amount) && amount > 0) {
+          request.secondMortgageAmount = amount;
+        }
+      }
 
-      // Optional params
-      if (filters.waiveEscrow === true) marketDefaults.waiveEscrow = true;
-      if (filters.militaryVeteran === true) marketDefaults.militaryVeteran = true;
-      if (filters.lockDays && filters.lockDays !== '30') marketDefaults.lockDays = filters.lockDays;
-      const sm = parseInt(filters.secondMortgageAmount || '0', 10);
-      if (!isNaN(sm) && sm > 0) marketDefaults.secondMortgageAmount = sm;
-
-      console.log('🔍 Fetching today\'s rates with market defaults:', marketDefaults);
+      console.log('🔍 Fetching today\'s rates with Mortech API:', request);
 
       const response = await fetch('/api/mortech/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(marketDefaults),
+        body: JSON.stringify(request),
       });
 
       const result = await response.json();
@@ -171,138 +301,71 @@ export default function TodaysRatesTab({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchTodaysRates();
   }, []);
 
+  // Transform rates to RateResults format
+  const transformRatesToRateResults = (rates: Rate[]) => {
+    return rates.map(rate => ({
+      id: rate.id,
+      lenderName: 'Today\'s Rates',
+      loanProgram: rate.loanType,
+      loanType: rate.loanType,
+      loanTerm: 30, // Default term
+      interestRate: rate.rate,
+      apr: rate.apr,
+      monthlyPayment: rate.monthlyPayment,
+      fees: 0,
+      points: rate.points,
+      credits: 0,
+      lockPeriod: 30
+    }));
+  };
+
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div 
+      className={`w-full space-y-6 ${className}`}
+      style={{ 
+        fontFamily: templateData?.template?.typography?.fontFamily || 'Inter',
+        padding: `${layout.padding.medium}px 0`
+      }}
+    >
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center mb-6">
         <h2 
           className="text-3xl font-bold mb-2"
-      style={{ 
-            fontSize: typography.fontSize['3xl'],
-            fontWeight: typography.fontWeight.bold,
-            color: colors.text 
-          }}
+          style={{ color: colors.text }}
         >
           Today's Mortgage Rates
         </h2>
         <p 
           className="text-lg"
-        style={{ 
-            fontSize: typography.fontSize.lg,
-            color: colors.textSecondary 
-          }}
+          style={{ color: colors.textSecondary }}
         >
           Current rates based on market conditions
-          <br />
-          {/* <span className="text-sm">
-            Assuming: $500k home, 20% down, 740 credit score, Primary residence
-          </span> */}
         </p>
-        <p className="text-sm mt-2" style={{ color: colors.textSecondary }}>
-          Last updated: {lastUpdated}
-        </p>
+        {lastUpdated && (
+          <p className="text-sm mt-2" style={{ color: colors.textSecondary }}>
+            Last updated: {lastUpdated}
+          </p>
+        )}
       </div>
 
-      {/* Filters (simple inline form) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input
-          value={filters.zipCode}
-          onChange={e => setFilters(v => ({ ...v, zipCode: e.target.value }))}
-          placeholder="ZIP Code"
-          className="border rounded px-3 py-2"
+      {/* Mortgage Search Form */}
+      <div 
+        className="bg-white border shadow-sm p-6"
+        style={{ 
+          borderColor: colors.border,
+          backgroundColor: colors.background,
+          borderRadius: `${layout.borderRadius}px`
+        }}
+      >
+        <MortgageSearchForm
+          onSearch={handleSearchFormUpdate}
+          loading={isLoading}
+          template={selectedTemplate}
+          isPublic={isPublic}
+          publicTemplateData={publicTemplateData}
         />
-        <input
-          value={filters.propertyValue}
-          onChange={e => {
-            setFilters(v => ({ ...v, propertyValue: e.target.value }));
-            setValidationMessage(null); // Clear validation when user changes value
-          }}
-          placeholder="Property Value"
-          className="border rounded px-3 py-2"
-        />
-        <input
-          value={filters.loanAmount}
-          onChange={e => {
-            setFilters(v => ({ ...v, loanAmount: e.target.value }));
-            setValidationMessage(null); // Clear validation when user changes value
-          }}
-          placeholder="Loan Amount"
-          className="border rounded px-3 py-2"
-        />
-        <input
-          value={filters.creditScore}
-          onChange={e => setFilters(v => ({ ...v, creditScore: e.target.value }))}
-          placeholder="Credit Score"
-          className="border rounded px-3 py-2"
-        />
-        <select
-          value={filters.propertyType}
-          onChange={e => setFilters(v => ({ ...v, propertyType: e.target.value }))}
-          className="border rounded px-3 py-2 bg-white"
-          style={{ backgroundColor: '#ffffff' }}
-        >
-          <option>Single Family</option>
-          <option>Condo</option>
-          <option>Townhouse</option>
-          <option>Multi-Family</option>
-        </select>
-        <select
-          value={filters.occupancy}
-          onChange={e => setFilters(v => ({ ...v, occupancy: e.target.value }))}
-          className="border rounded px-3 py-2 bg-white"
-          style={{ backgroundColor: '#ffffff' }}
-        >
-          <option>Primary</option>
-          <option>Secondary</option>
-          <option>Investment</option>
-        </select>
-        <select
-          value={filters.loanPurpose}
-          onChange={e => setFilters(v => ({ ...v, loanPurpose: e.target.value }))}
-          className="border rounded px-3 py-2 bg-white"
-          style={{ backgroundColor: '#ffffff' }}
-        >
-          <option>Purchase</option>
-          <option>Refinance</option>
-        </select>
-        <select
-          value={filters.loanTerm}
-          onChange={e => setFilters(v => ({ ...v, loanTerm: e.target.value }))}
-          className="border rounded px-3 py-2 bg-white"
-          style={{ backgroundColor: '#ffffff' }}
-        >
-          <option value="30">30</option>
-          <option value="20">20</option>
-          <option value="15">15</option>
-          <option value="10">10</option>
-        </select>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-center gap-3">
-        <button
-          onClick={() => fetchTodaysRates()}
-          disabled={isLoading}
-          style={{
-            backgroundColor: colors.primary,
-            color: '#ffffff',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontWeight: 600,
-            opacity: isLoading ? 0.6 : 1,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-          }}
-          className="transition-all hover:opacity-90"
-        >
-          {isLoading ? 'Loading...' : 'Refresh Rates'}
-        </button>
       </div>
 
       {/* Validation Message (Alert/Warning) */}
@@ -311,7 +374,7 @@ export default function TodaysRatesTab({
           style={{
             backgroundColor: '#fef3c7',
             border: '1px solid #fbbf24',
-            borderRadius: '8px',
+            borderRadius: `${layout.borderRadius}px`,
             padding: '16px',
             color: '#92400e'
           }}
@@ -321,45 +384,30 @@ export default function TodaysRatesTab({
         </div>
       )}
 
-      {/* Error Display */}
+      {/* Error Message */}
       {error && (
-        <div
-          style={{
-            backgroundColor: '#fee2e2',
-            border: '1px solid #ef4444',
-            borderRadius: '8px',
-            padding: '16px',
-            color: '#991b1b'
-          }}
-        >
-          <p className="font-semibold">Error loading rates</p>
-          <p className="text-sm">{error}</p>
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4" style={{ borderRadius: `${layout.borderRadius}px` }}>
+          <div className="flex items-center">
+            {React.createElement(icons.error, { size: 20, className: "text-red-500 mr-2" })}
+            <span className="text-red-700">{error}</span>
+          </div>
         </div>
       )}
 
-      {/* Rates Display */}
-      {!error && (
+      {/* Rate Results Component */}
       <RateResults
-          products={rates.map(r => ({
-            id: r.id,
-            lenderName: 'Market Lender',
-            loanProgram: 'Conventional',
-            loanType: 'Fixed',
-            loanTerm: 30,
-            interestRate: r.rate,
-            apr: r.apr,
-            monthlyPayment: r.monthlyPayment,
-            fees: 0,
-            points: r.points,
-            credits: 0,
-            lockPeriod: 30
-          }))}
+        products={transformRatesToRateResults(rates)}
         loading={isLoading}
+        rawData={[]}
         template={selectedTemplate}
-          isPublic={isPublic}
-          publicTemplateData={publicTemplateData}
-        />
-      )}
+        isMockData={false}
+        dataSource="todays-rates"
+        isPublic={isPublic}
+        publicTemplateData={publicTemplateData}
+        userId={userId}
+        companyId={companyId}
+        showTodaysRatesOnly={true}
+      />
 
       {/* Disclaimer */}
       <div 
@@ -367,6 +415,7 @@ export default function TodaysRatesTab({
         style={{ 
           backgroundColor: colors.background,
           border: `1px solid ${colors.border}`,
+          borderRadius: `${layout.borderRadius}px`,
           color: colors.textSecondary 
         }}
       >

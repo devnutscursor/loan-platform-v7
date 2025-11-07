@@ -94,8 +94,17 @@ export default function OfficersProfilePage() {
       const isNavigatingToThisPage = lastPathnameRef.current !== pathname;
       
       if (isNavigatingToThisPage) {
-        // Navigated to this page - refresh template to ensure fresh data
-        console.log('🔄 Profile page: Navigation detected, refreshing template:', selectedTemplate);
+        // Navigated to this page - clear caches and refresh template
+        console.log('🔄 Profile page: Navigation detected, clearing caches and refreshing template:', selectedTemplate);
+        
+        // Clear all template caches to ensure fresh data
+        if (typeof window !== 'undefined') {
+          const cacheKey = `template_${user.id}_${selectedTemplate}`;
+          localStorage.removeItem(cacheKey);
+          console.log('🗑️ Cleared cache on navigation:', cacheKey);
+        }
+        
+        // Force refresh after clearing cache
         refreshTemplate(selectedTemplate).catch((error) => {
           console.error('❌ Error refreshing template:', error);
         });
@@ -390,6 +399,27 @@ export default function OfficersProfilePage() {
     try {
       console.log('🔄 Updating public profile template to:', templateSlug);
       
+      // Clear all caches before updating
+      if (typeof window !== 'undefined' && user) {
+        // Clear both old and new template caches
+        [selectedTemplate, templateSlug].forEach(slug => {
+          if (slug) {
+            const cacheKey = `template_${user.id}_${slug}`;
+            localStorage.removeItem(cacheKey);
+            console.log('🗑️ Cleared cache for:', cacheKey);
+          }
+        });
+        
+        // Clear template cache API
+        try {
+          await fetch(`/api/cache/template?userId=${user.id}&slug=${templateSlug}`, {
+            method: 'DELETE'
+          });
+        } catch (e) {
+          console.log('⚠️ Could not clear server cache:', e);
+        }
+      }
+      
       // Get the current session token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
@@ -412,11 +442,17 @@ export default function OfficersProfilePage() {
         const result = await response.json();
         console.log('✅ Public profile template updated successfully:', result);
         
-        // Also update the global template selection for consistency
+        // Update the global template selection FIRST
         setSelectedTemplate(templateSlug);
+        
+        // Force a small delay to ensure state updates propagate
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Explicitly refresh the template to ensure colors update immediately
         await refreshTemplate(templateSlug);
+        
+        // Force re-render by triggering a state change
+        console.log('✅ Template refresh complete, colors should be updated');
       } else {
         const errorResult = await response.json();
         console.error('❌ Failed to update public profile template:', errorResult);
@@ -551,38 +587,48 @@ export default function OfficersProfilePage() {
         breadcrumbVariant="default"
         breadcrumbSize="md"
       >
-        <div className="space-y-6">
+        <style jsx global>{`
+          /* Ensure profile page is scrollable on all devices */
+          @media (max-width: 768px) {
+            .profile-page-container {
+              overflow-x: auto;
+              overflow-y: auto;
+              -webkit-overflow-scrolling: touch;
+              width: 100%;
+            }
+          }
+        `}</style>
+        <div className="space-y-4 md:space-y-6 profile-page-container overflow-auto">
           {/* Profile Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-[#005b7c] hover:bg-[#01bcc6] rounded-full flex items-center justify-center text-white text-xl font-bold">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 md:space-x-4">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-[#005b7c] hover:bg-[#01bcc6] rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold flex-shrink-0">
                   {officerInfo.officerName.split(' ').map((n: string) => n[0]).join('')}
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">{officerInfo.officerName}</h2>
-                  <p className="text-gray-600">{officerInfo.email}</p>
-                  {officerInfo.phone && <p className="text-gray-600">{officerInfo.phone}</p>}
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-900 truncate">{officerInfo.officerName}</h2>
+                  <p className="text-sm md:text-base text-gray-600 truncate">{officerInfo.email}</p>
+                  {officerInfo.phone && <p className="text-sm md:text-base text-gray-600">{officerInfo.phone}</p>}
                 </div>
               </div>
-              
             </div>
           </div>
 
           {/* Public Link Management Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Public Profile Link</h3>
-              <div className="text-sm text-gray-500">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-x-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Public Profile Link</h3>
+              <div className="text-xs md:text-sm text-gray-500">
                 Share your profile with borrowers
               </div>
             </div>
             
             {/* Public Profile Template Selector */}
-            <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
+            <div className="mb-4 md:mb-6 p-3 md:p-4 bg-white rounded-lg border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-1">Public Profile Template</h4>
+                  <h4 className="text-xs md:text-sm font-medium text-gray-900 mb-1">Public Profile Template</h4>
                   <p className="text-xs text-gray-500">Choose which template visitors will see</p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -590,13 +636,13 @@ export default function OfficersProfilePage() {
                     value={publicProfileTemplate}
                     onChange={(e) => handlePublicProfileTemplateChange(e.target.value)}
                     disabled={isUpdatingTemplate}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6] bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 md:px-3 py-1.5 md:py-2 border border-gray-300 rounded-md text-xs md:text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6] bg-white disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   >
                     <option value="template1">Template1</option>
                     <option value="template2">Template2</option>
                   </select>
                   {isUpdatingTemplate && (
-                    <div className="text-xs text-gray-500">Updating...</div>
+                    <div className="text-xs text-gray-500 whitespace-nowrap">Updating...</div>
                   )}
                 </div>
               </div>
@@ -609,23 +655,23 @@ export default function OfficersProfilePage() {
             )}
 
             {publicLink ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex-1">
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-green-800">Public link is active</span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-xs md:text-sm font-medium text-green-800">Public link is active</span>
                     </div>
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-xs md:text-sm text-green-600 mt-1">
                       Your profile is publicly accessible
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     <Button
                       onClick={copyPublicLink}
                       variant="primary"
                       size="sm"
-                      className="bg-[#01bcc6] hover:bg-[#008eab] text-white"
+                      className="bg-[#01bcc6] hover:bg-[#008eab] text-white text-xs md:text-sm px-3 py-1.5"
                     >
                       Copy Link
                     </Button>
@@ -633,16 +679,17 @@ export default function OfficersProfilePage() {
                       onClick={deactivatePublicLink}
                       variant="danger"
                       size="sm"
+                      className="text-xs md:text-sm px-3 py-1.5"
                     >
                       Deactivate
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
+                  <div className="min-w-0">
                     <span className="font-medium text-gray-700">Public URL:</span>
-                    <p className="text-gray-600 break-all">
+                    <p className="text-gray-600 break-all overflow-wrap-anywhere">
                       {typeof window !== 'undefined' ? window.location.origin : 'localhost:3000'}/public/profile/{publicLink.publicSlug}
                     </p>
                   </div>
@@ -681,11 +728,11 @@ export default function OfficersProfilePage() {
           </div>
 
           {/* Live Preview Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 lg:p-8 overflow-x-auto">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Live Preview</h3>
             {/* Unified Template Rendering with Suspense */}
             <Suspense fallback={<SkeletonLoader />}>
-              <div className="border border-gray-200 rounded-lg overflow-visible">
+              <div className="border border-gray-200 rounded-lg overflow-auto">
                 <UnifiedHeroSection
                   officerName={officerInfo.officerName}
                   phone={officerInfo.phone || undefined}
@@ -840,8 +887,8 @@ export default function OfficersProfilePage() {
                     } else {
                       // Grid Layout (Template1) - Current layout
                       return (
-                  <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                    <div className="xl:col-span-3">
+                  <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
+                    <div className="xl:col-span-3 min-w-0">
                       <LandingPageTabs
                         activeTab={activeTab}
                         onTabChange={setActiveTab}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useEffect } from 'react';
 import { spacing, borderRadius, shadows, typography, colors } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import Icon from '@/components/ui/Icon';
@@ -57,6 +57,8 @@ interface MortgageSearchFormProps {
   // NEW: Public mode props
   isPublic?: boolean;
   publicTemplateData?: any;
+  // Initial values from questionnaire
+  initialValues?: Partial<SearchFormData>;
 }
 
 function MortgageSearchForm({ 
@@ -65,7 +67,9 @@ function MortgageSearchForm({
   template = 'template1',
   // NEW: Public mode props
   isPublic = false,
-  publicTemplateData
+  publicTemplateData,
+  // Initial values from questionnaire
+  initialValues
 }: MortgageSearchFormProps) {
   const { getTemplateSync } = useEfficientTemplates();
   
@@ -89,7 +93,7 @@ function MortgageSearchForm({
     spacing: 16
   };
   
-  const [formData, setFormData] = useState<SearchFormData>({
+  const defaultFormData: SearchFormData = {
     zipCode: '75024',
     salesPrice: '225000',
     downPayment: '75000',
@@ -98,7 +102,7 @@ function MortgageSearchForm({
     propertyType: 'SingleFamily',
     occupancy: 'PrimaryResidence',
     loanType: 'Conventional',
-    loanTerm: '30', // Added loan term
+    loanTerm: '30',
     eligibleForLowerRate: false,
     loanPurpose: 'Purchase',
     // Refinance-specific fields
@@ -106,7 +110,7 @@ function MortgageSearchForm({
     mortgageBalance: '360000',
     cashOut: '0',
     ltv: '80.00',
-    // Additional fields matching your exact request
+    // Additional fields
     firstName: 'test',
     lastName: 'test1',
     vaFirstTimeUse: true,
@@ -123,18 +127,46 @@ function MortgageSearchForm({
     baseLoanAmount: 150000,
     loanLevelDebtToIncomeRatio: 18,
     totalMonthlyQualifyingIncome: 9000,
-    // Custom Rate Options (Additional Options)
+    // Custom Rate Options
     waiveEscrow: false,
     militaryVeteran: false,
     lockDays: '30',
     secondMortgageAmount: '0',
-    // ARM Loan Configuration - Explicitly enforce ARM loans
+    // ARM Loan Configuration
     amortizationTypes: ["Fixed", "ARM"],
     armFixedTerms: ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
     loanTerms: ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"]
+  };
+
+  const [formData, setFormData] = useState<SearchFormData>({
+    ...defaultFormData,
+    ...initialValues
   });
 
-  const [activeTab, setActiveTab] = useState<'purchase' | 'refinance'>('purchase');
+  // Update form data when initialValues change (from questionnaire)
+  useEffect(() => {
+    if (initialValues) {
+      console.log('🔄 MortgageSearchForm: Updating form with initialValues:', initialValues);
+      setFormData(prev => {
+        const updated = {
+          ...prev,
+          ...initialValues
+        };
+        console.log('🔄 MortgageSearchForm: Updated formData:', updated);
+        return updated;
+      });
+      // Set active tab based on loan purpose
+      if (initialValues.loanPurpose === 'Refinance') {
+        setActiveTab('refinance');
+      } else if (initialValues.loanPurpose === 'Purchase') {
+        setActiveTab('purchase');
+      }
+    }
+  }, [initialValues]);
+
+  const [activeTab, setActiveTab] = useState<'purchase' | 'refinance'>(
+    initialValues?.loanPurpose === 'Refinance' ? 'refinance' : 'purchase'
+  );
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
 
   const handleInputChange = (field: keyof SearchFormData, value: string | boolean) => {
@@ -156,18 +188,7 @@ function MortgageSearchForm({
       }
     }
 
-    // Auto-calculate LTV for refinance
-    if (field === 'homeValue' || field === 'mortgageBalance') {
-      const homeVal = field === 'homeValue' ? parseFloat(value as string) : parseFloat(formData.homeValue);
-      const mortgageBal = field === 'mortgageBalance' ? parseFloat(value as string) : parseFloat(formData.mortgageBalance);
-      if (homeVal > 0) {
-        const ltv = ((mortgageBal / homeVal) * 100).toFixed(2);
-        setFormData(prev => ({
-          ...prev,
-          ltv: ltv
-        }));
-      }
-    }
+    // Note: LTV calculation removed - not needed for refinance (no home value field)
   };
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -227,7 +248,7 @@ function MortgageSearchForm({
           display: 'grid', 
           gridTemplateColumns: activeTab === 'purchase' 
             ? '1fr 2fr 2fr 1.5fr'  // ZIP | Purchase Price | Down Payment | Credit Score
-            : '1fr 2fr 1.5fr 1fr',  // ZIP | Home Value | Mortgage Balance | Cash Out
+            : '1fr 2fr 1.5fr',  // ZIP | Loan Amount | Credit Score
           gap: spacing[4],
           alignItems: 'end'  // Align all fields to bottom to ensure same height
         }}>
@@ -261,60 +282,17 @@ function MortgageSearchForm({
               placeholder="75024"
             />
           </div>
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.medium,
-              color: colors.gray[700],
-              marginBottom: spacing[2]
-            }}>
-              {activeTab === 'purchase' ? 'Purchase Price' : 'Home Value'}
-            </label>
-{activeTab === 'refinance' ? (
-              <div style={{ display: 'flex', height: '40px' }}>
-                <input
-                  type="number"
-                  value={formData.homeValue}
-                  onChange={(e) => handleInputChange('homeValue', e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: `${spacing[2]} ${spacing[3]}`,
-                    border: `1px solid ${colors.gray[300]}`,
-                    borderTopLeftRadius: `${templateLayout.borderRadius}px`,
-                    borderBottomLeftRadius: `${templateLayout.borderRadius}px`,
-                    borderRight: 'none',
-                    fontSize: typography.fontSize.base,
-                    outline: 'none',
-                    transition: 'border-color 0.2s ease-in-out',
-                    boxSizing: 'border-box',
-                    color: templateColors.text,
-                    backgroundColor: templateColors.background,
-                    height: '100%'
-                  }}
-                  placeholder="450000"
-                />
-                 <div style={{ 
-                   display: 'flex',
-                   alignItems: 'center',
-                   padding: `${spacing[2]} ${spacing[2]}`, 
-                   backgroundColor: 'transparent', 
-                   border: `1px solid ${colors.gray[300]}`, 
-                   borderLeft: 'none',
-                   borderTopRightRadius: `${templateLayout.borderRadius}px`,
-                   borderBottomRightRadius: `${templateLayout.borderRadius}px`,
-                   fontSize: typography.fontSize.xs, 
-                   color: colors.gray[500],
-                   minWidth: '70px',
-                   justifyContent: 'center',
-                   height: '100%',
-                   boxSizing: 'border-box',
-                   fontWeight: typography.fontWeight.normal
-                 }}>
-                   {formData.ltv}% LTV
-                 </div>
-              </div>
-            ) : (
+          {activeTab === 'purchase' && (
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                color: colors.gray[700],
+                marginBottom: spacing[2]
+              }}>
+                Purchase Price
+              </label>
               <input
                 type="number"
                 value={formData.salesPrice}
@@ -334,11 +312,11 @@ function MortgageSearchForm({
                 }}
                 placeholder="225000"
               />
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Add Down Payment and Credit Score to Row 1 */}
-          {activeTab === 'purchase' ? (
+          {/* Purchase: Down Payment and Credit Score */}
+          {activeTab === 'purchase' && (
             <>
               <div>
                 <label style={{ 
@@ -390,107 +368,83 @@ function MortgageSearchForm({
                   </div>
                 </div>
               </div>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: typography.fontSize.sm, 
-                  fontWeight: typography.fontWeight.medium, 
-                  color: colors.gray[600], 
-                  marginBottom: spacing.sm 
-                }}>
-                  Credit Score
-                </label>
-                <select
-                  value={formData.creditScore}
-                  onChange={(e) => handleInputChange('creditScore', e.target.value)}
-                  style={{ 
-                    width: '100%',
-                    height: '40px',
-                    padding: `${spacing[2]} ${spacing[3]}`,
-                    border: `1px solid ${colors.gray[300]}`,
-                    borderRadius: `${templateLayout.borderRadius}px`,
-                    outline: 'none',
-                    fontSize: typography.fontSize.base,
-                    color: templateColors.text,
-                    backgroundColor: templateColors.background,
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="800+">800 or greater</option>
-                  <option value="780-799">780 - 799</option>
-                  <option value="760-779">760 - 779</option>
-                  <option value="740-759">740 - 759</option>
-                  <option value="720-739">720 - 739</option>
-                  <option value="700-719">700 - 719</option>
-                  <option value="680-699">680 - 699</option>
-                  <option value="660-679">660 - 679</option>
-                  <option value="640-659">640 - 659</option>
-                  <option value="620-639">620 - 639</option>
-                </select>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: typography.fontSize.sm, 
-                  fontWeight: typography.fontWeight.medium, 
-                  color: colors.gray[600], 
-                  marginBottom: spacing.sm 
-                }}>
-                  Mortgage Balance
-                </label>
-                <input
-                  type="number"
-                  value={formData.mortgageBalance}
-                  onChange={(e) => handleInputChange('mortgageBalance', e.target.value)}
-                  style={{ 
-                    width: '100%',
-                    height: '40px',
-                    padding: `${spacing[2]} ${spacing[3]}`,
-                    border: `1px solid ${colors.gray[300]}`,
-                    borderRadius: `${templateLayout.borderRadius}px`,
-                    outline: 'none',
-                    fontSize: typography.fontSize.base,
-                    color: templateColors.text,
-                    backgroundColor: templateColors.background,
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="360000"
-                />
-              </div>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: typography.fontSize.sm, 
-                  fontWeight: typography.fontWeight.medium, 
-                  color: colors.gray[600], 
-                  marginBottom: spacing.sm 
-                }}>
-                  Cash Out
-                </label>
-                <input
-                  type="number"
-                  value={formData.cashOut}
-                  onChange={(e) => handleInputChange('cashOut', e.target.value)}
-                  style={{ 
-                    width: '100%',
-                    height: '40px',
-                    padding: `${spacing[2]} ${spacing[3]}`,
-                    border: `1px solid ${colors.gray[300]}`,
-                    borderRadius: `${templateLayout.borderRadius}px`,
-                    outline: 'none',
-                    fontSize: typography.fontSize.base,
-                    color: templateColors.text,
-                    backgroundColor: templateColors.background,
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="0"
-                />
-              </div>
             </>
           )}
+          
+          {/* Refinance: Loan Amount */}
+          {activeTab === 'refinance' && (
+            <div>
+              <label style={{ 
+                display: 'block', 
+                fontSize: typography.fontSize.sm, 
+                fontWeight: typography.fontWeight.medium, 
+                color: colors.gray[600], 
+                marginBottom: spacing.sm 
+              }}>
+                Loan Amount
+              </label>
+              <input
+                type="number"
+                value={formData.mortgageBalance}
+                onChange={(e) => handleInputChange('mortgageBalance', e.target.value)}
+                style={{ 
+                  width: '100%',
+                  height: '40px',
+                  padding: `${spacing[2]} ${spacing[3]}`,
+                  border: `1px solid ${colors.gray[300]}`,
+                  borderRadius: `${templateLayout.borderRadius}px`,
+                  outline: 'none',
+                  fontSize: typography.fontSize.base,
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background,
+                  boxSizing: 'border-box'
+                }}
+                placeholder="360000"
+              />
+            </div>
+          )}
+          
+          {/* Credit Score (both Purchase and Refinance) */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              fontSize: typography.fontSize.sm, 
+              fontWeight: typography.fontWeight.medium, 
+              color: colors.gray[600], 
+              marginBottom: spacing.sm 
+            }}>
+              Credit Score
+            </label>
+            <select
+              value={formData.creditScore}
+              onChange={(e) => handleInputChange('creditScore', e.target.value)}
+              style={{ 
+                width: '100%',
+                height: '40px',
+                padding: `${spacing[2]} ${spacing[3]}`,
+                border: `1px solid ${colors.gray[300]}`,
+                borderRadius: `${templateLayout.borderRadius}px`,
+                outline: 'none',
+                fontSize: typography.fontSize.base,
+                color: templateColors.text,
+                backgroundColor: templateColors.background,
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="800+">800 or greater</option>
+              <option value="780-799">780 - 799</option>
+              <option value="760-779">760 - 779</option>
+              <option value="740-759">740 - 759</option>
+              <option value="720-739">720 - 739</option>
+              <option value="700-719">700 - 719</option>
+              <option value="680-699">680 - 699</option>
+              <option value="660-679">660 - 679</option>
+              <option value="640-659">640 - 659</option>
+              <option value="620-639">620 - 639</option>
+              <option value="580-619">580 - 619</option>
+              <option value="Below 580">Below 580</option>
+            </select>
+          </div>
         </div>
 
         {/* Row 2: Property Type, Residency Usage, Loan Term */}

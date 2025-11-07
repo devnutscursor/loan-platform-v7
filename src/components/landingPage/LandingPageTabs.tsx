@@ -68,6 +68,8 @@ interface LandingPageTabsProps {
   companyId?: string;
   // Layout props
   hideTabNavigation?: boolean; // Hide the tab navigation (for sidebar layout)
+  // Force mobile view (for customizer mobile preview)
+  forceMobileView?: boolean;
 }
 
 const tabs: Tab[] = [
@@ -128,7 +130,9 @@ export default function LandingPageTabs({
   userId,
   companyId,
   // Layout props
-  hideTabNavigation = false
+  hideTabNavigation = false,
+  // Force mobile view
+  forceMobileView = false
 }: LandingPageTabsProps) {
   const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
@@ -437,9 +441,9 @@ export default function LandingPageTabs({
       )}
 
       {/* Tab Content */}
-      <div className="max-w-7xl mx-auto">
+      <div className={`w-full mx-auto ${forceMobileView ? '' : 'md:min-w-[800px] md:max-w-7xl overflow-x-auto'}`}>
         <div 
-          className={`bg-white shadow-xl border overflow-hidden ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl border-t-0'}`}
+          className={`bg-white shadow-xl border ${forceMobileView ? '' : 'overflow-x-auto'} ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl border-t-0'}`}
           style={{ 
             backgroundColor: colors.background,
             borderColor: colors.border,

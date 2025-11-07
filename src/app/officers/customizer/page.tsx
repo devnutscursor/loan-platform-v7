@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Icon, { icons } from '@/components/ui/Icon';
 import Image from 'next/image';
+import PublicProfileContent from '@/components/public/PublicProfileContent';
 
 // Define Template type for customizer
 interface Template {
@@ -57,7 +58,10 @@ import {
   Eye, 
   RefreshCw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Smartphone,
+  Cog
 } from 'lucide-react';
 
 // Lazy load preview components
@@ -92,6 +96,12 @@ export default function CustomizerPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+  const [isFullWidth, setIsFullWidth] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isSettingProfileTemplate, setIsSettingProfileTemplate] = useState(false);
+  const [publicLink, setPublicLink] = useState<any>(null);
   const loadedTemplateRef = useRef<string | null>(null);
 
   // Company data state
@@ -340,6 +350,38 @@ export default function CustomizerPage() {
     }
   }, [user, fetchUserNmlsNumber]);
 
+  // Fetch public link for profile preview
+  useEffect(() => {
+    const fetchPublicLink = async () => {
+      if (!user) return;
+      
+      try {
+        // Get user's company ID from API
+        const companyResponse = await fetch(`/api/user-company?userId=${user.id}`);
+        const companyResult = await companyResponse.json();
+
+        if (!companyResult.success) {
+          console.log('⚠️ Could not fetch company for public link');
+          return;
+        }
+
+        const userCompany = companyResult.data;
+
+        const response = await fetch(`/api/public-links?userId=${user.id}&companyId=${userCompany.companyId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setPublicLink(result.data);
+          console.log('✅ Public link fetched:', result.data.publicSlug);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching public link:', error);
+      }
+    };
+
+    fetchPublicLink();
+  }, [user]);
+
   // Fetch company data for the logged-in user
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -478,6 +520,9 @@ export default function CustomizerPage() {
       customSettings: {}
     }));
     
+    // Reset saved state when switching templates
+    setIsTemplateSaved(false);
+    
     // Templates should already be preloaded, no need to fetch again
     console.log('🔄 Customizer: Template selected:', templateSlug);
   }, [setSelectedTemplate]);
@@ -503,6 +548,9 @@ export default function CustomizerPage() {
   // Handle setting changes
   const handleSettingChange = useCallback((path: string, value: any) => {
     console.log('🔄 Customizer: Setting change:', { path, value });
+    
+    // Mark as unsaved when settings change
+    setIsTemplateSaved(false);
     
     // Validate URLs for social media fields
     if (path.includes('facebook') || path.includes('twitter') || path.includes('linkedin') || path.includes('instagram')) {
@@ -548,16 +596,88 @@ export default function CustomizerPage() {
     });
   }, []);
 
-  // Toggle preview mode
-  const togglePreviewMode = useCallback(() => {
+  // Toggle preview mode (now called full width)
+  const toggleFullWidth = useCallback(() => {
+    setIsFullWidth(prev => !prev);
     setCustomizerState(prev => ({
       ...prev,
       isPreviewMode: !prev.isPreviewMode
     }));
   }, []);
 
+  // Toggle mobile view
+  const toggleMobileView = useCallback(() => {
+    setIsMobileView(prev => !prev);
+  }, []);
+
+  // Handle setting current template as profile template
+  const handleSetProfileTemplate = useCallback(async () => {
+    if (!user || !customizerState.selectedTemplate) return;
+    
+    setIsSettingProfileTemplate(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session found');
+      }
+
+      const response = await fetch('/api/templates/update-public-profile-template', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateSlug: customizerState.selectedTemplate
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to set profile template');
+      }
+
+      if (result.success) {
+        setSaveMessage('Template set as profile template successfully!');
+        setTimeout(() => setSaveMessage(null), 3000);
+        setShowSettingsModal(false);
+      } else {
+        throw new Error(result.error || 'API returned unsuccessful response');
+      }
+    } catch (error) {
+      console.error('❌ Customizer: Error setting profile template:', error);
+      setSaveMessage('Error setting profile template');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } finally {
+      setIsSettingProfileTemplate(false);
+    }
+  }, [user, customizerState.selectedTemplate]);
+
+  // Handle profile preview navigation
+  const handleProfilePreview = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      if (publicLink?.publicSlug) {
+        const baseUrl = window.location.origin;
+        const publicUrl = `${baseUrl}/public/profile/${publicLink.publicSlug}`;
+        window.open(publicUrl, '_blank');
+      } else {
+        // Fallback: show message that public link needs to be created
+        setSaveMessage('Please create a public profile link first from the Profile page.');
+        setTimeout(() => setSaveMessage(null), 4000);
+      }
+    }
+  }, [publicLink]);
+
   // Save template
   const handleSave = useCallback(async () => {
+    // If already saved, navigate to profile preview
+    if (isTemplateSaved) {
+      handleProfilePreview();
+      return;
+    }
+    
     if (!user || !customizerState.selectedTemplate) return;
     
     setIsSaving(true);
@@ -615,6 +735,7 @@ export default function CustomizerPage() {
 
       if (result.success) {
         setSaveMessage('Template saved successfully!');
+        setIsTemplateSaved(true); // Mark as saved to change button text
         setTimeout(() => setSaveMessage(null), 3000);
         console.log('✅ Customizer: Template saved successfully');
         
@@ -657,7 +778,7 @@ export default function CustomizerPage() {
       clearTimeout(saveTimeout);
       setIsSaving(false);
     }
-  }, [user, customizerState.selectedTemplate, customizerState.customSettings, refreshTemplate]);
+  }, [user, customizerState.selectedTemplate, customizerState.customSettings, refreshTemplate, isTemplateSaved, handleProfilePreview]);
 
 
   return (
@@ -667,18 +788,49 @@ export default function CustomizerPage() {
         breadcrumbVariant="default"
         breadcrumbSize="md"
       >
-        <div className="h-screen flex flex-col bg-gray-50">
+        <style jsx global>{`
+          /* Hide scrollbars but keep functionality */
+          ::-webkit-scrollbar {
+            width: 0px;
+            height: 0px;
+            background: transparent;
+          }
+          
+          ::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          
+          ::-webkit-scrollbar-thumb {
+            background: transparent;
+          }
+          
+          /* Firefox */
+          * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          
+          /* Ensure customizer is scrollable on mobile */
+          @media (max-width: 768px) {
+            .customizer-container {
+              overflow-x: auto;
+              overflow-y: auto;
+              -webkit-overflow-scrolling: touch;
+            }
+          }
+        `}</style>
+        <div className="h-screen flex flex-col bg-gray-50 customizer-container">
           {/* Header Controls */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold text-gray-900">Template Customizer</h1>
+          <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Template Customizer</h1>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">Template:</span>
+                  <span className="text-xs md:text-sm text-gray-500">Template:</span>
                   <select
                     value={customizerState.selectedTemplate}
                     onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+                    className="px-2 md:px-3 py-1 border border-gray-300 rounded-md text-xs md:text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
                   >
                     {['template1', 'template2'].map(templateSlug => {
                       const templateName = templateSlug === 'template1' ? 'Template1' : 'Template2';
@@ -691,26 +843,63 @@ export default function CustomizerPage() {
                     })}
                   </select>
                 </div>
-                
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant={customizerState.isPreviewMode ? "primary" : "secondary"}
-                  onClick={togglePreviewMode}
-                  className={customizerState.isPreviewMode ? 'bg-[#005b7c] hover:bg-[#01bcc6] text-white border-0' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300'}
+              <div className="flex items-center space-x-2 overflow-x-auto">
+                {/* Settings Icon - Set as Profile Template */}
+                <button
+                  onClick={() => setShowSettingsModal(true)}
+                  className="p-2 rounded-md hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0"
+                  title="Settings - Set as Profile Template"
                 >
-                  <Icon name={customizerState.isPreviewMode ? "chevronLeft" : "play"} size={16} className="mr-2" />
-                  {customizerState.isPreviewMode ? 'Exit Preview' : 'Preview Mode'}
-                </Button>
+                  <Cog size={18} />
+                </button>
                 
+                {/* Mobile View Icon - Hide on actual mobile devices */}
+                <button
+                  onClick={toggleMobileView}
+                  className={`hidden md:block p-2 rounded-md transition-colors ${
+                    isMobileView 
+                      ? 'bg-[#01bcc6]/10 text-[#01bcc6]' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  title="Mobile View"
+                >
+                  <Smartphone size={18} />
+                </button>
+                
+                {/* Full Width Icon - Hide on actual mobile */}
+                <button
+                  onClick={toggleFullWidth}
+                  className={`hidden md:block p-2 rounded-md transition-colors ${
+                    isFullWidth 
+                      ? 'bg-[#01bcc6]/10 text-[#01bcc6]' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  title={isFullWidth ? 'Exit Full Width' : 'Full Width'}
+                >
+                  <Maximize2 size={18} />
+                </button>
+                
+                {/* Save/Profile Preview Button */}
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || Object.keys(customizerState.customSettings).length === 0}
-                  className="bg-[#005b7c] hover:bg-[#01bcc6] text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={(isSaving || (Object.keys(customizerState.customSettings).length === 0 && !isTemplateSaved)) && !isTemplateSaved}
+                  className="bg-[#005b7c] hover:bg-[#01bcc6] text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-xs md:text-sm px-3 md:px-4"
                 >
-                  <Icon name="save" size={16} className="mr-2" />
-                  {isSaving ? 'Saving...' : 'Save Template'}
+                  {isTemplateSaved ? (
+                    <>
+                      <Eye size={14} className="mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Profile Preview</span>
+                      <span className="sm:hidden">Preview</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} className="mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Template'}</span>
+                      <span className="sm:hidden">{isSaving ? 'Saving...' : 'Save'}</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -726,10 +915,39 @@ export default function CustomizerPage() {
             )}
           </div>
 
+          {/* Settings Modal */}
+          {showSettingsModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Template Settings</h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Set the current template as your public profile template. This will make it visible to visitors on your public profile page.
+                  </p>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={handleSetProfileTemplate}
+                      disabled={isSettingProfileTemplate}
+                      className="flex-1 px-4 py-2 bg-[#005b7c] hover:bg-[#01bcc6] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSettingProfileTemplate ? 'Setting...' : 'Set as Profile Template'}
+                    </button>
+                    <button
+                      onClick={() => setShowSettingsModal(false)}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main Content - Takes remaining height */}
-          <div className="flex flex-1 min-h-0">
-            {/* Left Sidebar - Sections or Section Details */}
-            <div className={`w-80 bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            {/* Left Sidebar - Sections or Section Details - Hide on mobile, show on desktop */}
+            <div className={`hidden md:block w-80 bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
               customizerState.isPreviewMode ? '-ml-80' : 'ml-0'
             }`}>
               {!customizerState.showSectionDetails ? (
@@ -828,13 +1046,21 @@ export default function CustomizerPage() {
             </div>
 
             {/* Center - Live Preview (Full Width) */}
-            <div className="flex-1 bg-gray-100 overflow-hidden">
-              <div className="h-full overflow-auto overflow-x-auto">
-                <div className="p-6">
+            <div className="flex-1 bg-gray-100 overflow-auto">
+              <div className={`h-full w-full overflow-auto overflow-x-auto`}>
+                <div className={`${isMobileView ? 'flex justify-center items-start min-h-full p-0' : 'p-2 md:p-6'}`}>
                   <div 
-                    className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full w-full min-w-max"
+                      className={`transition-all duration-300 ${
+                        isMobileView 
+                          ? 'w-[375px] h-[667px] overflow-y-auto overflow-x-auto rounded-[28px] shadow-2xl border border-gray-300 bg-white m-0'
+                          : 'min-h-full w-full overflow-auto bg-white rounded-lg shadow-sm border border-gray-200'
+                      }`}
                     style={{
-                      fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
+                      fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
+                      ...(isMobileView && {
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehavior: 'contain'
+                      })
                     }}
                   >
                     <TemplateProvider
@@ -848,203 +1074,61 @@ export default function CustomizerPage() {
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#01bcc6]"></div>
                         </div>
                       }>
-                        {/* Live Preview Components with Real Officer Data and Merged Template */}
-                        <UnifiedHeroSection
-                          officerName={officerInfo.officerName}
-                          phone={officerInfo.phone || undefined}
-                          email={officerInfo.email}
-                          template={customizerState.selectedTemplate as 'template1' | 'template2'}
-                          templateCustomization={mergedTemplate}
-                          publicUserData={{
-                            name: officerInfo.officerName,
+                        {/* Use PublicProfileContent component for both mobile and desktop views */}
+                        <PublicProfileContent
+                          profileData={{
+                            user: {
+                              id: user?.id || '',
+                              firstName: officerInfo.officerName.split(' ')[0] || '',
+                              lastName: officerInfo.officerName.split(' ').slice(1).join(' ') || '',
                             email: officerInfo.email,
-                            phone: officerInfo.phone || undefined,
+                              phone: officerInfo.phone || '',
                             nmlsNumber: userNmlsNumber || undefined,
                             avatar: undefined
-                          }}
-                          companyData={companyData ? {
+                            },
+                            company: companyData ? {
                             id: companyData.id,
                             name: companyData.name,
                             logo: companyData.logo,
                             website: companyData.website,
+                              address: companyData.address,
                             phone: companyData.phone || companyData.admin_email,
                             email: companyData.email || companyData.admin_email,
                             license_number: companyData.license_number,
                             company_nmls_number: companyData.company_nmls_number,
                             company_social_media: companyData.company_social_media
-                          } : undefined}
-                        />
-                        
-                        <div 
-                          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8"
-                          style={{
-                            fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
+                            } : {
+                              id: '',
+                              name: 'Your Company',
+                              logo: undefined,
+                              website: undefined,
+                              address: undefined,
+                              phone: undefined,
+                              email: undefined,
+                              license_number: undefined,
+                              company_nmls_number: undefined,
+                              company_social_media: undefined
+                            },
+                            template: mergedTemplate
                           }}
-                        >
-                          {(() => {
-                            // Get layout configuration
-                            const layoutConfig = mergedTemplate?.layoutConfig;
-                            const isSidebarLayout = layoutConfig?.mainContentLayout?.type === 'sidebar';
-                            
-                            if (isSidebarLayout) {
-                              // Sidebar Layout (Template2) - Left sidebar with tabs list, right content area
-                              return (
-                                <div className="flex gap-6 lg:gap-8">
-                                  {/* Left Sidebar - Tabs List */}
-                                  <div className="w-64 flex-shrink-0">
-                                    <div className="sticky top-6 lg:top-8">
-                                      <div 
-                                        className="rounded-lg shadow-sm border p-4"
-                                        style={{
-                                          backgroundColor: mergedTemplate?.colors?.background || '#ffffff',
-                                          borderColor: mergedTemplate?.colors?.border || '#e5e7eb',
-                                          borderRadius: `${mergedTemplate?.layout?.borderRadius || 8}px`
-                                        }}
-                                      >
-                                        <h3 
-                                          className="text-lg font-semibold mb-4"
-                                          style={{
-                                            color: mergedTemplate?.colors?.text || '#111827',
-                                            fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
-                                          }}
-                                        >
-                                          Navigation
-                                        </h3>
-                                        <nav className="space-y-1">
-                                          {[
-                                            { id: 'todays-rates', label: "Today's Rates", icon: 'rates' },
-                                            { id: 'get-custom-rate', label: 'Get My Custom Rate', icon: 'custom' },
-                                            { id: 'document-checklist', label: 'Document Checklist', icon: 'document' },
-                                            { id: 'apply-now', label: 'Apply Now', icon: 'applyNow' },
-                                            { id: 'my-home-value', label: 'My Home Value', icon: 'home' },
-                                            { id: 'find-my-home', label: 'Find My Home', icon: 'home' },
-                                            { id: 'learning-center', label: 'Learning Center', icon: 'about' }
-                                          ].map((tab) => {
-                                            const isActive = previewActiveTab === tab.id;
-                                            return (
-                                              <button
-                                                key={tab.id}
-                                                onClick={() => setPreviewActiveTab(tab.id as typeof previewActiveTab)}
-                                                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
-                                                  isActive
-                                                    ? 'shadow-sm'
-                                                    : 'hover:bg-gray-50'
-                                                }`}
-                                                style={{
-                                                  backgroundColor: isActive 
-                                                    ? (customizerState.selectedTemplate === 'template2' 
-                                                        ? mergedTemplate?.colors?.primary || '#3b82f6'
-                                                        : `${mergedTemplate?.colors?.primary || '#3b82f6'}25`)
-                                                    : 'transparent',
-                                                  color: isActive 
-                                                    ? (customizerState.selectedTemplate === 'template2' 
-                                                        ? mergedTemplate?.colors?.background || '#ffffff'
-                                                        : mergedTemplate?.colors?.primary || '#3b82f6')
-                                                    : mergedTemplate?.colors?.textSecondary || '#6b7280',
-                                                  border: isActive 
-                                                    ? (customizerState.selectedTemplate === 'template2' 
-                                                        ? `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}`
-                                                        : `1px solid ${mergedTemplate?.colors?.primary || '#3b82f6'}50`)
-                                                    : '1px solid transparent',
-                                                  borderRadius: `${mergedTemplate?.layout?.borderRadius || 8}px`,
-                                                  fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
-                                                  cursor: 'pointer'
-                                                }}
-                                              >
-                                                <Icon 
-                                                  name={tab.icon as keyof typeof icons} 
-                                                  className={`w-4 h-4 mr-3`}
-                                                  color={isActive 
-                                                    ? (customizerState.selectedTemplate === 'template2' 
-                                                        ? mergedTemplate?.colors?.background || '#ffffff'
-                                                        : mergedTemplate?.colors?.primary || '#3b82f6')
-                                                    : mergedTemplate?.colors?.textSecondary || '#6b7280'
-                                                  }
-                                                />
-                                                {tab.label}
-                                              </button>
-                                            );
-                                          })}
-                                        </nav>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Right Content Area - Selected Tab Details */}
-                                  <div 
-                                    className="flex-1"
-                                    style={{
-                                      fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
-                                    }}
-                                  >
-                                    <LandingPageTabs
-                                      activeTab={previewActiveTab}
-                                      onTabChange={(tab) => setPreviewActiveTab(tab)}
-                                      selectedTemplate={customizerState.selectedTemplate as 'template1' | 'template2'}
-                                      className="w-full"
-                                      templateCustomization={mergedTemplate}
-                                      hideTabNavigation={true} // Hide the tab navigation since we have sidebar
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            } else {
-                              // Grid Layout (Template1) - Current layout
-                              return (
-                                <div 
-                                  className="grid grid-cols-1 xl:grid-cols-4 gap-6"
-                                  style={{
-                                    fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter'
-                                  }}
-                                >
-                            <div className="xl:col-span-3">
-                              <LandingPageTabs
-                                activeTab={previewActiveTab}
-                                onTabChange={(tab) => setPreviewActiveTab(tab)}
-                                selectedTemplate={customizerState.selectedTemplate as 'template1' | 'template2'}
-                                className="w-full"
-                                templateCustomization={mergedTemplate}
-                              />
-                            </div>
-                            <div className="xl:col-span-1">
-                              <div className="sticky top-6 lg:top-8">
-                                <UnifiedRightSidebar 
-                                  template={customizerState.selectedTemplate as 'template1' | 'template2'} 
-                                  templateCustomization={mergedTemplate}
-                                  isPublic={false}
-                                  publicCompanyData={companyData ? {
-                                    name: companyData.name,
-                                    logo: companyData.logo,
-                                    phone: companyData.phone,
-                                    email: companyData.email,
-                                    address: companyData.address,
-                                    website: companyData.website,
-                                    license_number: companyData.license_number,
-                                    company_nmls_number: companyData.company_nmls_number,
-                                    company_social_media: companyData.company_social_media
-                                  } : undefined}
-                                  publicTemplateData={{
-                                    template: mergedTemplate
-                                  }}
-                                  companyData={companyData ? {
-                                    id: companyData.id,
-                                    name: companyData.name,
-                                    logo: companyData.logo,
-                                    website: companyData.website,
-                                    phone: companyData.phone || companyData.admin_email,
-                                    email: companyData.email || companyData.admin_email,
-                                    license_number: companyData.license_number,
-                                    company_nmls_number: companyData.company_nmls_number,
-                                    company_social_media: companyData.company_social_media
-                                  } : undefined}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                              );
+                          templateData={{
+                            template: {
+                              ...mergedTemplate,
+                              slug: customizerState.selectedTemplate || 'template1'
+                            },
+                            pageSettings: {},
+                            metadata: {
+                              templateSlug: customizerState.selectedTemplate || 'template1',
+                              isCustomized: true,
+                              isPublished: false
                             }
-                          })()}
-                        </div>
+                          }}
+                          initialActiveTab={previewActiveTab}
+                          onTabChange={(tab) => setPreviewActiveTab(tab)}
+                          isPreview={true}
+                          companyName={companyData?.name}
+                          forceMobileViewport={isMobileView}
+                        />
                       </React.Suspense>
                     </TemplateProvider>
                   </div>
@@ -1778,10 +1862,58 @@ function TypographySettings({ template, onChange }: SettingsProps) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Font Weight</label>
-        <div className="space-y-2">
-          {Object.entries(typography.fontWeight).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 capitalize">{key}</span>
+          <p className="text-xs text-gray-500 mb-3">Control the thickness of text for different elements on your profile.</p>
+          <div className="space-y-3">
+            {(() => {
+              // Define user-friendly labels and order them by importance (most visible first)
+              const weightLabels: Record<string, { title: string; description: string; order: number }> = {
+                bold: {
+                  title: 'Officer Name & Main Headings',
+                  description: 'Controls the boldness of your name in the header and main section headings',
+                  order: 1
+                },
+                semibold: {
+                  title: 'Section Titles & Tab Labels',
+                  description: 'Affects section titles, tab navigation text, and subheadings',
+                  order: 2
+                },
+                medium: {
+                  title: 'Input Fields & Form Labels',
+                  description: 'Controls the weight of form labels, input field text, and emphasized body text',
+                  order: 3
+                },
+                normal: {
+                  title: 'Body Text & Paragraphs',
+                  description: 'Default weight for paragraphs, descriptions, and regular content text',
+                  order: 4
+                },
+                light: {
+                  title: 'Subtle Text & Secondary Info',
+                  description: 'Used for less important text, hints, and secondary information',
+                  order: 5
+                }
+              };
+              
+              // Sort by order (most important first)
+              return Object.entries(typography.fontWeight)
+                .map(([key, value]) => ({
+                  key,
+                  value,
+                  label: weightLabels[key] || { 
+                    title: key.charAt(0).toUpperCase() + key.slice(1), 
+                    description: `${key} weight`,
+                    order: 99
+                  }
+                }))
+                .sort((a, b) => a.label.order - b.label.order)
+                .map(({ key, value, label }) => (
+                  <div key={key} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 pr-4">
+                        <span className="text-sm font-medium text-gray-700 block">{label.title}</span>
+                        <span className="text-xs text-gray-500 block mt-0.5">{label.description}</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
               <input
                 type="range"
                 min="300"
@@ -1789,11 +1921,14 @@ function TypographySettings({ template, onChange }: SettingsProps) {
                 step="100"
                 value={value as number}
                 onChange={(e) => onChange(`fontWeight.${key}`, parseInt(e.target.value))}
-                className="w-20"
+                          className="w-24"
               />
-              <span className="text-sm text-gray-500 w-8">{value as number}</span>
+                        <span className="text-sm font-medium text-gray-700 w-10 text-right">{value as number}</span>
             </div>
-          ))}
+                    </div>
+                  </div>
+                ));
+            })()}
         </div>
       </div>
     </div>

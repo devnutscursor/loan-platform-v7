@@ -1,18 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import Icon, { icons } from '@/components/ui/Icon';
-
-// Lazy load unified components (same as internal profile)
-const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
-const UnifiedRightSidebar = lazy(() => import('@/components/landingPage/UnifiedRightSidebar'));
-const LandingPageTabs = lazy(() => import('@/components/landingPage/LandingPageTabs'));
-
-// Import types
-import type { TabId } from '@/components/landingPage/LandingPageTabs';
+import PublicProfileContent from '@/components/public/PublicProfileContent';
 
 interface PublicProfileData {
   user: {
@@ -124,15 +116,18 @@ const SkeletonLoader = () => (
 
 export default function PublicProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = params.slug as string;
+  
+  // Check if this is a preview mode from customizer
+  const isPreview = searchParams.get('preview') === 'true';
+  const previewTemplate = searchParams.get('template') as 'template1' | 'template2' | null;
   
   const [profileData, setProfileData] = useState<PublicProfileData | null>(null);
   const [templateData, setTemplateData] = useState<PublicTemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Tab state (template is determined by the fetched data)
-  const [activeTab, setActiveTab] = useState<TabId>('todays-rates');
 
   useEffect(() => {
     if (slug) {
@@ -180,17 +175,34 @@ export default function PublicProfilePage() {
 
   // Separate effect to handle template selection after component mounts
   useEffect(() => {
-    if (profileData?.user?.id && !templateData) {
+    if (profileData?.user?.id) {
       const fetchTemplate = async () => {
         try {
-          // The API will now determine the template from the database
-          // Add cache-busting parameter to prevent browser caching
+          // In preview mode, use the preview template from query params
+          // Otherwise, fetch from database
           const templateCacheBuster = Date.now();
-          const templateResponse = await fetch(`/api/public-templates/${profileData.user.id}?t=${templateCacheBuster}`);
+          let templateResponse;
+          
+          if (isPreview && previewTemplate) {
+            // Preview mode: fetch the specific template
+            console.log('🎨 Preview mode: Fetching template', previewTemplate);
+            templateResponse = await fetch(`/api/public-templates/${profileData.user.id}?template=${previewTemplate}&t=${templateCacheBuster}`);
+          } else {
+            // Normal mode: fetch from database
+            templateResponse = await fetch(`/api/public-templates/${profileData.user.id}?t=${templateCacheBuster}`);
+          }
+          
           const templateResult = await templateResponse.json();
           console.log('🎨 Template API response:', templateResult);
           
           if (templateResult.success) {
+            // Override template slug if in preview mode
+            if (isPreview && previewTemplate) {
+              templateResult.data.template = {
+                ...templateResult.data.template,
+                slug: previewTemplate
+              };
+            }
             setTemplateData(templateResult.data);
           } else {
             console.error('❌ Template API error:', templateResult.message);
@@ -202,7 +214,7 @@ export default function PublicProfilePage() {
 
       fetchTemplate();
     }
-  }, [profileData?.user?.id, templateData]);
+  }, [profileData?.user?.id, isPreview, previewTemplate]);
 
   const fetchPublicProfile = async () => {
     try {
@@ -247,21 +259,6 @@ export default function PublicProfilePage() {
     }
   };
 
-
-  // Get the selected template from the fetched data
-  const selectedTemplate = templateData?.template?.slug === 'template2' ? 'template2' : 'template1';
-
-  // Tab change handler (same as internal profile)
-  const handleTabChange = (tabId: TabId) => {
-    setActiveTab(tabId);
-  };
-
-  // Memoize user information (same as internal profile)
-  const officerInfo = {
-    officerName: `${profileData?.user.firstName || ''} ${profileData?.user.lastName || ''}`,
-    phone: profileData?.user.phone || null,
-    email: profileData?.user.email || 'user@example.com',
-  };
 
   // Debug: Always show loading state first
   console.log('🔍 Component render state:', { loading, error, profileData: !!profileData, slug });
@@ -323,257 +320,10 @@ export default function PublicProfilePage() {
   console.log('✅ Rendering profile data:', profileData);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Scroll bar styling with template border radius */}
-      <style jsx global>{`
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: ${templateData?.template?.layout?.borderRadius || 8}px;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: ${templateData?.template?.colors?.primary || '#ec4899'};
-          border-radius: ${templateData?.template?.layout?.borderRadius || 8}px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: ${templateData?.template?.colors?.secondary || '#01bcc6'};
-        }
-      `}</style>
-      {/* Unified Template Rendering with Suspense - PUBLIC MODE */}
-      <Suspense fallback={<SkeletonLoader />}>
-        {/* Main Content Area (container that wraps hero, content, footer) */}
-        <div className="w-full px-4 py-4 lg:px-6 lg:py-6">
-          <div 
-            className="overflow-hidden"
-            style={{ 
-              borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-            }}
-          >
-            {/* Hero Section - rounded top corners */}
-            <div 
-              className="overflow-hidden"
-              style={{ 
-                borderTopLeftRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                borderTopRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-              }}
-            >
-        <UnifiedHeroSection
-          isPublic={true}
-          publicUserData={{
-            name: officerInfo.officerName,
-            email: officerInfo.email,
-            phone: officerInfo.phone || undefined,
-            nmlsNumber: profileData.user.nmlsNumber,
-            avatar: profileData.user.avatar
-          }}
-          publicTemplateData={templateData}
-          template={selectedTemplate}
-          templateCustomization={profileData.template}
-                companyData={{
-                  id: profileData.company.id,
-                  name: profileData.company.name,
-                  logo: profileData.company.logo,
-                  phone: profileData.company.phone,
-                  email: profileData.company.email,
-                  address: profileData.company.address,
-                  website: profileData.company.website,
-                  license_number: profileData.company.license_number,
-                  company_nmls_number: profileData.company.company_nmls_number,
-                  company_social_media: profileData.company.company_social_media
-                }}
-              />
-            </div>
-
-            {/* Content Area - reduced padding and visible side borders */}
-            <div 
-              className="p-3 border-x"
-              style={{ borderColor: templateData?.template?.colors?.border || '#e5e7eb' }}
-            >
-            {(() => {
-            // Get layout configuration
-            const layoutConfig = templateData?.template?.layoutConfig;
-            const isSidebarLayout = layoutConfig?.mainContentLayout?.type === 'sidebar';
-            
-            if (isSidebarLayout) {
-              // Sidebar Layout (Template2) - Left sidebar with tabs list, right content area
-              return (
-                <div className="flex gap-6 lg:gap-4">
-                  {/* Left Sidebar - Tabs List */}
-                  <div className="w-64 flex-shrink-0">
-                    <div className="sticky top-6 lg:top-8">
-                      <div 
-                        className="rounded-lg shadow-sm border p-4"
-                        style={{
-                          backgroundColor: templateData?.template?.colors?.background || '#ffffff',
-                          borderColor: templateData?.template?.colors?.border || '#e5e7eb',
-                          borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-                        }}
-                      >
-                        <h3 
-                          className="text-lg font-semibold mb-4"
-                          style={{
-                            color: templateData?.template?.colors?.text || '#111827',
-                            fontFamily: (templateData?.template?.typography?.fontFamily && (templateData?.template?.typography?.fontFamily.body || templateData?.template?.typography?.fontFamily)) || undefined
-                          }}
-                        >
-                          Navigation
-                        </h3>
-                        <nav className="space-y-1">
-                          {[
-                            { id: 'todays-rates', label: "Today's Rates", icon: 'rates' },
-                            { id: 'get-custom-rate', label: 'Get My Custom Rate', icon: 'custom' },
-                            { id: 'document-checklist', label: 'Document Checklist', icon: 'document' },
-                            { id: 'apply-now', label: 'Apply Now', icon: 'applyNow' },
-                            { id: 'my-home-value', label: 'My Home Value', icon: 'home' },
-                            { id: 'find-my-home', label: 'Find My Home', icon: 'home' },
-                            { id: 'learning-center', label: 'Learning Center', icon: 'about' }
-                          ].map((tab) => (
-                            <button
-                              key={tab.id}
-                              onClick={() => setActiveTab(tab.id as TabId)}
-                              className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
-                                activeTab === tab.id
-                                  ? 'shadow-sm'
-                                  : 'hover:bg-gray-50'
-                              }`}
-                              style={{
-                                backgroundColor: activeTab === tab.id 
-                                  ? (selectedTemplate === 'template2' 
-                                      ? templateData?.template?.colors?.primary || '#3b82f6'
-                                      : `${templateData?.template?.colors?.primary || '#3b82f6'}25`)
-                                  : 'transparent',
-                                color: activeTab === tab.id 
-                                  ? (selectedTemplate === 'template2' 
-                                      ? templateData?.template?.colors?.background || '#ffffff'
-                                      : templateData?.template?.colors?.primary || '#3b82f6')
-                                  : templateData?.template?.colors?.textSecondary || '#6b7280',
-                                border: activeTab === tab.id 
-                                  ? (selectedTemplate === 'template2' 
-                                      ? `1px solid ${templateData?.template?.colors?.primary || '#3b82f6'}`
-                                      : `1px solid ${templateData?.template?.colors?.primary || '#3b82f6'}50`)
-                                  : '1px solid transparent',
-                                borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                                fontFamily: (templateData?.template?.typography?.fontFamily && (templateData?.template?.typography?.fontFamily.body || templateData?.template?.typography?.fontFamily)) || undefined
-                              }}
-                            >
-                              <Icon 
-                                name={tab.icon as keyof typeof icons} 
-                                className={`w-4 h-4 mr-3`}
-                                color={activeTab === tab.id 
-                                  ? (selectedTemplate === 'template2' 
-                                      ? templateData?.template?.colors?.background || '#ffffff'
-                                      : templateData?.template?.colors?.primary || '#3b82f6')
-                                  : templateData?.template?.colors?.textSecondary || '#6b7280'
-                                }
-                              />
-                              {tab.label}
-                            </button>
-                          ))}
-                        </nav>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Right Content Area - Selected Tab Details */}
-                  <div className="flex-1">
-                    <LandingPageTabs
-                      isPublic={true}
-                      publicTemplateData={templateData}
-                      activeTab={activeTab}
-                      onTabChange={handleTabChange}
-                      selectedTemplate={selectedTemplate}
-                      templateCustomization={profileData.template}
-                      userId={profileData.user.id}
-                      companyId={profileData.company.id}
-                      hideTabNavigation={true} // Hide the tab navigation since we have sidebar
-                    />
-                  </div>
-                </div>
-              );
-            } else {
-              // Grid Layout (Template1) - Current layout
-              return (
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                  <div className="xl:col-span-3">
-              <LandingPageTabs
-                isPublic={true}
-                publicTemplateData={templateData}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                selectedTemplate={selectedTemplate}
-                templateCustomization={profileData.template}
-                userId={profileData.user.id}
-                companyId={profileData.company.id}
-              />
-            </div>
-                  <div className="xl:col-span-1">
-                    <div className="sticky top-6 lg:top-8">
-                <UnifiedRightSidebar 
-                  isPublic={true}
-                  publicCompanyData={{
-                    name: profileData.company.name,
-                    logo: profileData.company.logo,
-                    phone: profileData.company.phone,
-                    email: profileData.company.email,
-                    address: profileData.company.address,
-                          website: profileData.company.website,
-                          license_number: profileData.company.license_number,
-                          company_nmls_number: profileData.company.company_nmls_number,
-                          company_social_media: profileData.company.company_social_media
-                  }}
-                  publicTemplateData={templateData}
-                  template={selectedTemplate} 
-                  templateCustomization={profileData.template}
-                        companyData={{
-                          id: profileData.company.id,
-                          name: profileData.company.name,
-                          logo: profileData.company.logo,
-                          phone: profileData.company.phone,
-                          email: profileData.company.email,
-                          address: profileData.company.address,
-                          website: profileData.company.website,
-                          license_number: profileData.company.license_number,
-                          company_nmls_number: profileData.company.company_nmls_number,
-                          company_social_media: profileData.company.company_social_media
-                        }}
-                />
-              </div>
-            </div>
-          </div>
-              );
-            }
-          })()}
-        </div>
-
-            {/* Footer - rounded bottom corners */}
-            <div 
-              className="overflow-hidden"
-              style={{ 
-                borderBottomLeftRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                borderBottomRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-              }}
-            >
-              <footer className="bg-gray-900 text-white py-8">
-            <div className="text-center">
-              <p className="text-white opacity-90">
-                © 2024 {profileData.company.name}™. All rights reserved. | NMLS Consumer Access
-              </p>
-              <p className="text-sm text-white opacity-75 mt-2">
-                This is an official public profile page.
-              </p>
-              {profileData.publicLink.maxUses && (
-                <p className="text-xs text-white opacity-60 mt-1">
-                  Profile views: {profileData.publicLink.currentUses} / {profileData.publicLink.maxUses}
-                </p>
-              )}
-                </div>
-              </footer>
-            </div>
-          </div>
-        </div>
-      </Suspense>
-    </div>
+    <PublicProfileContent
+      profileData={profileData}
+      templateData={templateData}
+      isPreview={false}
+    />
   );
 }

@@ -10,9 +10,9 @@ export async function GET(
   try {
     const { userId } = await params;
     const { searchParams } = new URL(request.url);
-    const templateSlug = searchParams.get('template') || 'template1';
+    const requestedTemplateSlug = searchParams.get('template');
     
-    console.log('🔍 Fetching public template for userId:', userId, 'template:', templateSlug);
+    console.log('🔍 Fetching public template for userId:', userId, 'requested template:', requestedTemplateSlug);
 
     if (!userId) {
       return NextResponse.json(
@@ -21,67 +21,105 @@ export async function GET(
       );
     }
 
-    // First, try to get the user's selected template (isSelected = true)
-    const selectedUserTemplate = await db
-      .select()
-      .from(templates)
-      .where(
-        and(
-          eq(templates.userId, userId),
-          eq(templates.isSelected, true),
-          eq(templates.isActive, true)
-        )
-      )
-      .limit(1);
+    let selectedTemplate = [];
 
-    let selectedTemplate = selectedUserTemplate;
-
-    // If no selected template, try to get template1 for this user
-    if (selectedTemplate.length === 0) {
-      const template1User = await db
+    // If a specific template is requested (preview mode), fetch that template
+    if (requestedTemplateSlug) {
+      console.log('🎨 Preview mode: Fetching specific template', requestedTemplateSlug);
+      
+      // First try to get the user's custom template with this slug
+      const userTemplate = await db
         .select()
         .from(templates)
         .where(
           and(
-            eq(templates.slug, 'template1'),
             eq(templates.userId, userId),
-            eq(templates.isDefault, false),
+            eq(templates.slug, requestedTemplateSlug),
             eq(templates.isActive, true)
           )
         )
         .limit(1);
-      selectedTemplate = template1User;
-    }
-
-    // If still no template, get default template1
-    if (selectedTemplate.length === 0) {
-      const defaultTemplate1 = await db
+      
+      if (userTemplate.length > 0) {
+        selectedTemplate = userTemplate;
+      } else {
+        // If user doesn't have this template, get the default template with this slug
+        const defaultTemplate = await db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.slug, requestedTemplateSlug),
+              eq(templates.isDefault, true),
+              eq(templates.isActive, true)
+            )
+          )
+          .limit(1);
+        selectedTemplate = defaultTemplate;
+      }
+    } else {
+      // Normal mode: First, try to get the user's selected template (isSelected = true)
+      const selectedUserTemplate = await db
         .select()
         .from(templates)
         .where(
           and(
-            eq(templates.slug, 'template1'),
-            eq(templates.isDefault, true),
+            eq(templates.userId, userId),
+            eq(templates.isSelected, true),
             eq(templates.isActive, true)
           )
         )
         .limit(1);
-      selectedTemplate = defaultTemplate1;
-    }
 
-    // If still no template, get any default template
-    if (selectedTemplate.length === 0) {
-      const anyDefaultTemplate = await db
-        .select()
-        .from(templates)
-        .where(
-          and(
-            eq(templates.isDefault, true),
-            eq(templates.isActive, true)
+      selectedTemplate = selectedUserTemplate;
+
+      // If no selected template, try to get template1 for this user
+      if (selectedTemplate.length === 0) {
+        const template1User = await db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.slug, 'template1'),
+              eq(templates.userId, userId),
+              eq(templates.isDefault, false),
+              eq(templates.isActive, true)
+            )
           )
-        )
-        .limit(1);
-      selectedTemplate = anyDefaultTemplate;
+          .limit(1);
+        selectedTemplate = template1User;
+      }
+
+      // If still no template, get default template1
+      if (selectedTemplate.length === 0) {
+        const defaultTemplate1 = await db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.slug, 'template1'),
+              eq(templates.isDefault, true),
+              eq(templates.isActive, true)
+            )
+          )
+          .limit(1);
+        selectedTemplate = defaultTemplate1;
+      }
+
+      // If still no template, get any default template
+      if (selectedTemplate.length === 0) {
+        const anyDefaultTemplate = await db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.isDefault, true),
+              eq(templates.isActive, true)
+            )
+          )
+          .limit(1);
+        selectedTemplate = anyDefaultTemplate;
+      }
     }
 
     if (selectedTemplate.length === 0) {
@@ -92,15 +130,20 @@ export async function GET(
     }
 
     const template = selectedTemplate[0];
+    
+    // Override template slug if a specific template was requested (for preview mode)
+    const finalTemplate = requestedTemplateSlug 
+      ? { ...template, slug: requestedTemplateSlug }
+      : template;
 
     return NextResponse.json({
       success: true,
       data: {
-        template: template,
+        template: finalTemplate,
         pageSettings: null,
         metadata: {
-          templateSlug: template.slug,
-          isCustomized: !template.isDefault,
+          templateSlug: finalTemplate.slug,
+          isCustomized: !finalTemplate.isDefault,
           isPublished: true,
         }
       },
