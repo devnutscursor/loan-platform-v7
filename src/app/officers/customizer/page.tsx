@@ -74,6 +74,8 @@ interface CustomizerState {
   showSectionDetails: boolean;
 }
 
+type ViewMode = 'desktop' | 'mobile' | 'full';
+
 export default function CustomizerPage() {
   const { user, userRole, companyId, loading: authLoading } = useAuth();
   const { selectedTemplate, setSelectedTemplate, isLoading: templateSelectionLoading } = useTemplateSelection();
@@ -94,9 +96,11 @@ export default function CustomizerPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isTemplateSaved, setIsTemplateSaved] = useState(false);
-  const [isFullWidth, setIsFullWidth] = useState(false);
-  const [isDesktopView, setIsDesktopView] = useState(true);
-  const [isMobileView, setIsMobileView] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
+  const previousNonFullViewRef = useRef<ViewMode>('desktop');
+  const isDesktopView = viewMode === 'desktop';
+  const isMobileView = viewMode === 'mobile';
+  const isFullWidth = viewMode === 'full';
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSettingProfileTemplate, setIsSettingProfileTemplate] = useState(false);
   const [publicLink, setPublicLink] = useState<any>(null);
@@ -596,29 +600,45 @@ export default function CustomizerPage() {
 
   // Toggle preview mode (now called full width)
   const toggleFullWidth = useCallback(() => {
-    if (!isDesktopView) return;
+    setViewMode(prevMode => {
+      const nextMode = prevMode === 'full'
+        ? previousNonFullViewRef.current || 'desktop'
+        : 'full';
 
-    setIsFullWidth(prev => !prev);
-    setCustomizerState(prev => ({
-      ...prev,
-      isPreviewMode: !prev.isPreviewMode
-    }));
-  }, [isDesktopView]);
+      if (prevMode !== 'full') {
+        previousNonFullViewRef.current = prevMode;
+      }
+
+      setCustomizerState(prev => ({
+        ...prev,
+        isPreviewMode: nextMode === 'full'
+      }));
+
+      if (nextMode !== 'full') {
+        previousNonFullViewRef.current = nextMode;
+      }
+
+      return nextMode;
+    });
+  }, [setCustomizerState]);
 
   const activateDesktopView = useCallback(() => {
-    setIsDesktopView(true);
-    setIsMobileView(false);
-  }, []);
-
-  const activateMobileView = useCallback(() => {
-    setIsDesktopView(false);
-    setIsMobileView(true);
-    setIsFullWidth(false);
+    previousNonFullViewRef.current = 'desktop';
+    setViewMode('desktop');
     setCustomizerState(prev => ({
       ...prev,
       isPreviewMode: false
     }));
-  }, []);
+  }, [setCustomizerState]);
+
+  const activateMobileView = useCallback(() => {
+    previousNonFullViewRef.current = 'mobile';
+    setViewMode('mobile');
+    setCustomizerState(prev => ({
+      ...prev,
+      isPreviewMode: false
+    }));
+  }, [setCustomizerState]);
 
   // Handle setting current template as profile template
   const handleSetProfileTemplate = useCallback(async () => {
@@ -894,12 +914,11 @@ export default function CustomizerPage() {
                 <button
                   onClick={toggleFullWidth}
                   className={`hidden md:block p-2 rounded-md transition-colors ${
-                    isFullWidth 
-                      ? 'bg-[#01bcc6]/10 text-[#01bcc6]' 
+                    isFullWidth
+                      ? 'bg-[#01bcc6]/10 text-[#01bcc6]'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  title={!isDesktopView ? 'Cannot toggle full width on mobile' : isFullWidth ? 'Exit Full Width' : 'Full Width'}
-                  disabled={!isDesktopView}
+                  }`}
+                  title={isFullWidth ? 'Exit Full Width' : 'Full Width'}
                 >
                   <Maximize2 size={18} />
                 </button>

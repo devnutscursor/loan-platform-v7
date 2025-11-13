@@ -320,6 +320,27 @@ export default function UnifiedHeroSection({
     );
   }
 
+  const headerPaddingClasses = layoutConfig?.headerLayout?.type === 'centered'
+    ? `py-12 ${forceMobileView ? '' : '@[64rem]:py-16'}`
+    : `py-20 ${forceMobileView ? '' : '@[64rem]:py-24'}`;
+
+  const containerPaddingClasses = forceMobileView
+    ? 'px-2'
+    : 'px-4 @[40rem]:px-6 @[64rem]:px-8 @[64rem]:py-2';
+
+  const containerWidthClasses = forceMobileView && layoutConfig?.headerLayout?.type !== 'centered'
+    ? 'min-w-max'
+    : 'w-full';
+
+  const responsiveContainerWidthClasses = forceMobileView ? '' : '@[64rem]:max-w-7xl';
+
+  const containerClassNames = [
+    containerWidthClasses,
+    'mx-auto py-2',
+    containerPaddingClasses,
+    responsiveContainerWidthClasses
+  ].filter(Boolean).join(' ');
+
   return (
     <section 
       className={`relative overflow-hidden ${className}`}
@@ -335,11 +356,11 @@ export default function UnifiedHeroSection({
       />
 
       {/* Main Content */}
-      <div className={`relative z-10 ${layoutConfig?.headerLayout?.type === 'centered' ? (forceMobileView ? 'py-12' : 'py-12 lg:py-16') : (forceMobileView ? 'py-20' : 'py-20 lg:py-24')}`}>
-        <div className={`${forceMobileView && layoutConfig?.headerLayout?.type !== 'centered' ? 'min-w-max' : 'w-full'} mx-auto py-2 ${forceMobileView ? 'px-2' : 'px-4 sm:px-6 lg:px-8 lg:py-2'} ${forceMobileView ? '' : 'md:min-w-[800px] md:max-w-7xl overflow-x-auto'}`}>
+      <div className={`relative z-10 ${headerPaddingClasses.trim()}`}>
+        <div className={containerClassNames}>
           {layoutConfig?.headerLayout?.type === 'centered' ? (
             // Centered Layout (Template1)
-          <div className={`text-center ${forceMobileView ? '' : 'md:min-w-[750px]'}`}>
+          <div className="text-center">
             {/* Profile Image */}
             <div className="relative inline-block mb-4">
                 <div className={`relative ${layoutConfig?.headerLayout?.avatarSize === 'large' ? 'w-40 h-40' : 'w-32 h-32'} mx-auto`}>
@@ -381,7 +402,7 @@ export default function UnifiedHeroSection({
 
             {/* Officer Name */}
             <h1 
-              className={`text-4xl font-bold mb-4 text-white ${forceMobileView ? '' : 'lg:text-5xl'}`}
+              className={`text-md @[20rem]:text-lg @[30rem]:text-xl @[40rem]:text-2xl @[50rem]:text-3xl @[60rem]:text-4xl @[70rem]:text-5xl font-bold mb-4 text-white ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
               style={{ 
                 fontWeight: typography.fontWeight.bold
               }}
@@ -390,7 +411,7 @@ export default function UnifiedHeroSection({
             </h1>
 
             {/* Contact Information */}
-            <div className={`flex flex-col items-center justify-center space-y-2 mb-6 ${forceMobileView ? '' : 'sm:flex-row sm:space-y-0 sm:space-x-6'}`}>
+            <div className={`flex flex-col items-center justify-center space-y-2 mb-6 ${forceMobileView ? '' : '@[40rem]:flex-row @[40rem]:space-y-0 @[40rem]:space-x-6'}`}>
               {displayEmail && (
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -437,7 +458,7 @@ export default function UnifiedHeroSection({
             </div>
 
             {/* Action Buttons */}
-            <div className={`flex flex-col items-center justify-center space-y-3 mb-6 ${forceMobileView ? '' : 'sm:flex-row sm:space-y-0 sm:space-x-4'}`}>
+            <div className={`flex flex-col items-center justify-center space-y-3 mb-6 ${forceMobileView ? '' : '@[40rem]:flex-row @[40rem]:space-y-0 @[40rem]:space-x-4'}`}>
               <button
                 onClick={handleApplyNow}
                 className="inline-flex items-center px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-none"
@@ -471,9 +492,9 @@ export default function UnifiedHeroSection({
             </div>
           ) : (
             // Horizontal Layout (Template2) - Responsive: Stack on mobile, horizontal on desktop
-            <div className={`flex flex-col ${forceMobileView ? 'overflow-x-auto  w-[375px]' : 'md:flex-row md:items-start md:min-w-[900px]'}`}>
+            <div className={`flex flex-col ${forceMobileView ? 'overflow-x-auto w-[375px]' : '@[48rem]:flex-row @[48rem]:items-start'}`}>
               {/* Left Section: Officer Info (80%) */}
-              <div className={`${forceMobileView ? 'min-w-max' : 'w-full'} mb-6 ${forceMobileView ? '' : 'md:w-3/4 md:pr-8 md:flex-shrink-0 md:min-w-[650px] md:mb-0'}`}>
+              <div className={`${forceMobileView ? 'min-w-max' : 'w-full'} mb-6 ${forceMobileView ? '' : '@[48rem]:w-3/4 @[48rem]:pr-8 @[48rem]:flex-shrink-0 @[48rem]:mb-0'}`}>
                 <div className={`flex items-start space-x-6 ${forceMobileView ? 'min-w-max' : ''}`}>
                   {/* Profile Image */}
                   <div className="relative">
@@ -517,7 +538,7 @@ export default function UnifiedHeroSection({
                   {/* Officer Info */}
                   <div className="flex flex-col">
                     <h1 
-                      className={`text-4xl font-bold text-white mb-4 ${forceMobileView ? '' : 'lg:text-5xl'}`}
+                      className={`text-4xl font-bold text-white mb-4 ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
                       style={{ 
                         fontWeight: typography.fontWeight.bold
                       }}
@@ -610,7 +631,7 @@ export default function UnifiedHeroSection({
                           borderRadius: `${layout.borderRadius}px`
                         }}
                       >
-                        Contact Officer
+                        Contact {displayName.split(' ')[0]}
                         <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
@@ -621,13 +642,13 @@ export default function UnifiedHeroSection({
               </div>
 
               {/* Vertical Separator Line - Hidden on mobile, visible on desktop */}
-              <div className={`${forceMobileView ? 'hidden' : 'hidden md:block'} w-px h-64 bg-white opacity-30 mx-4 flex-shrink-0`}></div>
+              <div className={`${forceMobileView ? 'hidden' : 'hidden @[48rem]:block'} w-px h-64 bg-white opacity-30 mx-4 flex-shrink-0`}></div>
               
               {/* Horizontal Separator Line - Visible on mobile, hidden on desktop */}
-              <div className={`${forceMobileView ? 'block' : 'md:hidden'} w-full h-px bg-white opacity-30 my-6`}></div>
+              <div className={`${forceMobileView ? 'block' : '@[48rem]:hidden'} w-full h-px bg-white opacity-30 my-6`}></div>
 
               {/* Right Section: Company Info (20%) */}
-              <div className={`w-full ${forceMobileView ? '' : 'md:w-1/4 md:pl-4 md:flex-shrink-0 md:min-w-[220px]'}`}>
+              <div className={`w-full ${forceMobileView ? '' : '@[48rem]:w-1/4 @[48rem]:pl-4 @[48rem]:flex-shrink-0'}`}>
                 <div className="flex items-start space-x-4">
                   {/* Company Logo */}
                   <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
@@ -660,7 +681,7 @@ export default function UnifiedHeroSection({
                   
                   {/* Company Details */}
                   <div className="flex flex-col">
-                    <h2 className={`text-2xl font-semibold text-white mb-3 ${forceMobileView ? '' : 'lg:text-3xl'}`}>
+                    <h2 className={`text-2xl font-semibold text-white mb-3 ${forceMobileView ? '' : '@[64rem]:text-3xl'}`}>
                       {companyData?.name || 'Your Company'}
                     </h2>
                     
