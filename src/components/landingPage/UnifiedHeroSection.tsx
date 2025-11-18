@@ -459,7 +459,7 @@ export default function UnifiedHeroSection({
             <div className={`flex flex-col @[18.75rem]:flex-row items-center justify-center gap-2 @[18.75rem]:gap-3 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6 ${forceMobileView ? '' : '@[40rem]:space-x-4'}`}>
               <button
                 onClick={handleApplyNow}
-                className="inline-flex items-center justify-center px-3 py-2 @[18.75rem]:px-4 @[18.75rem]:py-2.5 @[20rem]:px-6 @[20rem]:py-3 text-xs @[18.75rem]:text-sm @[20rem]:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-none w-full @[18.75rem]:w-auto"
+                className="inline-flex items-center justify-center px-3 py-2 @[18.75rem]:px-4 @[18.75rem]:py-2 @[20rem]:px-4 @[20rem]:py-2 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-none w-full @[18.75rem]:w-auto"
                 style={{
                   backgroundColor: colors.primary,
                   color: 'white',
@@ -475,7 +475,7 @@ export default function UnifiedHeroSection({
               
               <a
                 href="#contact"
-                className="inline-flex items-center justify-center px-3 py-2 @[18.75rem]:px-4 @[18.75rem]:py-2.5 @[20rem]:px-6 @[20rem]:py-3 text-xs @[18.75rem]:text-sm @[20rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-white border-white hover:bg-white hover:text-gray-900 w-full @[18.75rem]:w-auto"
+                className="inline-flex items-center justify-center px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-white border-white hover:bg-white hover:text-gray-900 w-full @[18.75rem]:w-auto"
                 style={{
                   fontWeight: typography.fontWeight.semibold,
                   borderRadius: `${layout.borderRadius}px`
