@@ -1165,8 +1165,21 @@ export default function CustomizerPage() {
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#01bcc6]"></div>
                         </div>
                       }>
-                        {/* Use PublicProfileContent component for both mobile and desktop views */}
-                        <PublicProfileContent
+                        {/* Show skeleton loader if template is still loading or is fallback */}
+                        {(templateLoading || isFallback || !currentTemplate) ? (
+                          <div className="bg-white min-h-screen flex flex-col">
+                            <div className="h-20 bg-gray-100 border-b border-gray-200" />
+                            <div className="h-[300px] bg-gray-50 flex items-center justify-center">
+                              <div className="w-[200px] h-[200px] bg-gray-200 rounded-full" />
+                            </div>
+                            <div className="p-8 bg-white">
+                              <div className="h-5 bg-gray-200 mb-4 rounded" />
+                              <div className="h-5 bg-gray-200 mb-4 rounded w-3/5" />
+                            </div>
+                          </div>
+                        ) : (
+                          /* Use PublicProfileContent component for both mobile and desktop views */
+                          <PublicProfileContent
                           profileData={{
                             user: {
                               id: user?.id || '',
@@ -1220,6 +1233,7 @@ export default function CustomizerPage() {
                           companyName={companyData?.name}
                           forceMobileViewport={isMobileView}
                         />
+                        )}
                       </React.Suspense>
                     </TemplateProvider>
                   </div>
