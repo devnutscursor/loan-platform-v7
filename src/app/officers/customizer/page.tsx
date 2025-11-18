@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 import PublicProfileContent from '@/components/public/PublicProfileContent';
+import SmartDropdown from '@/components/ui/SmartDropdown';
 
 // Define Template type for customizer
 interface Template {
@@ -819,37 +820,43 @@ export default function CustomizerPage() {
         breadcrumbSize="md"
       >
         <style jsx global>{`
-          /* Hide scrollbars but keep functionality */
-          ::-webkit-scrollbar {
-            width: 0px;
-            height: 0px;
-            background: transparent;
+          /* Show scrollbars for customizer scroll wrapper */
+          .customizer-scroll-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
           }
           
-          ::-webkit-scrollbar-track {
-            background: transparent;
+          .customizer-scroll-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
           }
           
-          ::-webkit-scrollbar-thumb {
-            background: transparent;
+          .customizer-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
           }
           
-          /* Firefox */
-          * {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+          .customizer-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
+          
+          /* Firefox scrollbar for customizer */
+          .customizer-scroll-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
           }
           
           /* Ensure customizer is scrollable on mobile */
           @media (max-width: 768px) {
-            .customizer-container {
-              overflow-x: auto;
-              overflow-y: auto;
+            .customizer-scroll-wrapper {
               -webkit-overflow-scrolling: touch;
+            }
+            .customizer-container {
+              min-width: 100%;
             }
           }
         `}</style>
-        <div className="h-screen flex flex-col bg-gray-50 customizer-container">
+        <div className="w-full max-h-[calc(100vh-120px)] overflow-x-auto overflow-y-auto customizer-scroll-wrapper">
+          <div className="flex flex-col bg-gray-50 customizer-container min-w-[1500px] min-h-[calc(100vh-120px)]">
           {/* Header Controls */}
           <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
@@ -1177,6 +1184,7 @@ export default function CustomizerPage() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </DashboardLayout>
@@ -1721,8 +1729,86 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
     backgroundType: template.colors?.backgroundType || 'gradient'
   };
 
+  // Define theme presets
+  const themes = [
+    {
+      value: 'default',
+      label: 'Default',
+      primary: '#005b7c',
+      secondary: '#01bcc6'
+    },
+    {
+      value: 'theme1',
+      label: 'Theme 1',
+      primary: '#064E3B',
+      secondary: '#D4AF37'
+    },
+    {
+      value: 'theme2',
+      label: 'Theme 2',
+      primary: '#374151',
+      secondary: '#9CA3AF'
+    },
+    {
+      value: 'theme3',
+      label: 'Theme 3',
+      primary: '#000000',
+      secondary: '#62a0ea'
+    }
+  ];
+
+  // Normalize color value for comparison (handles #, case, whitespace)
+  const normalizeColor = (color: string) => {
+    const cleaned = color.trim().toUpperCase();
+    // Ensure it starts with # for consistent comparison
+    return cleaned.startsWith('#') ? cleaned : `#${cleaned}`;
+  };
+
+  // Detect current theme based on primary and secondary colors
+  const detectCurrentTheme = () => {
+    const normalizedPrimary = normalizeColor(colors.primary);
+    const normalizedSecondary = normalizeColor(colors.secondary);
+    
+    const matchingTheme = themes.find(
+      theme => 
+        normalizeColor(theme.primary) === normalizedPrimary &&
+        normalizeColor(theme.secondary) === normalizedSecondary
+    );
+    
+    return matchingTheme?.value || null;
+  };
+
+  const currentTheme = detectCurrentTheme();
+
+  // Handle theme selection
+  const handleThemeChange = (themeValue: string) => {
+    const selectedTheme = themes.find(t => t.value === themeValue);
+    if (selectedTheme) {
+      onChange('primary', selectedTheme.primary);
+      onChange('secondary', selectedTheme.secondary);
+    }
+  };
+
+  // Prepare dropdown options
+  const themeOptions = themes.map(theme => ({
+    value: theme.value,
+    label: theme.label
+  }));
+
   return (
     <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Theme Presets</label>
+        <SmartDropdown
+          value={currentTheme}
+          onChange={handleThemeChange}
+          options={themeOptions}
+          placeholder="Select a theme preset"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Apply preset color combinations. You can still customize individual colors below.
+        </p>
+      </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
         <div className="flex items-center space-x-3">
