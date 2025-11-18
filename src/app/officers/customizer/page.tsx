@@ -850,24 +850,68 @@ export default function CustomizerPage() {
             .customizer-scroll-wrapper {
               -webkit-overflow-scrolling: touch;
             }
-            .customizer-container {
-              min-width: 100%;
+          }
+          
+          /* Force preview container to maintain fixed size in customizer (desktop only) */
+          .customizer-container .public-profile-container {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 1200px !important;
+          }
+          
+          /* Prevent child elements from being constrained in customizer preview (desktop only) */
+          .customizer-container .public-profile-container * {
+            max-width: none !important;
+          }
+          
+          /* Override fixed-width rules for mobile preview */
+          .customizer-mobile-preview .public-profile-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: auto !important;
+          }
+          
+          .customizer-mobile-preview .public-profile-container * {
+            max-width: 100% !important;
+          }
+          
+          /* Override the 768px media query for customizer preview (desktop only) */
+          @media (max-width: 768px) {
+            .customizer-container .public-profile-container {
+              width: auto !important;
+              max-width: none !important;
+              min-width: 1200px !important;
+            }
+            
+            .customizer-container .public-profile-container * {
+              max-width: none !important;
+            }
+            
+            /* Ensure mobile preview still works at 768px */
+            .customizer-mobile-preview .public-profile-container {
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: auto !important;
+            }
+            
+            .customizer-mobile-preview .public-profile-container * {
+              max-width: 100% !important;
             }
           }
         `}</style>
         <div className="w-full max-h-[calc(100vh-120px)] overflow-x-auto overflow-y-auto customizer-scroll-wrapper">
           <div className="flex flex-col bg-gray-50 customizer-container min-w-[1500px] min-h-[calc(100vh-120px)]">
           {/* Header Controls */}
-          <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Template Customizer</h1>
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+            <div className="flex flex-row items-center justify-between gap-0">
+              <div className="flex flex-row items-center gap-4">
+                <h1 className="text-2xl font-bold text-gray-900">Template Customizer</h1>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs md:text-sm text-gray-500">Template:</span>
+                  <span className="text-sm text-gray-500">Template:</span>
                   <select
                     value={customizerState.selectedTemplate}
                     onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="px-2 md:px-3 py-1 border border-gray-300 rounded-md text-xs md:text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
                   >
                     {['template1', 'template2'].map(templateSlug => {
                       const templateName = templateSlug === 'template1' ? 'Template1' : 'Template2';
@@ -904,10 +948,10 @@ export default function CustomizerPage() {
                   <LaptopMinimal size={18} />
                 </button>
                 
-                {/* Mobile View Icon - Hide on actual mobile devices */}
+                {/* Mobile View Icon */}
                 <button
                   onClick={activateMobileView}
-                  className={`hidden md:block p-2 rounded-md transition-colors ${
+                  className={`block p-2 rounded-md transition-colors ${
                     isMobileView 
                       ? 'bg-[#01bcc6]/10 text-[#01bcc6]' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -917,10 +961,10 @@ export default function CustomizerPage() {
                   <Smartphone size={18} />
                 </button>
                 
-                {/* Full Width Icon - Hide on actual mobile */}
+                {/* Full Width Icon */}
                 <button
                   onClick={toggleFullWidth}
-                  className={`hidden md:block p-2 rounded-md transition-colors ${
+                  className={`block p-2 rounded-md transition-colors ${
                     isFullWidth
                       ? 'bg-[#01bcc6]/10 text-[#01bcc6]'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -934,19 +978,17 @@ export default function CustomizerPage() {
                 <Button
                   onClick={handleSave}
                   disabled={(isSaving || (Object.keys(customizerState.customSettings).length === 0 && !isTemplateSaved)) && !isTemplateSaved}
-                  className="bg-[#005b7c] hover:bg-[#01bcc6] text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-xs md:text-sm px-3 md:px-4"
+                  className="bg-[#005b7c] hover:bg-[#01bcc6] text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-sm px-4"
                 >
                   {isTemplateSaved ? (
                     <>
-                      <Eye size={14} className="mr-1 md:mr-2" />
-                      <span className="hidden sm:inline">Profile Preview</span>
-                      <span className="sm:hidden">Preview</span>
+                      <Eye size={14} className="mr-2" />
+                      <span className="inline">Profile Preview</span>
                     </>
                   ) : (
                     <>
-                      <Save size={14} className="mr-1 md:mr-2" />
-                      <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Template'}</span>
-                      <span className="sm:hidden">{isSaving ? 'Saving...' : 'Save'}</span>
+                      <Save size={14} className="mr-2" />
+                      <span className="inline">{isSaving ? 'Saving...' : 'Save Template'}</span>
                     </>
                   )}
                 </Button>
@@ -995,8 +1037,8 @@ export default function CustomizerPage() {
 
           {/* Main Content - Takes remaining height */}
           <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Left Sidebar - Sections or Section Details - Hide on mobile, show on desktop */}
-            <div className={`hidden md:block w-80 bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
+            {/* Left Sidebar - Sections or Section Details */}
+            <div className={`block w-80 bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
               customizerState.isPreviewMode ? '-ml-80' : 'ml-0'
             }`}>
               {!customizerState.showSectionDetails ? (
@@ -1097,12 +1139,12 @@ export default function CustomizerPage() {
             {/* Center - Live Preview (Full Width) */}
             <div className="flex-1 bg-gray-100 overflow-auto">
               <div className={`h-full w-full overflow-auto overflow-x-auto`}>
-                <div className={`${isMobileView ? 'flex justify-center items-start min-h-full p-0' : 'p-2 md:p-6'}`}>
+                <div className={`${isMobileView ? 'flex justify-center items-start min-h-full p-0' : 'p-6'}`}>
                   <div 
                       className={`transition-all duration-300 ${
                         isMobileView 
-                          ? 'w-[375px] h-[667px] overflow-y-auto overflow-x-auto rounded-[28px] shadow-2xl border border-gray-300 bg-white m-0'
-                          : 'min-h-full w-full overflow-auto bg-white rounded-lg shadow-sm border border-gray-200'
+                          ? 'customizer-mobile-preview w-[375px] h-[667px] overflow-y-auto overflow-x-auto rounded-[28px] shadow-2xl border border-gray-300 bg-white m-0'
+                          : 'min-h-full min-w-[1200px] w-full overflow-auto bg-white rounded-lg shadow-sm border border-gray-200'
                       }`}
                     style={{
                       fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
