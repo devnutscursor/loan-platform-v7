@@ -352,9 +352,8 @@ export default function TodaysRatesTab({
 
       {/* Mortgage Search Form */}
       <div 
-        className="bg-white border shadow-sm p-6"
+        className="bg-white p-6"
         style={{ 
-          borderColor: colors.border,
           backgroundColor: colors.background,
           borderRadius: `${layout.borderRadius}px`
         }}

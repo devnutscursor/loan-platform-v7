@@ -348,7 +348,7 @@ export default function LandingPageTabs({
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={`
-                    relative flex-shrink-0 flex items-center space-x-3 px-6 py-4 rounded-xl
+                    relative flex-shrink-0 flex items-center space-x-3 px-4 py-3 rounded-xl
                     transition-all duration-300 ease-out transform
                     backdrop-blur-sm border shadow-sm
                     hover:shadow-lg active:scale-95
@@ -371,9 +371,7 @@ export default function LandingPageTabs({
                   {/* Enhanced active indicator */}
                   {isActive && (
                     <>
-                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full animate-pulse shadow-lg" style={{ backgroundColor: colors.primary, boxShadow: `0 0 20px ${colors.primary}50` }} />
-                      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: `${colors.primary}80` }} />
-                      <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full animate-ping" style={{ backgroundColor: `${colors.primary}40`, animationDelay: '0.5s' }} />
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full shadow-lg transition-all duration-300 ease-out" style={{ backgroundColor: colors.primary, boxShadow: `0 0 20px ${colors.primary}50` }} />
                     </>
                   )}
                   
@@ -445,9 +443,9 @@ export default function LandingPageTabs({
         }`}
       >
         <div 
-          className={`bg-white shadow-xl border ${
+          className={`bg-white shadow-xl ${
             forceMobileView || selectedTemplate === 'template2' ? '' : 'overflow-x-auto'
-          } ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl border-t-0'}`}
+          } ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl'}`}
           style={{ 
             backgroundColor: colors.background,
             borderColor: colors.border,

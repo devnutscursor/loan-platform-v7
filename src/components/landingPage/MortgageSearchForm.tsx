@@ -395,7 +395,6 @@ function MortgageSearchForm({
         style={{
           backgroundColor: '#ffffff',
           borderRadius: `${templateLayout.borderRadius}px`,
-          padding: spacing[6],
           marginBottom: spacing[8]
         }}
       >
