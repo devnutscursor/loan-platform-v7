@@ -425,10 +425,6 @@ export default function LandingPageTabs({
                     />
                   </div>
                   
-                  {/* Subtle border glow for active tab */}
-                  {isActive && (
-                    <div className="absolute inset-0 border-2 animate-pulse" style={{ borderColor: `${colors.primary}50` }} />
-                  )}
                 </button>
               );
             })}
