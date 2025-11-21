@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import Icon, { icons } from '@/components/ui/Icon';
 import Image from 'next/image';
 import PublicProfileContent from '@/components/public/PublicProfileContent';
+import type { TabId } from '@/components/landingPage/LandingPageTabs';
 
 // Define Template type for customizer
 interface Template {
@@ -92,7 +93,7 @@ export default function CustomizerPage() {
   });
 
   // State for active tab in preview
-  const [previewActiveTab, setPreviewActiveTab] = useState<'todays-rates' | 'get-custom-rate' | 'document-checklist' | 'apply-now' | 'my-home-value' | 'find-my-home' | 'learning-center'>('todays-rates');
+  const [previewActiveTab, setPreviewActiveTab] = useState<TabId>('todays-rates');
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
