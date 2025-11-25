@@ -30,8 +30,8 @@ async function createDefaultTemplates() {
       is_default: true,
       user_id: null,
       colors: {
-        primary: '#ec4899',
-        secondary: '#3b82f6',
+        primary: '#064E3B',
+        secondary: '#D4AF37',
         background: '#ffffff',
         text: '#111827',
         textSecondary: '#6b7280',
@@ -80,8 +80,8 @@ async function createDefaultTemplates() {
       is_default: true,
       user_id: null,
       colors: {
-        primary: '#9333ea',
-        secondary: '#06b6d4',
+        primary: '#374151',
+        secondary: '#9CA3AF',
         background: '#ffffff',
         text: '#111827',
         textSecondary: '#6b7280',
@@ -109,7 +109,7 @@ async function createDefaultTemplates() {
       layout: {
         alignment: 'center',
         spacing: 16,
-        borderRadius: 8,
+        borderRadius: 1,
         padding: 24
       },
       advanced: {
