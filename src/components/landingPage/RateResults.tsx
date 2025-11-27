@@ -668,7 +668,10 @@ function RateResults({
       {/* Product Details Modal */}
       {isModalOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ borderRadius: `${layout.borderRadius}px` }}>
+          <div
+            className="bg-white max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+            style={{ borderRadius: `${layout.borderRadius}px` }}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -685,7 +688,7 @@ function RateResults({
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
+            <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column - Basic Info */}
                 <div>
@@ -832,33 +835,34 @@ function RateResults({
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => handleGetStarted(selectedProduct)}
-                  className="flex-1 flex items-center justify-center text-white py-3 px-6 font-medium transition-colors"
-                  style={{ 
-                    backgroundColor: colors.primary,
-                    color: colors.background,
-                    borderRadius: `${layout.borderRadius}px`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.secondary;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary;
-                  }}
-                >
-                  Get Started with This Loan
-                </button>
-                <button
-                  onClick={handleCloseModal}
-                  className="flex-1 flex items-center justify-center border border-gray-300 text-gray-700 py-3 px-6 font-medium hover:bg-gray-50 transition-colors"
-                  style={{ borderRadius: `${layout.borderRadius}px` }}
-                >
-                  Close
-                </button>
-              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t border-gray-200 p-6 bg-white flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => handleGetStarted(selectedProduct)}
+                className="flex-1 flex items-center justify-center text-white py-3 px-6 font-medium transition-colors"
+                style={{ 
+                  backgroundColor: colors.primary,
+                  color: colors.background,
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.secondary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.primary;
+                }}
+              >
+                Get Started with This Loan
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="flex-1 flex items-center justify-center border border-gray-300 text-gray-700 py-3 px-6 font-medium hover:bg-gray-50 transition-colors"
+                style={{ borderRadius: `${layout.borderRadius}px` }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
