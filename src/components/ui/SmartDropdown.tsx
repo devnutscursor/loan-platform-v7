@@ -26,6 +26,7 @@ export interface SmartDropdownProps {
   activeOptionClassName?: string;
   renderValue?: (option: SmartDropdownOption | undefined) => React.ReactNode;
   onOpenChange?: (open: boolean) => void;
+  borderRadius?: number | string;
 }
 
 export default function SmartDropdown({
@@ -41,10 +42,18 @@ export default function SmartDropdown({
   activeOptionClassName,
   renderValue,
   onOpenChange,
+  borderRadius,
 }: SmartDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const resolvedBorderRadius =
+    borderRadius === undefined || borderRadius === null
+      ? '0.5rem'
+      : typeof borderRadius === 'number'
+        ? `${borderRadius}px`
+        : borderRadius;
 
   const selectedOption = useMemo(
     () => options.find(option => option.value === value),
@@ -138,6 +147,7 @@ export default function SmartDropdown({
         disabled={disabled}
         onClick={() => setIsOpen(prev => !prev)}
         onKeyDown={handleKeyDown}
+        style={{ borderRadius: resolvedBorderRadius }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           {selectedOption && selectedOption.icon && (
@@ -160,6 +170,7 @@ export default function SmartDropdown({
             menuClassName
           )}
           role="listbox"
+          style={{ borderRadius: resolvedBorderRadius }}
         >
           <ul className="max-h-60 overflow-auto py-1">
             {options.map((option, index) => {
@@ -173,12 +184,13 @@ export default function SmartDropdown({
                     role="option"
                     aria-selected={isSelected}
                     className={cn(
-                      'mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors',
+                      'mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
                       isActive && 'bg-[#01bcc6]/10 text-[#005b7c]',
                       isSelected && 'font-semibold text-[#005b7c]',
                       optionClassName,
                       isActive && activeOptionClassName
                     )}
+                    style={{ borderRadius: isSelected ? resolvedBorderRadius : '0.375rem' }}
                     onClick={() => handleOptionSelect(option)}
                   >
                     {option.icon && (

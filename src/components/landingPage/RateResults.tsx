@@ -451,6 +451,7 @@ function RateResults({
                     options={sortOptions}
                     placeholder="Sort by"
                     buttonClassName="border-gray-300 focus:ring-2 focus:ring-offset-2 w-full @[640px]:w-auto"
+                    borderRadius={layout.borderRadius}
                   />
                 </div>
               </div>
