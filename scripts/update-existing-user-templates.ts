@@ -59,8 +59,8 @@ async function updateExistingUserTemplates() {
         const updateData: any = {
           colors: {
             ...currentColors,
-            primary: isTemplate1 ? '#064E3B' : '#374151',
-            secondary: isTemplate1 ? '#D4AF37' : '#9CA3AF',
+            primary: isTemplate1 ? '#064E3B' : '#000000',
+            secondary: isTemplate1 ? '#D4AF37' : '#62a0ea',
           },
           layout: {
             ...currentLayout,

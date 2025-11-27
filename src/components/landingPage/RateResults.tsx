@@ -364,11 +364,7 @@ function RateResults({
   }
 
   return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      borderRadius: `${layout.borderRadius}px`,
-      boxShadow: shadows.lg
-    }}>
+    <div className={`bg-white border-0 @md:border @md:border-gray-200 `} style={{ borderRadius: `${layout.borderRadius}px` }}>
       {/* Mock Data Warning Banner */}
       {isMockData && (
         <div style={{
@@ -396,8 +392,7 @@ function RateResults({
       )}
       
       {/* Header */}
-      <div style={{
-        padding: spacing[6],
+      <div className='p-2 @md:p-4' style={{
         borderBottom: `1px solid ${colors.border}`
       }}>
         <div style={{
@@ -408,8 +403,7 @@ function RateResults({
           justifyContent: 'space-between'
         }}>
           <div>
-            <h2 style={{
-              fontSize: typography.fontSize['2xl'],
+            <h2 className='text-xl @md:text-2xl' style={{
               fontWeight: typography.fontWeight.bold,
               color: colors.text,
               lineHeight: typography.lineHeight.tight
@@ -440,24 +434,6 @@ function RateResults({
           <div className="flex flex-col @[640px]:flex-row @[640px]:justify-end gap-4">
             {/* Dropdowns Group - Right side on desktop, stacked on mobile */}
             <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-3">
-              {/* Loan Term Filter Dropdown */}
-              <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-2 w-full @[640px]:w-auto">
-                <span 
-                  className="text-sm font-medium @[640px]:whitespace-nowrap"
-                  style={{ color: colors.primary }}
-                >
-                  Loan Term:
-                </span>
-                <div className="w-full @[640px]:w-auto @[640px]:min-w-[180px] min-w-0">
-                  <SmartDropdown
-                    value={selectedTerm}
-                    onChange={handleTermChange}
-                    options={loanTermOptions}
-                    placeholder="Select loan term"
-                    buttonClassName="border-gray-300 focus:ring-2 focus:ring-offset-2 w-full @[640px]:w-auto"
-                  />
-                </div>
-              </div>
 
               {/* Sort Controls */}
               <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-2 w-full @[640px]:w-auto">
@@ -484,7 +460,7 @@ function RateResults({
       </div>
 
       {/* Results */}
-      <div className="p-6">
+      <div className="p-0 pt-2 @md:p-4">
         <style jsx>{`
           .rate-results-container {
             container-type: inline-size;

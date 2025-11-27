@@ -833,7 +833,7 @@ export default function CustomizerPage() {
           
           .customizer-scroll-wrapper::-webkit-scrollbar-thumb {
             background: #888;
-            border-radius: 4px;
+            border-radius: 0px;
           }
           
           .customizer-scroll-wrapper::-webkit-scrollbar-thumb:hover {
@@ -1144,8 +1144,8 @@ export default function CustomizerPage() {
                   <div 
                       className={`transition-all duration-300 ${
                         isMobileView 
-                          ? 'customizer-mobile-preview w-[375px] h-[667px] overflow-y-auto overflow-x-auto rounded-[28px] shadow-2xl border border-gray-300 bg-white m-0'
-                          : 'min-h-full min-w-[900px] w-full overflow-auto bg-white rounded-lg shadow-sm border border-gray-200'
+                          ? 'customizer-mobile-preview w-[375px] h-[667px] overflow-y-auto overflow-x-auto shadow-2xl border border-gray-300 bg-white m-0'
+                          : 'min-h-full min-w-[900px] w-full overflow-auto bg-white shadow-sm border border-gray-200'
                       }`}
                     style={{
                       fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
@@ -1283,7 +1283,6 @@ function GeneralSettings({ template, onChange }: SettingsProps) {
 
   const sections = [
     { id: 'colors', label: 'Colors', icon: Palette, component: ColorsSettings },
-    { id: 'content', label: 'Content', icon: Settings, component: ContentSettings },
     { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings }
   ];
 

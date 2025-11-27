@@ -84,8 +84,8 @@ async function updateDefaultTemplates() {
         user_id: null,
         name: 'Purple Theme',
         colors: {
-          primary: '#374151',
-          secondary: '#9CA3AF',
+          primary: '#000000',
+          secondary: '#62a0ea',
           background: '#ffffff',
           text: '#111827',
           textSecondary: '#6b7280',

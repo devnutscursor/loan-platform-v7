@@ -80,8 +80,8 @@ async function createDefaultTemplates() {
       is_default: true,
       user_id: null,
       colors: {
-        primary: '#374151',
-        secondary: '#9CA3AF',
+        primary: '#000000',
+        secondary: '#62a0ea',
         background: '#ffffff',
         text: '#111827',
         textSecondary: '#6b7280',

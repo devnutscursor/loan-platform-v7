@@ -349,7 +349,7 @@ export default function PublicProfileContent({
                                 >
                                   <Icon 
                                     name={tab.icon as keyof typeof icons} 
-                                    className={`w-4 h-4 mr-3`}
+                                    className={`w-3 h-3 @[20rem]:w-4 @[20rem]:h-4 @[48rem]:w-5 @[48rem]:h-5 mr-3`}
                                     color={activeTab === tab.id 
                                       ? (selectedTemplate === 'template2' 
                                           ? templateData?.template?.colors?.background || '#ffffff'

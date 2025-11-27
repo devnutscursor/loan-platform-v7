@@ -343,11 +343,10 @@ export default function LandingPageTabs({
           {/* Scrollable Tab Navigation */}
           <div className="relative max-w-7xl mx-auto px-4">
             <nav 
-              className="overflow-x-auto overflow-y-hidden scrollbar-rounded"
+              className="overflow-x-auto overflow-y-hidden scrollbar-rounded gap-2 @sm:gap-3"
               style={{ 
                 paddingTop: `${layout.padding.small}px`,
                 paddingBottom: `${layout.padding.small + 8}px`,
-                gap: `${layout.spacing}px`,
                 display: 'flex',
                 flexWrap: 'nowrap',
                 alignItems: 'center',
@@ -363,7 +362,7 @@ export default function LandingPageTabs({
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={`
-                    relative flex-shrink-0 flex items-center space-x-3 px-4 py-3 rounded-xl
+                    relative flex-shrink-0 flex items-center justify-center space-x-1.5 @sm:space-x-3 px-2 @sm:px-4 py-3 rounded-xl
                     transition-all duration-300 ease-out transform
                     backdrop-blur-sm border shadow-sm
                     hover:shadow-lg active:scale-95
@@ -371,7 +370,6 @@ export default function LandingPageTabs({
                   `}
                   title={tab.description}
                   style={{
-                    minWidth: '180px',
                     backdropFilter: 'blur(10px)',
                     borderRadius: `${layout.borderRadius}px`,
                     backgroundColor: isActive ? colors.primary : colors.background,
@@ -395,9 +393,9 @@ export default function LandingPageTabs({
                     isActive ? 'drop-shadow-lg' : ''
                   }`}>
                     {React.createElement(icons[tab.icon], { 
-                      size: 22, 
+                      size: undefined,
                       color: isActive ? colors.background : colors.primary,
-                      className: isActive ? 'drop-shadow-sm' : 'transition-colors duration-200'
+                      className: `${isActive ? 'drop-shadow-sm' : 'transition-colors duration-200'} w-3 h-3 @[20rem]:w-4 @[20rem]:h-4 @[48rem]:w-5 @[48rem]:h-5`
                     })}
                     {isActive && (
                       <div className="absolute inset-0 rounded-full opacity-20 blur-sm" style={{ backgroundColor: colors.primary }} />
@@ -406,7 +404,7 @@ export default function LandingPageTabs({
                   
                   {/* Label */}
                   <span 
-                    className="text-sm font-medium whitespace-nowrap transition-all duration-200 drop-shadow-sm"
+                    className="text-xs @sm:text-sm font-medium whitespace-nowrap transition-all duration-200 drop-shadow-sm"
                     style={{
                       color: isActive ? colors.background : colors.textSecondary,
                       fontWeight: typography.fontWeight.medium
