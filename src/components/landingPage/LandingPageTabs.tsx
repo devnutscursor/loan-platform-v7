@@ -283,6 +283,7 @@ export default function LandingPageTabs({
           selectedTemplate={selectedTemplate} 
           isPublic={isPublic}
           publicTemplateData={publicTemplateData}
+          userId={userId}
         />;
       
       case 'neighborhood-reports':

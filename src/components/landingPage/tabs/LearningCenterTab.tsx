@@ -5,6 +5,7 @@ import { typography } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
+import { supabase } from '@/lib/supabase/client';
 
 interface Video {
   id: string;
@@ -28,6 +29,7 @@ interface LearningCenterTabProps {
   // NEW: Public mode props
   isPublic?: boolean;
   publicTemplateData?: any;
+  userId?: string; // For fetching content
 }
 
 export default function LearningCenterTab({
@@ -35,7 +37,8 @@ export default function LearningCenterTab({
   className = '',
   // NEW: Public mode props
   isPublic = false,
-  publicTemplateData
+  publicTemplateData,
+  userId
 }: LearningCenterTabProps) {
   const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
@@ -157,7 +160,15 @@ button: {
   const [activeSection, setActiveSection] = useState<'videos' | 'faq' | 'guides'>('videos');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
+  
+  // State for fetched content
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [guides, setGuides] = useState<any[]>([]);
+  const [videoDataMap, setVideoDataMap] = useState<Map<string, any>>(new Map()); // Store full video data with URLs
+  const [loadingContent, setLoadingContent] = useState(true);
 
+  // Mock data as fallback
   const mockVideos: Video[] = [
     {
       id: '1',
@@ -230,13 +241,139 @@ button: {
     { id: 'process', name: 'Closing Process' }
   ];
 
+  // Fetch content from API
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        setLoadingContent(true);
+        const officerId = userId || (isPublic ? (publicTemplateData?.profileData?.user?.id) : user?.id);
+        
+        if (!officerId) {
+          // Use mock data if no officer ID
+          setVideos(mockVideos);
+          setFaqs(mockFAQs);
+          setLoadingContent(false);
+          return;
+        }
+
+        if (isPublic) {
+          // Fetch from public API
+          const response = await fetch(`/api/public/content/${officerId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              // Transform API data to component format
+              const videosList = (data.data.videos || []).map((v: any) => ({
+                id: v.id,
+                title: v.title,
+                description: v.description || '',
+                duration: v.duration || '',
+                thumbnail: v.thumbnail_url || '',
+                category: v.category
+              }));
+              setVideos(videosList);
+              // Store full video data for URL access
+              const videoMap = new Map();
+              (data.data.videos || []).forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              setVideoDataMap(videoMap);
+              setFaqs((data.data.faqs || []).map((f: any) => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category
+              })));
+              setGuides(data.data.guides || []);
+            }
+          }
+        } else {
+          // Fetch from authenticated API
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) {
+            // Use mock data if no auth token
+            setVideos(mockVideos);
+            setFaqs(mockFAQs);
+            setLoadingContent(false);
+            return;
+          }
+
+          const [faqsRes, videosRes, guidesRes] = await Promise.all([
+            fetch('/api/officers/content/faqs', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            }),
+            fetch('/api/officers/content/videos', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            }),
+            fetch('/api/officers/content/guides', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            })
+          ]);
+
+          if (videosRes.ok) {
+            const videosData = await videosRes.json();
+            if (videosData.success) {
+              const videosList = (videosData.data || []).map((v: any) => ({
+                id: v.id,
+                title: v.title,
+                description: v.description || '',
+                duration: v.duration || '',
+                thumbnail: v.thumbnail_url || '',
+                category: v.category
+              }));
+              setVideos(videosList);
+              // Store full video data for URL access
+              const videoMap = new Map();
+              (videosData.data || []).forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              setVideoDataMap(videoMap);
+            }
+          }
+
+          if (faqsRes.ok) {
+            const faqsData = await faqsRes.json();
+            if (faqsData.success) {
+              setFaqs((faqsData.data || []).map((f: any) => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category
+              })));
+            }
+          }
+
+          if (guidesRes.ok) {
+            const guidesData = await guidesRes.json();
+            if (guidesData.success) {
+              setGuides(guidesData.data || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching content:', error);
+        // Fallback to mock data on error
+        setVideos(mockVideos);
+        setFaqs(mockFAQs);
+      } finally {
+        setLoadingContent(false);
+      }
+    };
+
+    fetchContent();
+  }, [user, userId, isPublic, publicTemplateData]);
+
   const filteredVideos = selectedCategory === 'all' 
-    ? mockVideos 
-    : mockVideos.filter(video => video.category === selectedCategory);
+    ? videos 
+    : videos.filter(video => video.category === selectedCategory);
 
   const filteredFAQs = selectedCategory === 'all' 
-    ? mockFAQs 
-    : mockFAQs.filter(faq => faq.category === selectedCategory);
+    ? faqs 
+    : faqs.filter(faq => faq.category === selectedCategory);
+  
+  const filteredGuides = selectedCategory === 'all'
+    ? guides
+    : guides.filter((guide: any) => guide.category === selectedCategory);
 
   return (
     <div className={`w-full ${className}`}>
@@ -315,12 +452,23 @@ button: {
             <div key={video.id} className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
               <div className={`${classes.card.body}`}>
                 <div className="relative mb-4">
-                  <div className="aspect-video bg-gray-200 flex items-center justify-center" style={{ borderRadius: `${layout.borderRadius}px` }}>
-                    <Icon name="play" size={48} color={colors.textSecondary} />
-                  </div>
-                  <div className={`absolute bottom-2 right-2 ${classes.status.info}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-                    {video.duration}
-                  </div>
+                  {video.thumbnail ? (
+                    <img 
+                      src={video.thumbnail} 
+                      alt={video.title}
+                      className="w-full aspect-video object-cover"
+                      style={{ borderRadius: `${layout.borderRadius}px` }}
+                    />
+                  ) : (
+                    <div className="aspect-video bg-gray-200 flex items-center justify-center" style={{ borderRadius: `${layout.borderRadius}px` }}>
+                      <Icon name="play" size={48} color={colors.textSecondary} />
+                    </div>
+                  )}
+                  {video.duration && (
+                    <div className={`absolute bottom-2 right-2 ${classes.status.info}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+                      {video.duration}
+                    </div>
+                  )}
                 </div>
                 <h3 className={`${classes.heading.h5} mb-2`}>
                   {video.title}
@@ -342,6 +490,12 @@ button: {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = colors.primary;
+                  }}
+                  onClick={() => {
+                    const videoData = videoDataMap.get(video.id);
+                    if (videoData?.video_url || videoData?.videoUrl) {
+                      window.open(videoData.video_url || videoData.videoUrl, '_blank');
+                    }
                   }}
                 >
                   <Icon name="play" size={16} color={colors.background} />
@@ -386,129 +540,50 @@ button: {
 
       {activeSection === 'guides' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="book" size={24} color={colors.primary} />
+          {filteredGuides.length === 0 ? (
+            <div className={`${classes.card.container} col-span-2`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+              <div className={`${classes.card.body} text-center`}>
+                <p className={classes.body.base}>No guides available yet.</p>
               </div>
-              <h3 className={`${classes.heading.h5}`}>
-                First-Time Home Buyer Guide
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Complete step-by-step guide for first-time home buyers
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
             </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="calculator" size={24} color={colors.primary} />
+          ) : (
+            filteredGuides.map((guide: any) => (
+              <div key={guide.id} className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+                <div className={`${classes.card.body}`}>
+                  <div className={`${classes.icon.primary}`}>
+                    <Icon name="book" size={24} color={colors.primary} />
+                  </div>
+                  <h3 className={`${classes.heading.h5}`}>
+                    {guide.name}
+                  </h3>
+                  <p className={`${classes.body.small} mb-4`}>
+                    {guide.file_name}
+                  </p>
+                  <a
+                    href={guide.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.primary,
+                      color: colors.primary,
+                      borderRadius: `${layout.borderRadius}px`,
+                      textDecoration: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primary + '10';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.background;
+                    }}
+                  >
+                    Download Guide
+                  </a>
+                </div>
               </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Mortgage Calculator Guide
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Learn how to calculate your monthly payments and affordability
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                <Icon name="shield" size={24} color={colors.primary} />
-              </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Credit Score Improvement
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Tips and strategies to improve your credit score
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="fileText" size={24} color={colors.primary} />
-              </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Document Checklist
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Complete list of documents needed for your mortgage application
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
+            ))
+          )}
         </div>
       )}
 

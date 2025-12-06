@@ -347,6 +347,55 @@ export const publicLinkUsage = pgTable('public_link_usage', {
   accessedAtIdx: index('access_time_idx').on(table.accessedAt),
 }));
 
+// Officer Content FAQs table
+export const officerContentFaqs = pgTable('officer_content_faqs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  category: text('category').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  officerIdx: index('officer_content_faqs_officer_idx').on(table.officerId),
+  categoryIdx: index('officer_content_faqs_category_idx').on(table.category),
+}));
+
+// Officer Content Videos table
+export const officerContentVideos = pgTable('officer_content_videos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  category: text('category').notNull(),
+  videoUrl: text('video_url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  duration: text('duration'), // e.g., "8:45"
+  cloudinaryPublicId: text('cloudinary_public_id'), // for deletion
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  officerIdx: index('officer_content_videos_officer_idx').on(table.officerId),
+  categoryIdx: index('officer_content_videos_category_idx').on(table.category),
+}));
+
+// Officer Content Guides table
+export const officerContentGuides = pgTable('officer_content_guides', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileName: text('file_name').notNull(),
+  fileType: text('file_type'), // MIME type
+  cloudinaryPublicId: text('cloudinary_public_id'), // for deletion
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  officerIdx: index('officer_content_guides_officer_idx').on(table.officerId),
+  categoryIdx: index('officer_content_guides_category_idx').on(table.category),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -372,3 +421,9 @@ export type LoanOfficerPublicLink = typeof loanOfficerPublicLinks.$inferSelect;
 export type NewLoanOfficerPublicLink = typeof loanOfficerPublicLinks.$inferInsert;
 export type PublicLinkUsage = typeof publicLinkUsage.$inferSelect;
 export type NewPublicLinkUsage = typeof publicLinkUsage.$inferInsert;
+export type OfficerContentFaq = typeof officerContentFaqs.$inferSelect;
+export type NewOfficerContentFaq = typeof officerContentFaqs.$inferInsert;
+export type OfficerContentVideo = typeof officerContentVideos.$inferSelect;
+export type NewOfficerContentVideo = typeof officerContentVideos.$inferInsert;
+export type OfficerContentGuide = typeof officerContentGuides.$inferSelect;
+export type NewOfficerContentGuide = typeof officerContentGuides.$inferInsert;

@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
+    "db:run-migration": "tsx scripts/run-migration.ts",
     "type-check": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",
     "seed:auth": "tsx scripts/seed-auth.ts",
