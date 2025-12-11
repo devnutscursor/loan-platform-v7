@@ -35,6 +35,7 @@ interface Template {
   bodyModifications?: {
     enabledTabs?: string[];
     activeTab?: string;
+    homeValueWidgetUrl?: string;
   };
   rightSidebarModifications?: {
     companyName?: string;
@@ -1149,7 +1150,7 @@ export default function CustomizerPage() {
                         { id: 'general', label: 'General Settings', icon: Settings, description: 'Colors, typography, layout, advanced' },
                         { id: 'header', label: 'Header Modifications', icon: Layout, description: 'Officer name, avatar, contact info, Apply Now link' },
                         { id: 'body', label: 'Body Section', icon: Type, description: 'Tab management and content preview' },
-                        { id: 'rightSidebar', label: 'Right Sidebar Mods', icon: Palette, description: 'Social media, company info, reviews' }
+                        { id: 'rightSidebar', label: 'Company Info', icon: Palette, description: 'Social media, company info, reviews' }
                       ].map(section => (
                         <button
                           key={section.id}
@@ -1190,7 +1191,21 @@ export default function CustomizerPage() {
                       <span className="font-medium">Back to Sections</span>
                     </button>
                     <h2 className="text-lg font-semibold text-gray-900 mt-2">
-                      {customizerState.activeSection.charAt(0).toUpperCase() + customizerState.activeSection.slice(1)} Settings
+                      {(() => {
+                        const sections = [
+                          { id: 'general', label: 'General Settings' },
+                          { id: 'header', label: 'Header Modifications' },
+                          { id: 'body', label: 'Body Section' },
+                          { id: 'rightSidebar', label: 'Company Info' }
+                        ];
+                        const currentSection = sections.find(s => s.id === customizerState.activeSection);
+                        if (currentSection) {
+                          return currentSection.label.includes('Settings') 
+                            ? currentSection.label 
+                            : `${currentSection.label} Settings`;
+                        }
+                        return `${customizerState.activeSection.charAt(0).toUpperCase() + customizerState.activeSection.slice(1)} Settings`;
+                      })()}
                     </h2>
                   </div>
                   
@@ -1696,7 +1711,7 @@ function AvatarUploadComponent({ currentAvatar, onChange, onSave, setIsDeletingA
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                onError={(e) => {
+                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                 }}
@@ -1861,6 +1876,33 @@ function BodyModifications({ template, onChange }: SettingsProps) {
                 </label>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">My Home Value Tab Settings</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Home Value Widget URL (CloudCMA)
+            </label>
+            <input
+              type="url"
+              value={bodyMods.homeValueWidgetUrl || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                // Basic URL validation
+                const url = e.target.value;
+                if (url === '' || url.startsWith('http://') || url.startsWith('https://')) {
+                  onChange('homeValueWidgetUrl', url);
+                }
+              }}
+              placeholder="http://app.cloudcma.com/api_widget/..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the CloudCMA widget URL for the My Home Value tab iframe. This URL will be used to display the home value estimation widget.
+            </p>
           </div>
         </div>
       </div>
