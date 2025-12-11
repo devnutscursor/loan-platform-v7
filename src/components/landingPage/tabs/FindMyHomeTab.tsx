@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Script from 'next/script';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
@@ -180,17 +179,106 @@ button: {
     }
   };
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
+  const widgetIframeRef = React.useRef<HTMLIFrameElement>(null);
+  const idxWidgetLoadedRef = React.useRef(false);
+
+  // Update ref when state changes
+  useEffect(() => {
+    idxWidgetLoadedRef.current = idxWidgetLoaded;
+  }, [idxWidgetLoaded]);
 
   useEffect(() => {
-    // Check if IDX widget script is already loaded
-    if (typeof window !== 'undefined' && document.getElementById('idxwidgetsrc-122191')) {
-      setIdxWidgetLoaded(true);
+    // Check if IDX widget iframe is already loaded
+    if (typeof window !== 'undefined') {
+      const iframeElement = document.getElementById('idxwidget-iframe-122191') as HTMLIFrameElement;
+      if (iframeElement) {
+        try {
+          if (iframeElement.contentDocument?.readyState === 'complete') {
+            setIdxWidgetLoaded(true);
+          }
+        } catch (e) {
+          // Cross-origin iframe, can't check readyState
+          // Assume loaded if iframe exists
+          setIdxWidgetLoaded(true);
+        }
+      }
     }
   }, []);
 
-  const handleScriptLoad = () => {
+  const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
+    const iframe = event.currentTarget;
+    console.log('idx Iframe loaded', iframe.src);
     setIdxWidgetLoaded(true);
   };
+
+  const handleIframeError = () => {
+    console.log('idx Iframe error');
+    // Set loaded anyway after a delay to show content
+    setTimeout(() => {
+      setIdxWidgetLoaded(true);
+    }, 2000);
+  };
+
+  // Additional check: Monitor iframe load state via ref
+  useEffect(() => {
+    if (!widgetIframeRef.current) return;
+
+    const iframe = widgetIframeRef.current;
+    
+    // Check if iframe is already loaded
+    const checkIframeLoaded = () => {
+      try {
+        if (iframe.contentDocument?.readyState === 'complete') {
+          console.log('idx Iframe readyState is complete');
+          if (!idxWidgetLoaded) {
+            setIdxWidgetLoaded(true);
+          }
+          return true;
+        }
+      } catch (e) {
+        // Cross-origin or not accessible
+        console.log('idx Cannot check iframe readyState:', e);
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (checkIframeLoaded()) {
+      return;
+    }
+
+    // Also listen to load event on the iframe element directly
+    const handleLoad = () => {
+      console.log('idx Iframe load event fired via addEventListener');
+      if (!idxWidgetLoaded) {
+        setIdxWidgetLoaded(true);
+      }
+    };
+
+    iframe.addEventListener('load', handleLoad);
+
+    // Periodic check as fallback
+    const interval = setInterval(() => {
+      if (checkIframeLoaded()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    // Fallback timeout
+    const timeout = setTimeout(() => {
+      console.log('idx Fallback: Setting loaded state after timeout');
+      if (!idxWidgetLoaded) {
+        setIdxWidgetLoaded(true);
+      }
+      clearInterval(interval);
+    }, 3000);
+
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [idxWidgetLoaded]);
 
   // Stub variables for legacy code (never executed, kept for reference)
   const searchCriteria: any = {};
@@ -203,401 +291,66 @@ button: {
       className={`w-full ${className}`}
       style={{ fontFamily: typography.fontFamily }}
     >
-      {/* IDX Widget Script */}
-      <Script
-        id="idxwidgetsrc-122191"
-        charSet="UTF-8"
-        type="text/javascript"
-        src="//syncly360.idxbroker.com/idx/widgets/122191"
-        strategy="lazyOnload"
-        onLoad={handleScriptLoad}
-      />
-
-      {/* Header */}
+      {/* IDX Widget Iframe Container */}
       <div 
-        className={`${classes.card.header}`}
-        style={{ borderBottomColor: colors.border }}
-      >
-        <h2 
-          className={`${classes.heading.h2}`}
-          style={{ color: colors.text }}
-        >
-          {content.headline}
-        </h2>
-        <p 
-          className={`${classes.body.base}`}
-          style={{ color: colors.textSecondary }}
-        >
-          {content.subheadline}
-        </p>
-      </div>
-
-      {/* IDX Widget Container */}
-      <div 
-        className="w-full mt-6"
+        className="w-full mt-6 relative"
         style={{ 
           minHeight: '600px',
           borderRadius: `${layout.borderRadius}px`,
           overflow: 'hidden',
-          backgroundColor: colors.background
+          backgroundColor: colors.background,
+          border: `1px solid ${colors.border}`
         }}
       >
-        <div 
-          id="idxwidget-122191" 
-          className="w-full"
+        {!idxWidgetLoaded && (
+          <div className="flex items-center justify-center py-12 absolute inset-0" style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}>
+            <div className="text-center">
+              <div 
+                className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
+                style={{ borderColor: colors.primary }}
+              ></div>
+              <p style={{ color: colors.textSecondary }}>Loading property search...</p>
+            </div>
+          </div>
+        )}
+        <iframe
+          id="idxwidget-iframe-122191"
+          ref={widgetIframeRef}
+          src="/api/widgets/idx"
+          title="IDX Property Search Widget"
+          className="w-full border-0"
           style={{
             minHeight: '600px',
-            width: '100%'
+            width: '100%',
+            opacity: idxWidgetLoaded ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out',
+            pointerEvents: idxWidgetLoaded ? 'auto' : 'none'
           }}
-        >
-          {!idxWidgetLoaded && (
-            <div className="flex items-center justify-center py-12" style={{ minHeight: '600px' }}>
-              <div className="text-center">
-                <div 
-                  className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
-                  style={{ borderColor: colors.primary }}
-                ></div>
-                <p style={{ color: colors.textSecondary }}>Loading property search...</p>
-              </div>
-            </div>
-          )}
-        </div>
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
+          allow="clipboard-read; clipboard-write"
+        />
       </div>
 
-      {/* Global styles for IDX widget to ensure proper rendering */}
+      {/* Global styles for IDX widget iframe to ensure proper rendering */}
       <style jsx global>{`
-        #idxwidget-122191 {
+        #idxwidget-iframe-122191 {
           width: 100% !important;
           max-width: 100% !important;
+          min-height: 600px;
         }
-        #idxwidget-122191 iframe,
-        #idxwidget-122191 > div {
-          width: 100% !important;
-          max-width: 100% !important;
-        }
-        /* Ensure IDX widget is responsive */
+        /* Ensure IDX widget iframe is responsive */
         @media (max-width: 768px) {
-          #idxwidget-122191 {
-            overflow-x: auto;
+          #idxwidget-iframe-122191 {
+            min-height: 500px;
           }
+        }
+        /* Hide any search bars that appear in the parent document (outside iframe) */
+        body > #idx-ai-smart-search-122191 {
+          display: none !important;
         }
       `}</style>
 
-      {/* Legacy Search Form - Hidden but kept for reference */}
-      {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-      {/* @ts-ignore - Legacy code kept for reference, never executed */}
-      {false && (
-        <>
-          {/* Search Form */}
-          <div className={`${classes.card.container} mb-8 mt-8`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    value={searchCriteria.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    placeholder="City, State or ZIP"
-                    className={`${classes.input.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Min Price
-                  </label>
-                  <select
-                    value={searchCriteria.priceMin}
-                    onChange={(e) => handleInputChange('priceMin', e.target.value)}
-                    className={`${classes.select.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  >
-                    <option value="">No Min</option>
-                    <option value="100000">$100,000</option>
-                    <option value="200000">$200,000</option>
-                    <option value="300000">$300,000</option>
-                    <option value="400000">$400,000</option>
-                    <option value="500000">$500,000</option>
-                    <option value="750000">$750,000</option>
-                    <option value="1000000">$1,000,000</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Max Price
-                  </label>
-                  <select
-                    value={searchCriteria.priceMax}
-                    onChange={(e) => handleInputChange('priceMax', e.target.value)}
-                    className={`${classes.select.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  >
-                    <option value="">No Max</option>
-                    <option value="200000">$200,000</option>
-                    <option value="300000">$300,000</option>
-                    <option value="400000">$400,000</option>
-                    <option value="500000">$500,000</option>
-                    <option value="750000">$750,000</option>
-                    <option value="1000000">$1,000,000</option>
-                    <option value="1500000">$1,500,000</option>
-                    <option value="2000000">$2,000,000+</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Bedrooms
-                  </label>
-                  <select
-                    value={searchCriteria.bedrooms}
-                    onChange={(e) => handleInputChange('bedrooms', e.target.value)}
-                    className={`${classes.select.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  >
-                    <option value="">Any</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                    <option value="5">5+</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Bathrooms
-                  </label>
-                  <select
-                    value={searchCriteria.bathrooms}
-                    onChange={(e) => handleInputChange('bathrooms', e.target.value)}
-                    className={`${classes.select.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  >
-                    <option value="">Any</option>
-                    <option value="1">1+</option>
-                    <option value="1.5">1.5+</option>
-                    <option value="2">2+</option>
-                    <option value="2.5">2.5+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`${classes.body.small} font-medium text-gray-700 mb-2 block`}>
-                    Property Type
-                  </label>
-                  <select
-                    value={searchCriteria.propertyType}
-                    onChange={(e) => handleInputChange('propertyType', e.target.value)}
-                    className={`${classes.select.base}`}
-                    style={{
-                      borderRadius: `${layout.borderRadius}px`,
-                      borderColor: colors.border
-                    }}
-                  >
-                    <option value="all">All Types</option>
-                    <option value="single-family">Single Family</option>
-                    <option value="condo">Condo</option>
-                    <option value="townhouse">Townhouse</option>
-                    <option value="multi-family">Multi-Family</option>
-                    <option value="land">Land</option>
-                  </select>
-                </div>
-              </div>
-
-              <div 
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-                style={{ gap: `${layout.padding.medium}px` }}
-              >
-                <button
-                  onClick={handleSearch}
-                  className="flex items-center justify-center gap-3 px-8 py-4 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                  style={{
-                    backgroundColor: colors.primary,
-                    color: colors.background,
-                    borderColor: colors.primary,
-                    borderRadius: `${layout.borderRadius}px`,
-                    border: 'none',
-                    fontFamily: typography.fontFamily,
-                    fontSize: getFontSize('base'),
-                    fontWeight: typography.fontWeight.semibold,
-                    minWidth: '160px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.secondary;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary;
-                  }}
-                >
-                  <Icon name="search" size={20} color={colors.background} />
-                  <span>Search Home</span>
-                </button>
-                
-                <button
-                  onClick={() => setShowIframe(true)}
-                  className="flex items-center justify-center gap-3 px-8 py-4 font-semibold transition-all duration-300 transform hover:scale-105 border-2 hover:shadow-lg"
-                  style={{
-                    backgroundColor: colors.background,
-                    color: colors.primary,
-                    borderColor: colors.primary,
-                    borderRadius: `${layout.borderRadius}px`,
-                    fontFamily: typography.fontFamily,
-                    fontSize: getFontSize('base'),
-                    fontWeight: typography.fontWeight.semibold,
-                    minWidth: '160px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary + '10';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.background;
-                  }}
-                >
-                  <Icon name="map" size={20} color={colors.primary} />
-                  <span>{content.ctaSecondary}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.body}`}>
-                <div className={`${classes.icon.primary}`}>
-                  <Icon name="search" size={24} color={colors.primary} />
-                </div>
-                <h3 className={`${classes.heading.h5}`}>
-                  Advanced Search
-                </h3>
-                <p className={`${classes.body.small}`}>
-                  Filter by price, location, size, and property type
-                </p>
-              </div>
-            </div>
-
-            <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.body}`}>
-                <div className={`${classes.icon.primary}`}>
-                  <Icon name="map" size={24} color={colors.primary} />
-                </div>
-                <h3 className={`${classes.heading.h5}`}>
-                  Interactive Maps
-                </h3>
-                <p className={`${classes.body.small}`}>
-                  Explore neighborhoods with detailed map views
-                </p>
-              </div>
-            </div>
-
-            <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.body}`}>
-                <div className={`${classes.icon.primary}`}>
-                  <Icon name="heart" size={24} color={colors.primary} />
-                </div>
-                <h3 className={`${classes.heading.h5}`}>
-                  Save Favorites
-                </h3>
-                <p className={`${classes.body.small}`}>
-                  Save properties you love and compare them easily
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Information Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.header}`}>
-                <h3 className={`${classes.heading.h4}`}>
-                  Search Tips
-                </h3>
-              </div>
-              <div className={`${classes.card.body}`}>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className={`${classes.icon.small}`}>
-                      <span className="text-sm font-bold text-gray-600">1</span>
-                    </div>
-                    <div>
-                      <h4 className={`${classes.heading.h6}`}>Set Your Budget</h4>
-                      <p className={`${classes.body.small}`}>Determine your price range before searching</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className={`${classes.icon.small}`}>
-                      <span className="text-sm font-bold text-gray-600">2</span>
-                    </div>
-                    <div>
-                      <h4 className={`${classes.heading.h6}`}>Choose Location</h4>
-                      <p className={`${classes.body.small}`}>Consider commute time and neighborhood amenities</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className={`${classes.icon.small}`}>
-                      <span className="text-sm font-bold text-gray-600">3</span>
-                    </div>
-                    <div>
-                      <h4 className={`${classes.heading.h6}`}>Define Needs</h4>
-                      <p className={`${classes.body.small}`}>List must-have features vs. nice-to-have features</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.header}`}>
-                <h3 className={`${classes.heading.h4}`}>
-                  Market Insights
-                </h3>
-              </div>
-              <div className={`${classes.card.body}`}>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className={`${classes.body.small}`}>Average Home Price</span>
-                    <span className={`${classes.body.base} font-semibold`}>$425,000</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`${classes.body.small}`}>Days on Market</span>
-                    <span className={`${classes.body.base} font-semibold`}>28 days</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`${classes.body.small}`}>Price per Sq Ft</span>
-                    <span className={`${classes.body.base} font-semibold`}>$185</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`${classes.body.small}`}>Market Trend</span>
-                    <span className={`${classes.status.success}`}>Rising</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
