@@ -364,11 +364,7 @@ function RateResults({
   }
 
   return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      borderRadius: `${layout.borderRadius}px`,
-      boxShadow: shadows.lg
-    }}>
+    <div className={`bg-white border-0 @md:border @md:border-gray-200 `} style={{ borderRadius: `${layout.borderRadius}px` }}>
       {/* Mock Data Warning Banner */}
       {isMockData && (
         <div style={{
@@ -396,8 +392,7 @@ function RateResults({
       )}
       
       {/* Header */}
-      <div style={{
-        padding: spacing[6],
+      <div className='p-2 @md:p-4' style={{
         borderBottom: `1px solid ${colors.border}`
       }}>
         <div style={{
@@ -408,8 +403,7 @@ function RateResults({
           justifyContent: 'space-between'
         }}>
           <div>
-            <h2 style={{
-              fontSize: typography.fontSize['2xl'],
+            <h2 className='text-xl @md:text-2xl' style={{
               fontWeight: typography.fontWeight.bold,
               color: colors.text,
               lineHeight: typography.lineHeight.tight
@@ -440,24 +434,6 @@ function RateResults({
           <div className="flex flex-col @[640px]:flex-row @[640px]:justify-end gap-4">
             {/* Dropdowns Group - Right side on desktop, stacked on mobile */}
             <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-3">
-              {/* Loan Term Filter Dropdown */}
-              <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-2 w-full @[640px]:w-auto">
-                <span 
-                  className="text-sm font-medium @[640px]:whitespace-nowrap"
-                  style={{ color: colors.primary }}
-                >
-                  Loan Term:
-                </span>
-                <div className="w-full @[640px]:w-auto @[640px]:min-w-[180px] min-w-0">
-                  <SmartDropdown
-                    value={selectedTerm}
-                    onChange={handleTermChange}
-                    options={loanTermOptions}
-                    placeholder="Select loan term"
-                    buttonClassName="border-gray-300 focus:ring-2 focus:ring-offset-2 w-full @[640px]:w-auto"
-                  />
-                </div>
-              </div>
 
               {/* Sort Controls */}
               <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-2 w-full @[640px]:w-auto">
@@ -475,6 +451,7 @@ function RateResults({
                     options={sortOptions}
                     placeholder="Sort by"
                     buttonClassName="border-gray-300 focus:ring-2 focus:ring-offset-2 w-full @[640px]:w-auto"
+                    borderRadius={layout.borderRadius}
                   />
                 </div>
               </div>
@@ -484,7 +461,7 @@ function RateResults({
       </div>
 
       {/* Results */}
-      <div className="p-6">
+      <div className="p-0 pt-2 @md:p-4">
         <style jsx>{`
           .rate-results-container {
             container-type: inline-size;
@@ -691,7 +668,10 @@ function RateResults({
       {/* Product Details Modal */}
       {isModalOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ borderRadius: `${layout.borderRadius}px` }}>
+          <div
+            className="bg-white max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+            style={{ borderRadius: `${layout.borderRadius}px` }}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -708,7 +688,7 @@ function RateResults({
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
+            <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column - Basic Info */}
                 <div>
@@ -855,33 +835,34 @@ function RateResults({
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => handleGetStarted(selectedProduct)}
-                  className="flex-1 flex items-center justify-center text-white py-3 px-6 font-medium transition-colors"
-                  style={{ 
-                    backgroundColor: colors.primary,
-                    color: colors.background,
-                    borderRadius: `${layout.borderRadius}px`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.secondary;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary;
-                  }}
-                >
-                  Get Started with This Loan
-                </button>
-                <button
-                  onClick={handleCloseModal}
-                  className="flex-1 flex items-center justify-center border border-gray-300 text-gray-700 py-3 px-6 font-medium hover:bg-gray-50 transition-colors"
-                  style={{ borderRadius: `${layout.borderRadius}px` }}
-                >
-                  Close
-                </button>
-              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t border-gray-200 p-6 bg-white flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => handleGetStarted(selectedProduct)}
+                className="flex-1 flex items-center justify-center text-white py-3 px-6 font-medium transition-colors"
+                style={{ 
+                  backgroundColor: colors.primary,
+                  color: colors.background,
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.secondary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.primary;
+                }}
+              >
+                Get Started with This Loan
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="flex-1 flex items-center justify-center border border-gray-300 text-gray-700 py-3 px-6 font-medium hover:bg-gray-50 transition-colors"
+                style={{ borderRadius: `${layout.borderRadius}px` }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

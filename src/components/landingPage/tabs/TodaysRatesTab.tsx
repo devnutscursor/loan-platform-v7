@@ -317,13 +317,13 @@ export default function TodaysRatesTab({
       {/* Header */}
       <div className="text-center mb-6">
         <h2 
-          className="text-3xl font-bold mb-2"
+          className="text-xl @md:text-2xl font-bold mb-2"
           style={{ color: colors.text }}
         >
           Today's Mortgage Rates
         </h2>
         <p 
-          className="text-lg"
+          className="text-base @md:text-lg"
           style={{ color: colors.textSecondary }}
         >
           Current rates based on market conditions
@@ -337,7 +337,7 @@ export default function TodaysRatesTab({
 
       {/* Mortgage Search Form */}
       <div 
-        className="bg-white p-6"
+        className="bg-white"
         style={{ 
           backgroundColor: colors.background,
           borderRadius: `${layout.borderRadius}px`

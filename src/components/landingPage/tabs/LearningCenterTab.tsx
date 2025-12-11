@@ -5,6 +5,7 @@ import { typography } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
+import { supabase } from '@/lib/supabase/client';
 
 interface Video {
   id: string;
@@ -28,6 +29,7 @@ interface LearningCenterTabProps {
   // NEW: Public mode props
   isPublic?: boolean;
   publicTemplateData?: any;
+  userId?: string; // For fetching content
 }
 
 export default function LearningCenterTab({
@@ -35,7 +37,8 @@ export default function LearningCenterTab({
   className = '',
   // NEW: Public mode props
   isPublic = false,
-  publicTemplateData
+  publicTemplateData,
+  userId
 }: LearningCenterTabProps) {
   const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
@@ -155,9 +158,20 @@ button: {
     }
   };
   const [activeSection, setActiveSection] = useState<'videos' | 'faq' | 'guides'>('videos');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all'); // For FAQs and Guides
+  const [selectedVideoTab, setSelectedVideoTab] = useState<string>('all');
+  const [selectedVideoSubCategory, setSelectedVideoSubCategory] = useState<string>('all');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
+  
+  // State for fetched content
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [guides, setGuides] = useState<any[]>([]);
+  const [videoDataMap, setVideoDataMap] = useState<Map<string, any>>(new Map()); // Store full video data with URLs
+  const [loadingContent, setLoadingContent] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
+  // Mock data as fallback
   const mockVideos: Video[] = [
     {
       id: '1',
@@ -220,6 +234,7 @@ button: {
     }
   ];
 
+  // Categories for FAQs and Guides (keep existing)
   const categories = [
     { id: 'all', name: 'All Topics' },
     { id: 'mortgage-basics', name: 'Mortgage Basics' },
@@ -230,13 +245,213 @@ button: {
     { id: 'process', name: 'Closing Process' }
   ];
 
-  const filteredVideos = selectedCategory === 'all' 
-    ? mockVideos 
-    : mockVideos.filter(video => video.category === selectedCategory);
+  // Video loan categories structure with 3 main tabs
+  const videoLoanCategories = {
+    'purchase-loans': {
+      id: 'purchase-loans',
+      name: 'Purchase Loans',
+      subCategories: [
+        { id: 'all', name: 'All Purchase Loans' },
+        { id: 'conventional', name: 'Conventional' },
+        { id: 'va-loan', name: 'VA Loan' },
+        { id: 'fha-loan', name: 'FHA Loan' },
+        { id: 'jumbo-loan', name: 'Jumbo Loan' },
+        { id: 'usda-loan', name: 'USDA Loan' },
+        { id: '2nd-mortgage', name: '2nd Mortgage' },
+        { id: 'construction-loan', name: 'Construction Loan' },
+        { id: 'down-payment-assistance-loan', name: 'Down Payment Assistance Loan' }
+      ]
+    },
+    'refinance-loans': {
+      id: 'refinance-loans',
+      name: 'Refinance Loans',
+      subCategories: [
+        { id: 'all', name: 'All Refinance Loans' },
+        { id: 'streamline', name: 'Streamline' },
+        { id: 'va-irrrl', name: 'VA IRRRL' },
+        { id: 'heloc', name: 'HELOC' },
+        { id: 'cash-out', name: 'Cash-Out' }
+      ]
+    },
+    'non-qm-loans': {
+      id: 'non-qm-loans',
+      name: 'Non-QM Loans',
+      subCategories: [
+        { id: 'all', name: 'All Non-QM Loans' },
+        { id: '1099-loans', name: '1099 Loans' },
+        { id: 'va-irrrl', name: 'VA IRRRL' },
+        { id: 'heloc', name: 'HELOC' },
+        { id: 'cash-out', name: 'Cash-Out' }
+      ]
+    }
+  };
+
+  // Fetch content from API
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        setLoadingContent(true);
+        const officerId = userId || (isPublic ? (publicTemplateData?.profileData?.user?.id) : user?.id);
+        
+        if (!officerId) {
+          // Use mock data if no officer ID
+          setVideos(mockVideos);
+          setFaqs(mockFAQs);
+          setLoadingContent(false);
+          return;
+        }
+
+        if (isPublic) {
+          // Fetch from public API
+          const response = await fetch(`/api/public/content/${officerId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              // Transform API data to component format
+              const videosList = (data.data.videos || []).map((v: any) => ({
+                id: v.id,
+                title: v.title,
+                description: v.description || '',
+                duration: v.duration || '',
+                thumbnail: v.thumbnailUrl || '',
+                category: v.category
+              }));
+              setVideos(videosList);
+              // Store full video data for URL access
+              const videoMap = new Map();
+              (data.data.videos || []).forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              setVideoDataMap(videoMap);
+              setFaqs((data.data.faqs || []).map((f: any) => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category
+              })));
+              setGuides(data.data.guides || []);
+            }
+          }
+        } else {
+          // Fetch from authenticated API
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) {
+            // Use mock data if no auth token
+            setVideos(mockVideos);
+            setFaqs(mockFAQs);
+            setLoadingContent(false);
+            return;
+          }
+
+          const [faqsRes, videosRes, guidesRes] = await Promise.all([
+            fetch('/api/officers/content/faqs', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            }),
+            fetch('/api/officers/content/videos', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            }),
+            fetch('/api/officers/content/guides', {
+              headers: { 'Authorization': `Bearer ${session.access_token}` }
+            })
+          ]);
+
+          if (videosRes.ok) {
+            const videosData = await videosRes.json();
+            if (videosData.success) {
+              const videosList = (videosData.data || []).map((v: any) => ({
+                id: v.id,
+                title: v.title,
+                description: v.description || '',
+                duration: v.duration || '',
+                thumbnail: v.thumbnailUrl || '',
+                category: v.category
+              }));
+              setVideos(videosList);
+              // Store full video data for URL access
+              const videoMap = new Map();
+              (videosData.data || []).forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              setVideoDataMap(videoMap);
+            }
+          }
+
+          if (faqsRes.ok) {
+            const faqsData = await faqsRes.json();
+            if (faqsData.success) {
+              setFaqs((faqsData.data || []).map((f: any) => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                category: f.category
+              })));
+            }
+          }
+
+          if (guidesRes.ok) {
+            const guidesData = await guidesRes.json();
+            if (guidesData.success) {
+              setGuides(guidesData.data || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching content:', error);
+        // Fallback to mock data on error
+        setVideos(mockVideos);
+        setFaqs(mockFAQs);
+      } finally {
+        setLoadingContent(false);
+      }
+    };
+
+    fetchContent();
+  }, [user, userId, isPublic, publicTemplateData]);
+
+  // Reset sub-category when switching video tabs or when switching to videos section
+  useEffect(() => {
+    if (activeSection === 'videos') {
+      setSelectedVideoSubCategory('all');
+    }
+  }, [selectedVideoTab, activeSection]);
+
+  // Filter videos by tab and sub-category
+  const filteredVideos = activeSection === 'videos' 
+    ? (() => {
+        // If "All" is selected, show all videos
+        if (selectedVideoTab === 'all') {
+          return videos;
+        }
+        
+        const currentTab = videoLoanCategories[selectedVideoTab as keyof typeof videoLoanCategories];
+        if (!currentTab) return videos;
+        
+        // Get all sub-category IDs for the current tab (excluding 'all')
+        const tabSubCategoryIds = currentTab.subCategories
+          .filter(sub => sub.id !== 'all')
+          .map(sub => sub.id);
+        
+        // Filter by tab sub-categories
+        let filtered = videos.filter(video => tabSubCategoryIds.includes(video.category));
+        
+        // Further filter by selected sub-category if not 'all'
+        if (selectedVideoSubCategory !== 'all') {
+          filtered = filtered.filter(video => video.category === selectedVideoSubCategory);
+        }
+        
+        return filtered;
+      })()
+    : (selectedCategory === 'all' 
+        ? videos 
+        : videos.filter(video => video.category === selectedCategory));
 
   const filteredFAQs = selectedCategory === 'all' 
-    ? mockFAQs 
-    : mockFAQs.filter(faq => faq.category === selectedCategory);
+    ? faqs 
+    : faqs.filter(faq => faq.category === selectedCategory);
+  
+  const filteredGuides = selectedCategory === 'all'
+    ? guides
+    : guides.filter((guide: any) => guide.category === selectedCategory);
 
   return (
     <div className={`w-full ${className}`}>
@@ -281,32 +496,112 @@ button: {
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 font-medium transition-all duration-200 ${
-                selectedCategory === category.id
-                  ? 'border'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              style={selectedCategory === category.id ? {
-                backgroundColor: `${colors.primary}20`,
-                color: colors.primary,
-                borderColor: colors.primary,
-                borderRadius: `${layout.borderRadius}px`
-              } : {
-                borderRadius: `${layout.borderRadius}px`
-              }}
-            >
-              {category.name}
-            </button>
-          ))}
+      {/* Category Filter - Conditional Rendering */}
+      {activeSection === 'videos' ? (
+        <div className="mb-6">
+          {/* Main Video Tabs - Styled as sub-navigation */}
+          <div className="mb-4 pl-2" style={{ borderColor: colors.primary }}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* All Videos Tab */}
+              <button
+                onClick={() => setSelectedVideoTab('all')}
+                className={`px-3 sm:px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  selectedVideoTab === 'all'
+                    ? 'shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                style={selectedVideoTab === 'all' ? {
+                  backgroundColor: `${colors.primary}15`,
+                  color: colors.primary,
+                  borderBottom: `3px solid ${colors.primary}`,
+                  borderRadius: `${layout.borderRadius}px`
+                } : {
+                  backgroundColor: 'transparent',
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+              >
+                All
+              </button>
+              {/* Category Tabs */}
+              {Object.values(videoLoanCategories).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedVideoTab(tab.id)}
+                  className={`px-3 sm:px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    selectedVideoTab === tab.id
+                      ? 'shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  style={selectedVideoTab === tab.id ? {
+                    backgroundColor: `${colors.primary}15`,
+                    color: colors.primary,
+                    borderBottom: `3px solid ${colors.primary}`,
+                    borderRadius: `${layout.borderRadius}px`
+                  } : {
+                    backgroundColor: 'transparent',
+                    borderRadius: `${layout.borderRadius}px`
+                  }}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Sub-Category Filter - Only show when a specific tab is selected (not "All") */}
+          {selectedVideoTab !== 'all' && videoLoanCategories[selectedVideoTab as keyof typeof videoLoanCategories] && (
+            <div className="flex flex-wrap gap-2">
+              {videoLoanCategories[selectedVideoTab as keyof typeof videoLoanCategories].subCategories.map((subCategory) => (
+                <button
+                  key={subCategory.id}
+                  onClick={() => setSelectedVideoSubCategory(subCategory.id)}
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                    selectedVideoSubCategory === subCategory.id
+                      ? 'border-2'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  style={selectedVideoSubCategory === subCategory.id ? {
+                    backgroundColor: `${colors.primary}20`,
+                    color: colors.primary,
+                    borderColor: colors.primary,
+                    borderRadius: `${layout.borderRadius}px`
+                  } : {
+                    borderRadius: `${layout.borderRadius}px`
+                  }}
+                >
+                  {subCategory.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 font-medium transition-all duration-200 ${
+                  selectedCategory === category.id
+                    ? 'border'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                style={selectedCategory === category.id ? {
+                  backgroundColor: `${colors.primary}20`,
+                  color: colors.primary,
+                  borderColor: colors.primary,
+                  borderRadius: `${layout.borderRadius}px`
+                } : {
+                  borderRadius: `${layout.borderRadius}px`
+                }}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Content Sections */}
       {activeSection === 'videos' && (
@@ -315,12 +610,23 @@ button: {
             <div key={video.id} className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
               <div className={`${classes.card.body}`}>
                 <div className="relative mb-4">
-                  <div className="aspect-video bg-gray-200 flex items-center justify-center" style={{ borderRadius: `${layout.borderRadius}px` }}>
-                    <Icon name="play" size={48} color={colors.textSecondary} />
-                  </div>
-                  <div className={`absolute bottom-2 right-2 ${classes.status.info}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-                    {video.duration}
-                  </div>
+                  {video.thumbnail ? (
+                    <img 
+                      src={video.thumbnail} 
+                      alt={video.title}
+                      className="w-full aspect-video object-cover"
+                      style={{ borderRadius: `${layout.borderRadius}px` }}
+                    />
+                  ) : (
+                    <div className="aspect-video bg-gray-200 flex items-center justify-center" style={{ borderRadius: `${layout.borderRadius}px` }}>
+                      <Icon name="play" size={48} color={colors.textSecondary} />
+                    </div>
+                  )}
+                  {video.duration && (
+                    <div className={`absolute bottom-2 right-2 ${classes.status.info}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+                      {video.duration}
+                    </div>
+                  )}
                 </div>
                 <h3 className={`${classes.heading.h5} mb-2`}>
                   {video.title}
@@ -343,6 +649,9 @@ button: {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = colors.primary;
                   }}
+                  onClick={() => {
+                    setSelectedVideo(video);
+                  }}
                 >
                   <Icon name="play" size={16} color={colors.background} />
                   <span>Watch Video</span>
@@ -357,23 +666,40 @@ button: {
         <div className="space-y-4">
           {filteredFAQs.map((faq) => (
             <div key={faq.id} className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-              <div className={`${classes.card.body}`}>
+              <div className={`${classes.card.body}`} style={{ padding: 0 }}>
                 <button
                   onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
-                  className="w-full text-left flex items-center justify-between"
+                  className="w-full text-left flex items-center justify-between py-3 px-6 hover:opacity-90 transition-opacity"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.background,
+                    borderRadius: `${layout.borderRadius}px ${layout.borderRadius}px 0 0`
+                  }}
                 >
-                  <h3 className={`${classes.heading.h5}`}>
+                  <h3 
+                    className="text-base font-semibold leading-snug pr-4"
+                  >
                     {faq.question}
                   </h3>
                   <Icon 
                     name={expandedFAQ === faq.id ? 'chevronUp' : 'chevronDown'} 
                     size={20} 
-                    color={colors.textSecondary}
+                    color={colors.background}
+                    className="flex-shrink-0"
                   />
                 </button>
                 {expandedFAQ === faq.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className={`${classes.body.base}`}>
+                  <div 
+                    className="px-6 py-4"
+                    style={{ 
+                      backgroundColor: colors.background,
+                      borderRadius: `0 0 ${layout.borderRadius}px ${layout.borderRadius}px`
+                    }}
+                  >
+                    <p 
+                      className="text-base leading-relaxed"
+                      style={{ color: colors.text }}
+                    >
                       {faq.answer}
                     </p>
                   </div>
@@ -386,129 +712,50 @@ button: {
 
       {activeSection === 'guides' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="book" size={24} color={colors.primary} />
+          {filteredGuides.length === 0 ? (
+            <div className={`${classes.card.container} col-span-2`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+              <div className={`${classes.card.body} text-center`}>
+                <p className={classes.body.base}>No guides available yet.</p>
               </div>
-              <h3 className={`${classes.heading.h5}`}>
-                First-Time Home Buyer Guide
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Complete step-by-step guide for first-time home buyers
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
             </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="calculator" size={24} color={colors.primary} />
+          ) : (
+            filteredGuides.map((guide: any) => (
+              <div key={guide.id} className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
+                <div className={`${classes.card.body}`}>
+                  <div className={`${classes.icon.primary}`}>
+                    <Icon name="book" size={24} color={colors.primary} />
+                  </div>
+                  <h3 className={`${classes.heading.h5}`}>
+                    {guide.name}
+                  </h3>
+                  <p className={`${classes.body.small} mb-4`}>
+                    {guide.file_name}
+                  </p>
+                  <a
+                    href={guide.funnelUrl || guide.funnel_url || guide.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.primary,
+                      color: colors.primary,
+                      borderRadius: `${layout.borderRadius}px`,
+                      textDecoration: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primary + '10';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.background;
+                    }}
+                  >
+                    Download Guide
+                  </a>
+                </div>
               </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Mortgage Calculator Guide
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Learn how to calculate your monthly payments and affordability
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                <Icon name="shield" size={24} color={colors.primary} />
-              </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Credit Score Improvement
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Tips and strategies to improve your credit score
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
-
-          <div className={`${classes.card.container}`} style={{ borderRadius: `${layout.borderRadius}px` }}>
-            <div className={`${classes.card.body}`}>
-              <div className={`${classes.icon.primary}`}>
-                  <Icon name="fileText" size={24} color={colors.primary} />
-              </div>
-              <h3 className={`${classes.heading.h5}`}>
-                Document Checklist
-              </h3>
-              <p className={`${classes.body.small} mb-4`}>
-                Complete list of documents needed for your mortgage application
-              </p>
-              <button 
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-medium transition-colors border-2"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                  color: colors.primary,
-                  borderRadius: `${layout.borderRadius}px`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary + '10';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.background;
-                }}
-              >
-                Download Guide
-              </button>
-            </div>
-          </div>
+            ))
+          )}
         </div>
       )}
 
@@ -562,6 +809,68 @@ button: {
           </div>
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      {selectedVideo && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedVideo(null)}
+        >
+          <div 
+            className="relative bg-black rounded-lg w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            style={{ borderRadius: `${layout.borderRadius}px` }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h3 className={`${classes.heading.h5}`} style={{ color: colors.background }}>
+                {selectedVideo.title}
+              </h3>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Icon name="close" size={24} />
+              </button>
+            </div>
+            
+            {/* Video Player */}
+            <div className="relative flex-1 flex items-center justify-center p-4">
+              {(() => {
+                const videoData = videoDataMap.get(selectedVideo.id);
+                const videoUrl = videoData?.videoUrl || videoData?.video_url;
+                if (videoUrl) {
+                  return (
+                    <video
+                      controls
+                      autoPlay
+                      className="w-full h-full max-h-[70vh]"
+                      style={{ borderRadius: `${layout.borderRadius}px` }}
+                    >
+                      <source src={videoUrl} type="video/mp4" />
+                      <source src={videoUrl} type="video/webm" />
+                      <source src={videoUrl} type="video/quicktime" />
+                      Your browser does not support the video tag.
+                    </video>
+                  );
+                }
+                return (
+                  <p className="text-white">Video URL not available</p>
+                );
+              })()}
+            </div>
+            
+            {/* Video Description */}
+            {selectedVideo.description && (
+              <div className="p-4 border-t border-gray-700">
+                <p className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
+                  {selectedVideo.description}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

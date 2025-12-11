@@ -98,6 +98,7 @@ export default function CustomizerPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const previousNonFullViewRef = useRef<ViewMode>('desktop');
   const isDesktopView = viewMode === 'desktop';
@@ -185,6 +186,9 @@ export default function CustomizerPage() {
       isCustomized: templateData?.metadata?.isCustomized
     });
   }, [templateLoading, isFallback, templateData, currentTemplate, selectedTemplate]);
+  
+  // Combined loading state for initial page load/reload and save operations
+  const isInitialLoading = authLoading || templateSelectionLoading || templateLoading || companyLoading || isFallback || !currentTemplate || isSaving || isDeletingAvatar;
   
   // Deep merge template with custom settings for real-time preview
   const mergedTemplate = React.useMemo(() => {
@@ -812,6 +816,96 @@ export default function CustomizerPage() {
     }
   }, [user, customizerState.selectedTemplate, customizerState.customSettings, refreshTemplate, isTemplateSaved, handleProfilePreview]);
 
+  // Auto-save template without navigation (for automatic saves like avatar upload/clear)
+  const autoSaveTemplate = useCallback(async () => {
+    if (!user || !customizerState.selectedTemplate) return;
+    
+    setIsSaving(true);
+    
+    // Add timeout to prevent hanging
+    const saveTimeout = setTimeout(() => {
+      console.warn('⚠️ Customizer: Auto-save operation timed out');
+      setIsSaving(false);
+    }, 30000);
+    
+    try {
+      console.log('🔄 Customizer: Auto-saving template settings:', {
+        templateSlug: customizerState.selectedTemplate,
+        customSettings: customizerState.customSettings
+      });
+      
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session found');
+      }
+
+      const startTime = Date.now();
+      const response = await fetch('/api/templates/user', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateSlug: customizerState.selectedTemplate,
+          customSettings: customizerState.customSettings,
+          isPublished: false
+        })
+      });
+      
+      const endTime = Date.now();
+      console.log(`🔄 Customizer: Auto-save API response received in ${endTime - startTime}ms:`, response.status, response.statusText);
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to auto-save template');
+      }
+
+      if (result.success) {
+        setIsTemplateSaved(true); // Mark as saved
+        console.log('✅ Customizer: Template auto-saved successfully');
+        
+        // Invalidate client-side cache for this template
+        if (typeof window !== 'undefined' && user) {
+          const cacheKey = `template_${user.id}_${customizerState.selectedTemplate}`;
+          localStorage.removeItem(cacheKey);
+          console.log('🗑️ Customizer: Invalidated client cache for:', cacheKey);
+        }
+        
+        // Force immediate context update by calling refreshTemplate
+        try {
+          await refreshTemplate(customizerState.selectedTemplate);
+          console.log('✅ Customizer: Template refreshed successfully after auto-save');
+          
+          // Also refresh the efficient templates cache
+          if (typeof window !== 'undefined') {
+            const efficientCacheKey = `template_${user.id}_${customizerState.selectedTemplate}`;
+            localStorage.removeItem(efficientCacheKey);
+            console.log('🗑️ Customizer: Cleared efficient templates cache for:', efficientCacheKey);
+            // Broadcast to other tabs to refresh the template
+            try {
+              const bc = new BroadcastChannel('templates');
+              bc.postMessage({ type: 'template:updated', userId: user.id, slug: customizerState.selectedTemplate, ts: Date.now() });
+            } catch {}
+          }
+        } catch (error) {
+          console.error('❌ Customizer: Error refreshing template data after auto-save:', error);
+        }
+      } else {
+        throw new Error(result.error || 'API returned unsuccessful response');
+      }
+      
+    } catch (error) {
+      console.error('❌ Customizer: Error auto-saving template:', error);
+      throw error; // Re-throw so caller can handle
+    } finally {
+      clearTimeout(saveTimeout);
+      setIsSaving(false);
+    }
+  }, [user, customizerState.selectedTemplate, customizerState.customSettings, refreshTemplate]);
+
 
   return (
     <RouteGuard allowedRoles={['employee']}>
@@ -833,7 +927,7 @@ export default function CustomizerPage() {
           
           .customizer-scroll-wrapper::-webkit-scrollbar-thumb {
             background: #888;
-            border-radius: 4px;
+            border-radius: 0px;
           }
           
           .customizer-scroll-wrapper::-webkit-scrollbar-thumb:hover {
@@ -857,7 +951,7 @@ export default function CustomizerPage() {
           .customizer-container .public-profile-container {
             width: auto !important;
             max-width: none !important;
-            min-width: 1200px !important;
+            min-width: 900px !important;
           }
           
           /* Prevent child elements from being constrained in customizer preview (desktop only) */
@@ -901,7 +995,7 @@ export default function CustomizerPage() {
           }
         `}</style>
         <div className="w-full max-h-[calc(100vh-120px)] overflow-x-auto overflow-y-auto customizer-scroll-wrapper">
-          <div className="flex flex-col bg-gray-50 customizer-container min-w-[1500px] min-h-[calc(100vh-120px)]">
+          <div className="flex flex-col bg-gray-50 customizer-container min-w-[1200px] min-h-[calc(100vh-120px)]">
           {/* Header Controls */}
           <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
             <div className="flex flex-row items-center justify-between gap-0">
@@ -1115,6 +1209,8 @@ export default function CustomizerPage() {
                           template={mergedTemplate} 
                           officerInfo={officerInfo}
                           onChange={(path, value) => handleSettingChange(`headerModifications.${path}`, value)}
+                          onSave={autoSaveTemplate}
+                          setIsDeletingAvatar={setIsDeletingAvatar}
                         />
                       )}
                       
@@ -1144,8 +1240,8 @@ export default function CustomizerPage() {
                   <div 
                       className={`transition-all duration-300 ${
                         isMobileView 
-                          ? 'customizer-mobile-preview w-[375px] h-[667px] overflow-y-auto overflow-x-auto rounded-[28px] shadow-2xl border border-gray-300 bg-white m-0'
-                          : 'min-h-full min-w-[1200px] w-full overflow-auto bg-white rounded-lg shadow-sm border border-gray-200'
+                          ? 'customizer-mobile-preview w-[375px] h-[667px] overflow-y-auto overflow-x-auto shadow-2xl border border-gray-300 bg-white m-0'
+                          : 'min-h-full min-w-[900px] w-full overflow-auto bg-white shadow-sm border border-gray-200'
                       }`}
                     style={{
                       fontFamily: mergedTemplate?.typography?.fontFamily || 'Inter',
@@ -1167,7 +1263,7 @@ export default function CustomizerPage() {
                         </div>
                       }>
                         {/* Show skeleton loader if template is still loading or is fallback */}
-                        {(templateLoading || isFallback || !currentTemplate) ? (
+                        {isInitialLoading ? (
                           <div className="bg-white min-h-screen flex flex-col">
                             <div className="h-20 bg-gray-100 border-b border-gray-200" />
                             <div className="h-[300px] bg-gray-50 flex items-center justify-center">
@@ -1261,6 +1357,8 @@ interface HeaderModificationsProps extends SettingsProps {
     phone?: string;
     email: string;
   };
+  onSave?: () => Promise<void>;
+  setIsDeletingAvatar?: (isDeleting: boolean) => void;
 }
 
 // General Settings Component (combines all current settings)
@@ -1283,10 +1381,7 @@ function GeneralSettings({ template, onChange }: SettingsProps) {
 
   const sections = [
     { id: 'colors', label: 'Colors', icon: Palette, component: ColorsSettings },
-    { id: 'typography', label: 'Typography', icon: Type, component: TypographySettings },
-    { id: 'content', label: 'Content', icon: Settings, component: ContentSettings },
-    { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings },
-    { id: 'advanced', label: 'Advanced', icon: Settings, component: AdvancedSettings }
+    { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings }
   ];
 
   return (
@@ -1327,11 +1422,12 @@ function GeneralSettings({ template, onChange }: SettingsProps) {
 }
 
 // Avatar Upload Component
-function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: string; onChange: (url: string) => void }) {
+function AvatarUploadComponent({ currentAvatar, onChange, onSave, setIsDeletingAvatar }: { currentAvatar: string; onChange: (url: string) => void; onSave?: () => Promise<void>; setIsDeletingAvatar?: (isDeleting: boolean) => void }) {
   const [uploadMode, setUploadMode] = useState<'url' | 'upload'>('url');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1378,6 +1474,12 @@ function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: str
         body: formData,
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Upload failed:', response.status, text);
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (!result.success) {
@@ -1386,7 +1488,21 @@ function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: str
 
       // Update the avatar URL
       onChange(result.data.url);
+      // Also update previewUrl to the Cloudinary URL (not the blob URL)
+      setPreviewUrl(result.data.url);
       console.log('✅ Avatar uploaded successfully:', result.data.url);
+
+      // Auto-save the template after uploading
+      if (onSave) {
+        try {
+          console.log('💾 Auto-saving template after avatar upload...');
+          await onSave();
+          console.log('✅ Template auto-saved successfully');
+        } catch (error) {
+          console.error('❌ Error auto-saving template:', error);
+          // Don't throw - the avatar is already uploaded and state is updated
+        }
+      }
 
     } catch (error) {
       console.error('❌ Avatar upload error:', error);
@@ -1402,11 +1518,104 @@ function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: str
     setPreviewUrl(url || null);
   };
 
-  const clearAvatar = () => {
-    onChange('');
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const clearAvatar = async () => {
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to clear the avatar? This action cannot be undone.');
+    if (!confirmed) {
+      console.log('🚫 Clear avatar cancelled by user');
+      return;
+    }
+
+    setIsDeleting(true);
+    // Notify parent that avatar deletion has started (for skeleton loader)
+    if (setIsDeletingAvatar) {
+      setIsDeletingAvatar(true);
+    }
+    console.log('🔍 Clear avatar called:', { previewUrl, currentAvatar });
+
+    try {
+      // Check if current avatar is a Cloudinary URL
+      // Prefer currentAvatar as it's the source of truth, but also check previewUrl
+      const avatarToCheck = currentAvatar || previewUrl;
+      console.log('🔍 Avatar to check:', avatarToCheck);
+      
+      // Clean up blob URL if previewUrl is a blob URL
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      if (avatarToCheck && avatarToCheck.includes('res.cloudinary.com')) {
+        console.log('✅ Detected Cloudinary URL, attempting deletion...');
+        try {
+        // Extract publicId from Cloudinary URL
+        // Format: https://res.cloudinary.com/{cloud_name}/image/upload/{version}/{public_id}.{format}
+        // The publicId can include folders, e.g., "avatars/filename"
+        const urlParts = avatarToCheck.split('/');
+        const uploadIndex = urlParts.findIndex(part => part === 'upload');
+        
+        if (uploadIndex !== -1 && urlParts.length > uploadIndex + 2) {
+          // Get all parts after the version number (which is at uploadIndex + 1)
+          // Join them to get the full publicId path (including folder)
+          const publicIdParts = urlParts.slice(uploadIndex + 2);
+          const publicIdWithExt = publicIdParts.join('/');
+          
+          // Remove file extension to get publicId
+          const publicId = publicIdWithExt.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '');
+          
+          console.log('🔍 Extracted publicId:', publicId);
+          
+          // Delete from Cloudinary
+          const response = await fetch('/api/upload/avatar', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ publicId }),
+          });
+          
+          const responseData = await response.json();
+          
+          if (!response.ok) {
+            console.warn('⚠️ Failed to delete image from Cloudinary:', responseData);
+          } else {
+            console.log('✅ Image deleted from Cloudinary:', responseData);
+          }
+          } else {
+            console.warn('⚠️ Could not extract publicId from URL:', avatarToCheck);
+          }
+        } catch (error) {
+          console.error('❌ Error deleting from Cloudinary:', error);
+          // Continue to clear local state even if deletion fails
+        }
+      } else {
+        console.log('ℹ️ Not a Cloudinary URL or no avatar to clear:', avatarToCheck);
+      }
+      
+      // Clear local state regardless
+      console.log('🧹 Clearing local state...');
+      onChange('');
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Auto-save the template after clearing
+      if (onSave) {
+        try {
+          console.log('💾 Auto-saving template after avatar clear...');
+          await onSave();
+          console.log('✅ Template auto-saved successfully');
+        } catch (error) {
+          console.error('❌ Error auto-saving template:', error);
+          // Don't throw - the avatar is already cleared locally
+        }
+      }
+    } finally {
+      setIsDeleting(false);
+      // Notify parent that avatar deletion has completed
+      if (setIsDeletingAvatar) {
+        setIsDeletingAvatar(false);
+      }
     }
   };
 
@@ -1493,18 +1702,19 @@ function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: str
                 }}
               />
             </div>
-            <div className="flex-1">
+            <div className="flex-1" title={previewUrl || currentAvatar}>
               <p className="text-sm text-gray-600">Preview</p>
-              <p className="text-xs text-gray-500 truncate">
+              <p className="text-xs text-gray-500 max-w-[100px] truncate" >
                 {previewUrl || currentAvatar}
               </p>
             </div>
             <button
               type="button"
               onClick={clearAvatar}
-              className="px-3 py-1 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+              disabled={isDeleting}
+              className="px-3 py-1 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-600"
             >
-              Clear
+              {isDeleting ? 'Deleting...' : 'Clear'}
             </button>
           </div>
         </div>
@@ -1514,7 +1724,7 @@ function AvatarUploadComponent({ currentAvatar, onChange }: { currentAvatar: str
 }
 
 // Header Modifications Component
-function HeaderModifications({ template, officerInfo, onChange }: HeaderModificationsProps) {
+function HeaderModifications({ template, officerInfo, onChange, onSave, setIsDeletingAvatar }: HeaderModificationsProps) {
   if (!template) return null;
 
   const headerMods = template.headerModifications || {};
@@ -1559,6 +1769,8 @@ function HeaderModifications({ template, officerInfo, onChange }: HeaderModifica
             <AvatarUploadComponent 
               currentAvatar={headerMods.avatar || ''}
               onChange={(url) => onChange('avatar', url)}
+              onSave={onSave}
+              setIsDeletingAvatar={setIsDeletingAvatar}
             />
           </div>
         </div>
@@ -1790,25 +2002,25 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
   const themes = [
     {
       value: 'default',
-      label: 'Default',
+      label: 'LoanOff Default',
       primary: '#005b7c',
       secondary: '#01bcc6'
     },
     {
       value: 'theme1',
-      label: 'Theme 1',
+      label: 'Luxury',
       primary: '#064E3B',
       secondary: '#D4AF37'
     },
     {
       value: 'theme2',
-      label: 'Theme 2',
+      label: 'Modern',
       primary: '#374151',
       secondary: '#9CA3AF'
     },
     {
       value: 'theme3',
-      label: 'Theme 3',
+      label: 'Premium',
       primary: '#000000',
       secondary: '#62a0ea'
     }
@@ -2181,39 +2393,11 @@ function LayoutSettings({ template, onChange }: SettingsProps) {
 
   // Provide default values to prevent controlled/uncontrolled input errors
   const layout = {
-    alignment: template.layout?.alignment || 'center',
-    spacing: template.layout?.spacing || 16,
     borderRadius: template.layout?.borderRadius || 8
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Alignment</label>
-        <select
-          value={layout.alignment}
-          onChange={(e) => onChange('alignment', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="left">Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Spacing</label>
-        <input
-          type="range"
-          min="8"
-          max="32"
-          value={layout.spacing}
-          onChange={(e) => onChange('spacing', parseInt(e.target.value))}
-          className="w-full"
-        />
-        <div className="text-sm text-gray-500 mt-1">{layout.spacing}px</div>
-      </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Border Radius</label>
         <input

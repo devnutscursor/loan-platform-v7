@@ -236,6 +236,68 @@ button: {
     return validateSlide(currentSlide);
   };
 
+  // Helper function to check if a slide should be skipped
+  const shouldSkipSlide = (slideIndex: number): boolean => {
+    // Skip Rental Status (slide 4) if user owns a home
+    if (slideIndex === 4 && formData.ownHome === 'Yes') {
+      return true;
+    }
+    // Skip Rental Income (slide 6) and Loan Qualification (slide 7) if user doesn't own a 2nd home
+    if ((slideIndex === 6 || slideIndex === 7) && formData.secondHome === 'No') {
+      return true;
+    }
+    return false;
+  };
+
+  // Helper to get the next valid slide index
+  const getNextValidSlide = (fromSlide: number): number => {
+    let nextSlide = fromSlide + 1;
+    while (nextSlide < slides.length - 1 && shouldSkipSlide(nextSlide)) {
+      nextSlide++;
+    }
+    return nextSlide;
+  };
+
+  // Helper to get the previous valid slide index
+  const getPrevValidSlide = (fromSlide: number): number => {
+    let prevSlide = fromSlide - 1;
+    while (prevSlide > 0 && shouldSkipSlide(prevSlide)) {
+      prevSlide--;
+    }
+    return prevSlide;
+  };
+
+  // Calculate effective slide count (excluding skipped slides)
+  const getEffectiveSlideCount = () => {
+    let count = slides.length;
+    if (formData.ownHome === 'Yes') {
+      count--; // Subtract 1 for skipped Rental Status slide
+    }
+    if (formData.secondHome === 'No') {
+      count -= 2; // Subtract 2 for skipped Rental Income and Loan Qualification slides
+    }
+    return count;
+  };
+
+  // Calculate effective current slide number (accounting for skipped slides)
+  const getEffectiveCurrentSlide = () => {
+    let effective = currentSlide + 1;
+    
+    // Subtract 1 if we've passed slide 4 and it was skipped
+    if (formData.ownHome === 'Yes' && currentSlide > 4) {
+      effective--;
+    }
+    
+    // Subtract 2 if we've passed slides 6 and 7 and they were skipped
+    if (formData.secondHome === 'No' && currentSlide > 7) {
+      effective -= 2;
+    } else if (formData.secondHome === 'No' && currentSlide > 6) {
+      effective -= 1; // We're past slide 6 but not past 7
+    }
+    
+    return effective;
+  };
+
   const nextSlide = () => {
     if (!validateSlide(currentSlide)) {
       alert('Please answer all required questions.');
@@ -243,7 +305,9 @@ button: {
     }
     
     if (currentSlide < slides.length - 2) {
-      setCurrentSlide(prev => prev + 1);
+      // Use helper to skip slide 4 if needed
+      const nextValidSlide = getNextValidSlide(currentSlide);
+      setCurrentSlide(nextValidSlide);
     } else if (currentSlide === slides.length - 2) {
       generateSummary();
       setCurrentSlide(prev => prev + 1);
@@ -270,14 +334,34 @@ button: {
 
   const prevSlide = () => {
     if (currentSlide > 0) {
-      setCurrentSlide(prev => prev - 1);
+      // Use helper to skip slide 4 if needed
+      const prevValidSlide = getPrevValidSlide(currentSlide);
+      setCurrentSlide(prevValidSlide);
     }
   };
+
+  // Automatically skip slides if conditions are met
+  useEffect(() => {
+    // If we're on slide 4 (Rental Status) and user owns a home, skip to next slide
+    if (currentSlide === 4 && formData.ownHome === 'Yes') {
+      const nextValidSlide = getNextValidSlide(currentSlide);
+      if (nextValidSlide !== currentSlide) {
+        setCurrentSlide(nextValidSlide);
+      }
+    }
+    // If we're on slide 6 (Rental Income) or slide 7 (Loan Qualification) and user doesn't own a 2nd home, skip
+    if ((currentSlide === 6 || currentSlide === 7) && formData.secondHome === 'No') {
+      const nextValidSlide = getNextValidSlide(currentSlide);
+      if (nextValidSlide !== currentSlide) {
+        setCurrentSlide(nextValidSlide);
+      }
+    }
+  }, [currentSlide, formData.ownHome, formData.secondHome]);
 
   const generateSummary = () => {
     const docs = [
       '2 Bank Statements (2 most recent)',
-      '401k & Stock Accounts (2 most recent)',
+      '(If Applicable) 401k & Stock Accounts (2 most recent)',
       "Unexpired Driver's License",
       "Unexpired Passport",
       "Copy of Social Security Card"
@@ -305,22 +389,28 @@ button: {
       docs.push('Mortgage Statement', 'Home Insurance w/Declarations and RCE');
     }
 
-    if (formData.payingRent === 'Yes') {
-      docs.push('Copy of Lease Agreement', '12 Months Rent Receipts / Checks or Bank Statements');
-    } else if (formData.payingRent === 'No') {
-      docs.push('Letter from Borrower Living Rent-Free', 'Letter from Person You\'re Living With');
+    // Only add rental documents if user doesn't own a home
+    if (formData.ownHome !== 'Yes') {
+      if (formData.payingRent === 'Yes') {
+        docs.push('Copy of Lease Agreement', '12 Months Rent Receipts / Checks or Bank Statements');
+      } else if (formData.payingRent === 'No') {
+        docs.push('Letter from Borrower Living Rent-Free', 'Letter from Person You\'re Living With');
+      }
     }
 
     if (formData.secondHome === 'Yes') {
-      docs.push('2nd Home Mortgage Statement', '2nd Home Insurance Docs');
+      docs.push('2nd Home Mortgage Statement', '2nd Home Insurance w/Declarations and RCE');
     }
 
-    if (formData.rentalIncome === 'Yes') {
-      docs.push('Lease Agreements', '12 Months Rent Income Proof');
-    }
+    // Only add rental income documents if user owns a 2nd home
+    if (formData.secondHome === 'Yes') {
+      if (formData.rentalIncome === 'Yes') {
+        docs.push('Lease Agreements', '12 Months Rent Income Proof');
+      }
 
-    if (formData.useForLoan === 'Yes') {
-      docs.push('Lease Agreements', '12 Months Rent Income Proof');
+      if (formData.useForLoan === 'Yes') {
+        docs.push('Lease Agreements', '12 Months Rent Income Proof');
+      }
     }
 
     if (formData.giftFunds === 'Yes') {
@@ -586,11 +676,11 @@ Please gather all required documents before submitting your loan application.`;
               </div>
               <div className="flex items-center space-x-3">
                 <input type="checkbox" checked disabled className="w-5 h-5" />
-                <span className={`${classes.body.base}`}>401k & Stock Accounts (2 most recent)</span>
+                <span className={`${classes.body.base}`}>(If Applicable) 401k & Stock Accounts (2 most recent)</span>
               </div>
             </div>
             <p className={`${classes.body.small} ml-8`} style={{ color: colors.textSecondary }}>
-              Please attach all of the above. Must cover most recent 60 days
+              Please attach all of the above. Must cover most recent 60 days. Please include any other asset or retirement account statements.
             </p>
           </div>
         );
@@ -767,6 +857,9 @@ Please gather all required documents before submitting your loan application.`;
                       <span className={`${classes.body.base}`}>Home Insurance w/Declarations and RCE</span>
                     </div>
                   </div>
+                  <p className={`${classes.body.small} ml-8 mt-2`} style={{ color: colors.textSecondary }}>
+                    Note: "RCE" is Replacement Cost Estimator. Your insurance company will know what this is when you request it.
+                  </p>
                 </div>
               </div>
             )}
@@ -872,9 +965,12 @@ Please gather all required documents before submitting your loan application.`;
                     </div>
                     <div className="flex items-center space-x-3">
                       <input type="checkbox" checked disabled className="w-5 h-5" />
-                      <span className={`${classes.body.base}`}>2nd Home Insurance Docs</span>
+                      <span className={`${classes.body.base}`}>2nd Home Insurance w/Declarations and RCE</span>
                     </div>
                   </div>
+                  <p className={`${classes.body.small} ml-8 mt-2`} style={{ color: colors.textSecondary }}>
+                    Note: "RCE" is Replacement Cost Estimator. Your insurance company will know what this is when you request it.
+                  </p>
                 </div>
               </div>
             )}
@@ -1270,17 +1366,17 @@ Please gather all required documents before submitting your loan application.`;
       <div className="mb-6 mt-8">
         <div className="flex items-center justify-between mb-4">
           <span className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
-            Step {currentSlide + 1} of {slides.length}
+            Step {getEffectiveCurrentSlide()} of {getEffectiveSlideCount()}
           </span>
           <span className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
-            {Math.round(((currentSlide + 1) / slides.length) * 100)}% Complete
+            {Math.round((getEffectiveCurrentSlide() / getEffectiveSlideCount()) * 100)}% Complete
           </span>
         </div>
         <div className="w-full h-2" style={{ backgroundColor: colors.border, borderRadius: `${layout.borderRadius}px` }}>
           <div 
             className="h-2 transition-all duration-300"
             style={{ 
-              width: `${((currentSlide + 1) / slides.length) * 100}%`,
+              width: `${(getEffectiveCurrentSlide() / getEffectiveSlideCount()) * 100}%`,
               backgroundColor: colors.primary,
               borderRadius: `${layout.borderRadius}px`
             }}

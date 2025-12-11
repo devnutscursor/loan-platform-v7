@@ -27,8 +27,8 @@ async function updateDefaultTemplates() {
         user_id: null,
         name: 'Red Theme',
         colors: {
-          primary: '#ec4899',
-          secondary: '#3b82f6',
+          primary: '#064E3B',
+          secondary: '#D4AF37',
           background: '#ffffff',
           text: '#111827',
           textSecondary: '#6b7280',
@@ -66,6 +66,8 @@ async function updateDefaultTemplates() {
         classes: {}
       })
       .eq('slug', 'template1')
+      .eq('is_default', true)
+      .is('user_id', null)
       .select();
 
     if (error1) {
@@ -82,8 +84,8 @@ async function updateDefaultTemplates() {
         user_id: null,
         name: 'Purple Theme',
         colors: {
-          primary: '#9333ea',
-          secondary: '#06b6d4',
+          primary: '#000000',
+          secondary: '#62a0ea',
           background: '#ffffff',
           text: '#111827',
           textSecondary: '#6b7280',
@@ -111,7 +113,7 @@ async function updateDefaultTemplates() {
         layout: {
           alignment: 'center',
           spacing: 16,
-          borderRadius: 8,
+          borderRadius: 1,
           padding: 24
         },
         advanced: {
@@ -121,6 +123,8 @@ async function updateDefaultTemplates() {
         classes: {}
       })
       .eq('slug', 'template2')
+      .eq('is_default', true)
+      .is('user_id', null)
       .select();
 
     if (error2) {

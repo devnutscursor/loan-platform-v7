@@ -60,6 +60,7 @@ interface UnifiedHeroSectionProps {
   };
   // Force mobile view (for customizer mobile preview)
   forceMobileView?: boolean;
+  onApplyNowRequest?: () => void;
 }
 
 export default function UnifiedHeroSection({
@@ -79,7 +80,8 @@ export default function UnifiedHeroSection({
   // NEW: Company data props
   companyData,
   // Force mobile view
-  forceMobileView = false
+  forceMobileView = false,
+  onApplyNowRequest
 }: UnifiedHeroSectionProps) {
   // Debug: Log force mobile view state
   console.log('🔍 UnifiedHeroSection: forceMobileView =', forceMobileView, 'template =', template);
@@ -172,20 +174,11 @@ export default function UnifiedHeroSection({
   };
 
   const handleApplyNow = () => {
-    // Get the officer's email
-    const officerEmail = isPublic ? publicUserData?.email : email;
-    const officerFirstName = isPublic ? publicUserData?.name?.split(' ')[0] : officerName?.split(' ')[0];
-    
-    if (!officerEmail) {
-      console.warn('No officer email available for Apply Now functionality');
+    if (onApplyNowRequest) {
+      onApplyNowRequest();
       return;
     }
-
-    // Create mailto link
-    const subject = encodeURIComponent('Loan Application Inquiry');
-    const body = encodeURIComponent(`Hi ${officerFirstName || 'there'}, I'm interested in your loan services. Please contact me to discuss my application.`);
-    
-    window.location.href = `mailto:${officerEmail}?subject=${subject}&body=${body}`;
+    console.warn('UnifiedHeroSection: onApplyNowRequest not provided; Apply Now action skipped.');
   };
 
   // Use helper functions to get display values
@@ -196,6 +189,7 @@ export default function UnifiedHeroSection({
   const displayImage = getProfileImage();
   const hasExplicitImage = !!displayImage;
   const showInitials = imageError || !hasExplicitImage;
+  {console.log('displayImage', displayImage)}
 
   // No need for profile fetching - using user data directly
 
@@ -379,7 +373,7 @@ export default function UnifiedHeroSection({
                   </div>
                 ) : (
                     <div 
-                      className="w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg overflow-hidden"
+                      className="relative w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg overflow-hidden"
                       style={{ borderColor: colors.primary }}
                     >
                   <Image
@@ -490,24 +484,24 @@ export default function UnifiedHeroSection({
             </div>
           ) : (
             // Horizontal Layout (Template2) - Responsive: Stack on mobile, horizontal on desktop
-            <div className={`flex flex-col ${forceMobileView ? 'w-full overflow-hidden' : '@[60rem]:flex-row @[60rem]:items-start'}`}>
+            <div className={`flex flex-col justify-center ${forceMobileView ? 'w-full overflow-hidden' : '@4xl:flex-row @4xl:items-center'}`}>
               {/* Left Section: Officer Info (80%) */}
-                <div className={`${forceMobileView ? 'w-full max-w-full' : 'w-full'} mb-6 ${forceMobileView ? '' : '@[48rem]:w-3/4 @[48rem]:pr-8 @[48rem]:flex-shrink-0 @[48rem]:mb-0'}`}>
-                 <div className={`flex flex-col @[50rem]:flex-row gap-3 ${forceMobileView ? 'items-center justify-center w-full max-w-full min-w-0' : 'items-start @[50rem]:justify-start'}`}>
+                <div className={`mx-auto @3xl:mx-0 ${forceMobileView ? 'w-full max-w-full' : 'w-full'} mb-6 ${forceMobileView ? '' : '@[48rem]:w-3/4 @[48rem]:flex-shrink-0 @[48rem]:mb-0'}`}>
+                 <div className={`flex flex-col @[50rem]:flex-row gap-3 ${forceMobileView ? 'items-center justify-center w-full max-w-full min-w-0' : 'items-center @[50rem]:justify-center'}`}>
                   {/* Profile Image */}
                    <div className="flex justify-center @[50rem]:justify-start items-center mx-auto">
                     <div className={`${avatarFeatureClasses}`}>
                       {showInitials ? (
                         <div
-                          className={`w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg flex items-center justify-center text-white font-bold ${avatarFeatureInitialsClasses}`}
-                          style={{ backgroundColor: colors.primary, borderColor: colors.primary }}
+                        className={`w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg flex items-center justify-center text-white font-bold ${avatarFeatureInitialsClasses}`}
+                        style={{ backgroundColor: colors.primary, borderColor: colors.primary }}
                         >
                           {displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                         </div>
                       ) : (
                         <div 
-                          className="w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg overflow-hidden"
-                          style={{ borderColor: colors.primary }}
+                        className="relative w-full h-full rounded-full border-2 @[20rem]:border-4 border-white shadow-lg overflow-hidden"
+                        style={{ borderColor: colors.primary }}
                         >
                           <Image
                             src={displayImage as string}
@@ -526,7 +520,7 @@ export default function UnifiedHeroSection({
                   </div>
 
                   {/* Officer Info */}
-                   <div className="flex flex-col items-center @sm:items-start justify-center w-full my-auto">
+                   <div className="flex flex-col items-center @3xl:items-start justify-center w-full my-auto">
                     <h1 
                       className={`text-lg @[18.75rem]:text-xl @[20rem]:text-2xl @[30rem]:text-3xl @[40rem]:text-4xl font-bold text-white mb-2 @[18.75rem]:mb-3 @[20rem]:mb-4 ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
                       style={{ 
@@ -537,7 +531,7 @@ export default function UnifiedHeroSection({
                     </h1>
                     
                     {/* Officer Contact Info */}
-                     <div className="flex flex-col items-start @[50rem]:flex-row @[50rem]:items-center text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg gap-2 @[18.75rem]:gap-3 text-white opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6">
+                     <div className="flex flex-col items-start @4xl:flex-row @4xl:items-center text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg gap-2 @[18.75rem]:gap-3 text-white opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6">
                       {/* Officer Email */}
                       {displayEmail && (
                         <>
@@ -552,7 +546,7 @@ export default function UnifiedHeroSection({
                           </div>
                           
                           {/* Dot Separator */}
-                          <span className="text-white opacity-50 hidden @[50rem]:block">•</span>
+                          <span className="text-white opacity-50 hidden @4xl:block">•</span>
                         </>
                       )}
                       
@@ -638,8 +632,8 @@ export default function UnifiedHeroSection({
               <div className={`${forceMobileView ? 'block' : '@[60rem]:hidden'} w-full h-px bg-white opacity-30 my-6`}></div>
 
               {/* Right Section: Company Info (20%) */}
-              <div className={`w-full ${forceMobileView ? '' : '@[48rem]:w-1/4 @[48rem]:pl-4 @[48rem]:flex-shrink-0'}`}>
-                <div className="flex flex-col @[22rem]:flex-row @[50rem]:flex-col justify-center items-start @[50rem]:items-center space-x-4">
+              <div className={`w-full ${forceMobileView ? '' : '@[48rem]:pl-4 '}`}>
+                <div className="flex flex-row @4xl:flex-col justify-center items-center @3xl:items-start @3xl:justify-start gap-2">
                   {/* Company Logo */}
                   <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
                     style={{
@@ -679,7 +673,7 @@ export default function UnifiedHeroSection({
                     <div className="space-y-2 text-base text-white opacity-90">
                       {/* Company Email */}
                       {companyData?.email && (
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center">
                           <div className="w-4 h-4 flex items-center justify-center">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />

@@ -64,6 +64,7 @@ import {
   Settings,
   Link,
   AlertCircle,
+  HelpCircle,
 } from 'lucide-react';
 
 // Centralized icon registry for the entire app
@@ -176,6 +177,7 @@ export const icons = {
   alertTriangle: AlertTriangle,
   link: Link,
   alertCircle: AlertCircle,
+  helpCircle: HelpCircle,
 } as const;
 
 interface IconProps {

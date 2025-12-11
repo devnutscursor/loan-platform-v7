@@ -131,6 +131,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   const [stepHistory, setStepHistory] = useState<string[]>(['landing']);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [questionnaireFormData, setQuestionnaireFormData] = useState<Partial<SearchFormData> | undefined>(undefined);
+  const [pendingAutoSearchData, setPendingAutoSearchData] = useState<SearchFormData | null>(null);
 
   // Get template-specific styles and content
   const { getTemplateSync } = useEfficientTemplates();
@@ -174,7 +175,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     setQuestionnaireAnswers(allAnswers);
     
     // Generate form data from questionnaire answers
-    await autoSearchFromQuestionnaire(allAnswers);
+    const formData = await autoSearchFromQuestionnaire(allAnswers);
+    
+    setPendingAutoSearchData(formData);
     
     // Hide questionnaire and show search form with pre-filled values
     setShowQuestionnaire(false);
@@ -221,6 +224,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     if (creditScore === '580-619') return '580-619';
     if (creditScore === '620-639') return '620-639';
     if (creditScore === '640+') return '640-659'; // Map 640+ to closest range
+    if (creditScore === '640-679') return '660-679'; // Map 640-679 to middle range
+    if (creditScore === '680-719') return '700-719'; // Map 680-719 to middle range
+    if (creditScore === '720+') return '720-739'; // Map 720+ to closest range
     if (creditScore === '640-659') return '640-659';
     if (creditScore === '660-679') return '660-679';
     if (creditScore === '680-699') return '680-699';
@@ -235,7 +241,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   };
 
   // Auto-search based on questionnaire answers
-  const autoSearchFromQuestionnaire = async (answers: Record<string, any>) => {
+  const autoSearchFromQuestionnaire = async (answers: Record<string, any>): Promise<SearchFormData> => {
     // Extract values from questionnaire answers
     let loanType = 'Conventional';
     let creditScore = '740-759';
@@ -362,8 +368,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       loanTerms: formDataPartial.loanTerms || ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"]
     };
 
-    // Don't auto-trigger search - let user see the form with pre-filled values
-    // await handleSearch(formData);
+    return formData;
   };
 
   // Handle search - transform form data to Mortech API format
@@ -505,6 +510,15 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     }
   };
 
+  useEffect(() => {
+    if (!pendingAutoSearchData || !questionnaireFormData) {
+      return;
+    }
+
+    handleSearch(pendingAutoSearchData);
+    setPendingAutoSearchData(null);
+  }, [pendingAutoSearchData, questionnaireFormData, handleSearch]);
+
   // Get template content
   const getTemplateContent = () => {
     if (template === 'template1') {
@@ -622,13 +636,33 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 </div>
               </Button>
               <Button 
-                onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '640+' })}
+                onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '640-679' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
                 <div className="flex items-center space-x-3">
                   {React.createElement(icons.star, { size: 20, color: colors.background })}
-                  <span>640 or higher</span>
+                  <span>640 to 679</span>
+                </div>
+              </Button>
+              <Button 
+                onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '680-719' })}
+                {...getTemplateButtonStyles('secondary')}
+                className="h-10 @sm:h-14 text-sm @sm:text-base"
+              >
+                <div className="flex items-center space-x-3">
+                  {React.createElement(icons.trendingUp, { size: 20, color: colors.background })}
+                  <span>680 to 719</span>
+                </div>
+              </Button>
+              <Button 
+                onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '720+' })}
+                {...getTemplateButtonStyles('secondary')}
+                className="h-10 @sm:h-14 text-sm @sm:text-base"
+              >
+                <div className="flex items-center space-x-3">
+                  {React.createElement(icons.star, { size: 20, color: colors.background })}
+                  <span>720 or higher</span>
                 </div>
               </Button>
             </div>
