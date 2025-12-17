@@ -155,7 +155,6 @@ export default function TodaysRatesTab({
     setValidationMessage(null);
     
     try {
-      let loanAmount: number;
       let propertyValue: number;
       
       let calculatedLoanAmount: number;
@@ -203,15 +202,12 @@ export default function TodaysRatesTab({
       // Store loan amount and down payment for lead capture
       setLoanAmount(calculatedLoanAmount);
       setDownPayment(calculatedDownPayment);
-      
-      // Use calculated values for API request
-      loanAmount = calculatedLoanAmount;
 
       // Build Mortech API request from form data
       const request: any = {
         propertyZip: formData.zipCode || '75024',
         appraisedvalue: propertyValue,
-        loan_amount: loanAmount,
+        loan_amount: calculatedLoanAmount,
         fico: mapCreditScore(formData.creditScore),
         loanpurpose: formData.loanPurpose as 'Purchase' | 'Refinance',
         proptype: mapPropertyType(formData.propertyType),

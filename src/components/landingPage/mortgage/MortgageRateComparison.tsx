@@ -380,7 +380,6 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     setValidationMessage(null);
     
     try {
-      let loanAmount: number;
       let propertyValue: number;
       
       let calculatedLoanAmount: number;
@@ -428,15 +427,12 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       // Store loan amount and down payment for lead capture
       setLoanAmount(calculatedLoanAmount);
       setDownPayment(calculatedDownPayment);
-      
-      // Use calculated values for API request
-      loanAmount = calculatedLoanAmount;
 
       // Build Mortech API request
       const request: any = {
         propertyZip: formData.zipCode || '75024',
         appraisedvalue: propertyValue,
-        loan_amount: loanAmount,
+        loan_amount: calculatedLoanAmount,
         fico: mapCreditScore(formData.creditScore),
         loanpurpose: formData.loanPurpose as 'Purchase' | 'Refinance',
         proptype: mapPropertyTypeToMortech(formData.propertyType),
