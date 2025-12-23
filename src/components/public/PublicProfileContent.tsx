@@ -426,6 +426,7 @@ export default function PublicProfileContent({
                           <div className={forceMobileViewport ? '' : '@[80rem]:sticky @[80rem]:top-6 @[96rem]:top-8'}>
                             <UnifiedRightSidebar 
                               isPublic={true}
+                              companyData={profileData.company}
                               publicCompanyData={profileData.company}
                               publicTemplateData={templateData}
                               templateCustomization={profileData.template}

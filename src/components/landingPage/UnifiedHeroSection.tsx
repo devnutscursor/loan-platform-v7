@@ -531,7 +531,7 @@ export default function UnifiedHeroSection({
                     </h1>
                     
                     {/* Officer Contact Info */}
-                     <div className="flex flex-col items-start @4xl:flex-row @4xl:items-center text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg gap-2 @[18.75rem]:gap-3 text-white opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6">
+                     <div className="flex flex-col items-start @4xl:flex-row @4xl:items-center text-xs @5xl:text-base gap-2 @[18.75rem]:gap-3 text-white opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6">
                       {/* Officer Email */}
                       {displayEmail && (
                         <>
@@ -626,10 +626,10 @@ export default function UnifiedHeroSection({
               </div>
 
               {/* Vertical Separator Line - Hidden on mobile, visible on desktop */}
-              <div className={`${forceMobileView ? 'hidden' : 'hidden @[60rem]:block'} w-px h-64 bg-white opacity-30 mx-4 flex-shrink-0`}></div>
+              <div className={`${forceMobileView ? 'hidden' : 'hidden @4xl:block'} w-px h-64 bg-white opacity-30 mx-4 flex-shrink-0`}></div>
               
               {/* Horizontal Separator Line - Visible on mobile, hidden on desktop */}
-              <div className={`${forceMobileView ? 'block' : '@[60rem]:hidden'} w-full h-px bg-white opacity-30 my-6`}></div>
+              <div className={`${forceMobileView ? 'block' : '@4xl:hidden'} w-full h-px bg-white opacity-30 my-6`}></div>
 
               {/* Right Section: Company Info (20%) */}
               <div className={`w-full ${forceMobileView ? '' : '@[48rem]:pl-4 '}`}>

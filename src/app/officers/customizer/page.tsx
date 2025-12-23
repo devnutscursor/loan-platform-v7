@@ -1251,7 +1251,7 @@ export default function CustomizerPage() {
             {/* Center - Live Preview (Full Width) */}
             <div className="flex-1 bg-gray-100 overflow-auto">
               <div className={`h-full w-full overflow-auto overflow-x-auto`}>
-                <div className={`${isMobileView ? 'flex justify-center items-start min-h-full p-0' : 'p-6'}`}>
+                <div className={`${isMobileView ? 'flex justify-center items-start min-h-full p-0' : 'p-2 2xl:p-6'}`}>
                   <div 
                       className={`transition-all duration-300 ${
                         isMobileView 
