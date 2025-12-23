@@ -2037,7 +2037,8 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
     text: template.colors?.text || '#111827',
     textSecondary: template.colors?.textSecondary || '#6b7280',
     border: template.colors?.border || '#e5e7eb',
-    backgroundType: template.colors?.backgroundType || 'gradient'
+    backgroundType: template.colors?.backgroundType || 'gradient',
+    heroTextColor: template.colors?.heroTextColor || '#ffffff'
   };
 
   // Define theme presets
@@ -2223,6 +2224,27 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Hero Text Color</label>
+        <div className="flex items-center space-x-3">
+          <input
+            type="color"
+            value={colors.heroTextColor}
+            onChange={(e) => onChange('heroTextColor', e.target.value)}
+            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+          />
+          <input
+            type="text"
+            value={colors.heroTextColor}
+            onChange={(e) => onChange('heroTextColor', e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          Color for text in the hero section (officer name, contact info, etc.)
+        </p>
       </div>
     </div>
   );

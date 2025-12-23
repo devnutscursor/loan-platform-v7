@@ -241,7 +241,8 @@ export default function UnifiedHeroSection({
     background: '#ffffff',
     text: '#111827',
     textSecondary: '#6b7280',
-    border: '#e5e7eb'
+    border: '#e5e7eb',
+    heroTextColor: '#ffffff'
   };
   
   const typography = templateData?.template?.typography || {
@@ -394,9 +395,10 @@ export default function UnifiedHeroSection({
 
             {/* Officer Name */}
             <h1 
-              className={`text-sm @[18.75rem]:text-base @[20rem]:text-lg @[30rem]:text-xl @[40rem]:text-2xl @[50rem]:text-3xl @[60rem]:text-4xl @[70rem]:text-5xl font-bold mb-2 @[18.75rem]:mb-3 @[20rem]:mb-4 text-white ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
+              className={`text-sm @[18.75rem]:text-base @[20rem]:text-lg @[30rem]:text-xl @[40rem]:text-2xl @[50rem]:text-3xl @[60rem]:text-4xl @[70rem]:text-5xl font-bold mb-2 @[18.75rem]:mb-3 @[20rem]:mb-4 ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
               style={{ 
-                fontWeight: typography.fontWeight.bold
+                fontWeight: typography.fontWeight.bold,
+                color: colors.heroTextColor || '#ffffff'
               }}
             >
               {displayName}
@@ -406,14 +408,15 @@ export default function UnifiedHeroSection({
             <div className={`flex flex-col items-center justify-center space-y-1.5 @[18.75rem]:space-y-2 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6 ${forceMobileView ? '' : '@[40rem]:flex-row @[40rem]:space-y-0 @[40rem]:space-x-6'}`}>
               {displayEmail && (
                 <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                     <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
                   </div>
                   <span 
-                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg text-white opacity-90 break-all"
+                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg opacity-90 break-all"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
                   >
                     {displayEmail}
                   </span>
@@ -421,13 +424,14 @@ export default function UnifiedHeroSection({
               )}
               {displayPhone && (
                 <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                     <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                     </svg>
                   </div>
                   <span 
-                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg text-white opacity-90"
+                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg opacity-90"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
                   >
                     {displayPhone}
                   </span>
@@ -435,13 +439,14 @@ export default function UnifiedHeroSection({
               )}
               {publicUserData?.nmlsNumber && (
                 <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                  <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                     <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm2 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <span 
-                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg text-white opacity-90"
+                    className="text-xs @[18.75rem]:text-sm @[20rem]:text-base @[30rem]:text-lg opacity-90"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
                   >
                     NMLS# {publicUserData.nmlsNumber}
                   </span>
@@ -456,7 +461,7 @@ export default function UnifiedHeroSection({
                 className="inline-flex items-center justify-center px-3 py-2 @[18.75rem]:px-4 @[18.75rem]:py-2 @[20rem]:px-4 @[20rem]:py-2 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-none w-full @[18.75rem]:w-auto"
                 style={{
                   backgroundColor: colors.primary,
-                  color: 'white',
+                  color: colors.heroTextColor || '#ffffff',
                   fontWeight: typography.fontWeight.semibold,
                   borderRadius: `${layout.borderRadius}px`
                 }}
@@ -469,10 +474,12 @@ export default function UnifiedHeroSection({
               
               <a
                 href="#contact"
-                className="inline-flex items-center justify-center px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-white border-white hover:bg-white hover:text-gray-900 w-full @[18.75rem]:w-auto"
+                className="inline-flex items-center justify-center px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-white hover:bg-white hover:text-gray-900 w-full @[18.75rem]:w-auto"
                 style={{
                   fontWeight: typography.fontWeight.semibold,
-                  borderRadius: `${layout.borderRadius}px`
+                  borderRadius: `${layout.borderRadius}px`,
+                  color: colors.heroTextColor || '#ffffff',
+                  borderColor: colors.heroTextColor || '#ffffff'
                 }}
               >
                 <p className='@sm:pb-1 pb-0'>Contact {displayName.split(' ')[0]}</p>
@@ -522,21 +529,22 @@ export default function UnifiedHeroSection({
                   {/* Officer Info */}
                    <div className="flex flex-col items-center @3xl:items-start justify-center w-full my-auto">
                     <h1 
-                      className={`text-lg @[18.75rem]:text-xl @[20rem]:text-2xl @[30rem]:text-3xl @[40rem]:text-4xl font-bold text-white mb-2 @[18.75rem]:mb-3 @[20rem]:mb-4 ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
+                      className={`text-lg @[18.75rem]:text-xl @[20rem]:text-2xl @[30rem]:text-3xl @[40rem]:text-4xl font-bold mb-2 @[18.75rem]:mb-3 @[20rem]:mb-4 ${forceMobileView ? '' : '@[64rem]:text-5xl'}`}
                       style={{ 
-                        fontWeight: typography.fontWeight.bold
+                        fontWeight: typography.fontWeight.bold,
+                        color: colors.heroTextColor || '#ffffff'
                       }}
                     >
                       {displayName}
                     </h1>
                     
                     {/* Officer Contact Info */}
-                     <div className="flex flex-col items-start @4xl:flex-row @4xl:items-center text-xs @5xl:text-base gap-2 @[18.75rem]:gap-3 text-white opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6">
+                     <div className="flex flex-col items-start @4xl:flex-row @4xl:items-center text-xs @5xl:text-base gap-2 @[18.75rem]:gap-3 opacity-90 mb-4 @[18.75rem]:mb-5 @[20rem]:mb-6" style={{ color: colors.heroTextColor || '#ffffff' }}>
                       {/* Officer Email */}
                       {displayEmail && (
                         <>
                           <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                            <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                            <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                               <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -546,7 +554,7 @@ export default function UnifiedHeroSection({
                           </div>
                           
                           {/* Dot Separator */}
-                          <span className="text-white opacity-50 hidden @4xl:block">•</span>
+                          <span className="opacity-50 hidden @4xl:block" style={{ color: colors.heroTextColor || '#ffffff' }}>•</span>
                         </>
                       )}
                       
@@ -554,7 +562,7 @@ export default function UnifiedHeroSection({
                       {displayPhone && (
                         <>
                           <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                            <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                            <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                               <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                               </svg>
@@ -563,13 +571,13 @@ export default function UnifiedHeroSection({
                           </div>
                           
                           {/* Dot Separator */}
-                          <span className="text-white opacity-50 hidden @[50rem]:block">•</span>
+                          <span className="opacity-50 hidden @[50rem]:block" style={{ color: colors.heroTextColor || '#ffffff' }}>•</span>
                         </>
                       )}
                       
                       {/* Officer NMLS# */}
                       <div className="flex items-center space-x-1.5 @[18.75rem]:space-x-2">
-                        <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center">
+                        <div className="w-4 h-4 @[18.75rem]:w-5 @[18.75rem]:h-5 flex items-center justify-center" style={{ color: colors.heroTextColor || '#ffffff' }}>
                           <svg className="w-3 h-3 @[18.75rem]:w-4 @[18.75rem]:h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm2 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                           </svg>
@@ -596,7 +604,7 @@ export default function UnifiedHeroSection({
                         className="inline-flex items-center justify-center w-full @[18.75rem]:w-auto px-3 py-2 @[18.75rem]:px-4 @[18.75rem]:py-2 @[20rem]:px-4 @[20rem]:py-2 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border-none"
                         style={{
                           backgroundColor: colors.primary,
-                          color: 'white',
+                          color: colors.heroTextColor || '#ffffff',
                           fontWeight: typography.fontWeight.semibold,
                           borderRadius: `${layout.borderRadius}px`
                         }}
@@ -609,10 +617,12 @@ export default function UnifiedHeroSection({
                       
                       <a
                         href="#contact"
-                        className="inline-flex items-center justify-center w-full @[18.75rem]:w-auto px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-white border-white hover:bg-white hover:text-gray-900"
+                        className="inline-flex items-center justify-center w-full @[18.75rem]:w-auto px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 hover:bg-white hover:text-gray-900"
                         style={{
                           fontWeight: typography.fontWeight.semibold,
-                          borderRadius: `${layout.borderRadius}px`
+                          borderRadius: `${layout.borderRadius}px`,
+                          color: colors.heroTextColor || '#ffffff',
+                          borderColor: colors.heroTextColor || '#ffffff'
                         }}
                       >
                         <p className='text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base @sm:pb-1 pb-0'>Contact {displayName.split(' ')[0]}</p>
@@ -665,12 +675,12 @@ export default function UnifiedHeroSection({
                   
                   {/* Company Details */}
                   <div className="flex flex-col">
-                    <h2 className={`text-xl font-semibold text-white mb-3 ${forceMobileView ? '' : ''}`}>
+                    <h2 className={`text-xl font-semibold mb-3 ${forceMobileView ? '' : ''}`} style={{ color: colors.heroTextColor || '#ffffff' }}>
                       {companyData?.name || 'Your Company'}
                     </h2>
                     
                     {/* Company Contact Info */}
-                    <div className="space-y-2 text-base text-white opacity-90">
+                    <div className="space-y-2 text-base opacity-90" style={{ color: colors.heroTextColor || '#ffffff' }}>
                       {/* Company Email */}
                       {companyData?.email && (
                         <div className="flex items-center">
@@ -733,7 +743,7 @@ export default function UnifiedHeroSection({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline"
-                            style={{ color: colors.primary }}
+                            style={{ color: colors.heroTextColor }}
                           >
                             Visit Website
                           </a>
