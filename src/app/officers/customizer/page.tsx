@@ -235,7 +235,7 @@ export default function CustomizerPage() {
           primary: '#ec4899',
           secondary: '#01bcc6',
           background: '#ffffff',
-          text: '#111827',
+          text: '#000000', // Always black
           textSecondary: '#6b7280',
           border: '#e5e7eb'
         },
@@ -2102,7 +2102,7 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
     primary: template.colors?.primary || '#01bcc6',
     secondary: template.colors?.secondary || '#01bcc6',
     background: template.colors?.background || '#ffffff',
-    text: template.colors?.text || '#111827',
+    text: '#000000', // Always black - removed customization option
     textSecondary: template.colors?.textSecondary || '#6b7280',
     border: template.colors?.border || '#e5e7eb',
     backgroundType: template.colors?.backgroundType || 'gradient',
@@ -2274,24 +2274,6 @@ function ColorsSettings({ template, onChange }: SettingsProps) {
             ? 'Uses gradient from primary to secondary color with liquid animations' 
             : 'Uses solid secondary color background with liquid animations'}
         </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
-        <div className="flex items-center space-x-3">
-          <input
-            type="color"
-            value={colors.text}
-            onChange={(e) => onChange('text', e.target.value)}
-            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-          />
-          <input
-            type="text"
-            value={colors.text}
-            onChange={(e) => onChange('text', e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
       </div>
 
       <div>
