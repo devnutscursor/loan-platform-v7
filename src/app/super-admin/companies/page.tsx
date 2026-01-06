@@ -37,6 +37,7 @@ interface CreateCompanyForm {
   name: string;
   email: string;
   website?: string;
+  includeDefaultContent?: boolean;
 }
 
 export default function CompaniesPage() {
@@ -49,6 +50,7 @@ export default function CompaniesPage() {
     name: '',
     email: '',
     website: '',
+    includeDefaultContent: false,
   });
   const [isCreating, setIsCreating] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -142,7 +144,8 @@ export default function CompaniesPage() {
         body: JSON.stringify({
           companyName: formData.name,
           adminEmail: formData.email,
-          website: formData.website
+          website: formData.website,
+          includeDefaultContent: formData.includeDefaultContent || false
         }),
       });
 
@@ -159,7 +162,7 @@ export default function CompaniesPage() {
         persistent: true,
       });
 
-      setFormData({ name: '', email: '', website: '' });
+      setFormData({ name: '', email: '', website: '', includeDefaultContent: false });
       setShowCreateModal(false);
       fetchCompanies();
     } catch (error: unknown) {
@@ -407,6 +410,12 @@ export default function CompaniesPage() {
       type: 'url',
       placeholder: 'https://example.com',
     },
+    {
+      name: 'includeDefaultContent',
+      label: 'Include Default Content (FAQs, Guides, Videos)',
+      type: 'checkbox',
+      required: false,
+    },
   ];
 
   return (
@@ -449,7 +458,7 @@ export default function CompaniesPage() {
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
-            setFormData({ name: '', email: '', website: '' });
+            setFormData({ name: '', email: '', website: '', includeDefaultContent: false });
             setValidationErrors({});
           }}
           title="Create New Company"

@@ -6,14 +6,15 @@ const sendInviteSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
   adminEmail: z.string().email('Valid email is required'),
   website: z.string().optional(),
+  includeDefaultContent: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { companyName, adminEmail, website } = sendInviteSchema.parse(body);
+    const { companyName, adminEmail, website, includeDefaultContent } = sendInviteSchema.parse(body);
 
-    const result = await sendCompanyAdminInvite(companyName, adminEmail, website);
+    const result = await sendCompanyAdminInvite(companyName, adminEmail, website, includeDefaultContent);
 
     return NextResponse.json(result);
   } catch (error) {

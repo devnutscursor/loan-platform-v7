@@ -16,7 +16,7 @@ interface ModalProps {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'textarea' | 'select';
+  type: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox';
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
@@ -125,7 +125,7 @@ export function FormModal({
     };
   }, [isOpen, onClose]);
 
-  const handleInputChange = (fieldName: string, value: string) => {
+  const handleInputChange = (fieldName: string, value: string | boolean) => {
     onFormDataChange({
       ...formData,
       [fieldName]: value
@@ -136,6 +136,23 @@ export function FormModal({
     const hasError = validationErrors[field.name];
     
     switch (field.type) {
+      case 'checkbox':
+        return (
+          <div className="flex items-center">
+            <input
+              id={field.name}
+              type="checkbox"
+              checked={formData[field.name] || false}
+              onChange={(e) => handleInputChange(field.name, e.target.checked)}
+              className="h-4 w-4 text-[#01bcc6] focus:ring-[#01bcc6] border-gray-300 rounded"
+              disabled={loading}
+            />
+            <label htmlFor={field.name} className="ml-2 text-sm text-gray-700">
+              {field.label}
+            </label>
+          </div>
+        );
+      
       case 'textarea':
         return (
           <textarea
@@ -217,9 +234,11 @@ export function FormModal({
           <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
             {fields.map((field) => (
               <div key={field.name}>
-                <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-1">
-                  {field.label} {field.required && <span className="text-red-500">*</span>}
-                </label>
+                {field.type !== 'checkbox' && (
+                  <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                  </label>
+                )}
                 {renderField(field)}
                 {validationErrors[field.name] && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors[field.name]}</p>

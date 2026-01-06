@@ -96,6 +96,9 @@ export const companies = pgTable('companies', {
   // Legacy settings (kept for backward compatibility)
   settings: jsonb('settings').default('{}'), // Company-wide settings
   
+  // Default content access
+  hasDefaultContentAccess: boolean('has_default_content_access').default(false), // Whether company has access to default FAQs, guides, and videos
+  
   // Timestamps
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
