@@ -481,7 +481,7 @@ export default function LandingPageTabs({
               ? `${layout.borderRadius}px` 
               : `0 0 ${layout.borderRadius}px ${layout.borderRadius}px`,
             
-            minHeight: '800px',
+            minHeight: 'auto',
             boxShadow: `0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)`
           }}
         >

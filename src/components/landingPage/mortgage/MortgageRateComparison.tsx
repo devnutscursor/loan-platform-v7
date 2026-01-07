@@ -956,7 +956,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   // Show landing page by default
   if (showLanding) {
     return (
-      <div className="min-h-screen">
+      <div className="">
         {/* Header */}
         {showHeader && (
           <header className="bg-white shadow-sm border-b">
@@ -1046,7 +1046,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   // Show questionnaire section
   if (showQuestionnaire) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${className}`}>
+      <div className={` bg-gray-50 ${className}`}>
         {/* Header */}
         {showHeader && (
           <header className="bg-white shadow-sm border-b">
@@ -1123,7 +1123,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
   // Show search form and results
   return (
-      <div className={`min-h-screen bg-gray-50 ${className}`}>
+      <div className={` bg-gray-50 ${className}`}>
       {/* Header */}
       {showHeader && (
         <header className="bg-white shadow-sm border-b">
