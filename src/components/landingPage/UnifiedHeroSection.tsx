@@ -583,7 +583,7 @@ export default function UnifiedHeroSection({
               
               <a
                 href="#contact"
-                className="inline-flex items-center justify-center px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-white hover:bg-white hover:text-gray-900 w-full @[18.75rem]:w-auto"
+                className="inline-flex items-center justify-center px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 text-[10px] @[18.75rem]:text-xs @[20rem]:text-sm @[30rem]:text-base font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-white hover:bg-white hover:!text-gray-900 w-full @[18.75rem]:w-auto"
                 style={{
                   fontWeight: typography.fontWeight.semibold,
                   borderRadius: `${layout.borderRadius}px`,
@@ -726,7 +726,7 @@ export default function UnifiedHeroSection({
                       
                       <a
                         href="#contact"
-                        className="inline-flex items-center justify-center w-full @[18.75rem]:w-auto px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 hover:bg-white hover:text-gray-900"
+                        className="inline-flex items-center justify-center w-full @[18.75rem]:w-auto px-3 py-1.5 @[18.75rem]:px-4 @[18.75rem]:py-1.5 @[20rem]:px-4 @[20rem]:py-1.5 font-semibold border-2 hover:shadow-lg transition-all duration-300 transform hover:scale-105 hover:bg-white hover:!text-gray-900"
                         style={{
                           fontWeight: typography.fontWeight.semibold,
                           borderRadius: `${layout.borderRadius}px`,
