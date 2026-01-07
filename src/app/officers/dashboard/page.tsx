@@ -345,12 +345,12 @@ export default function OfficersDashboardPage() {
           }
         ]}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-4 sm:gap-6">
           
 
           {/* Lead Statistics */}
-          <div style={dashboard.grid.cols4}>
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexShrink: 0 }}>
                 <div style={{
@@ -370,7 +370,7 @@ export default function OfficersDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -390,7 +390,7 @@ export default function OfficersDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -410,7 +410,7 @@ export default function OfficersDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -446,74 +446,49 @@ export default function OfficersDashboardPage() {
           />
 
           {/* Working Cards Section */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Recent Leads Card */}
-            <SpotlightCard variant="default" className="dashboard-card p-6 animate-card-stagger-2">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#005b7c'
-                }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-6 animate-card-stagger-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-[#005b7c]">
                   Recent Leads
                 </h3>
                 <Button
                   variant="primary"
                   onClick={() => router.push('/officers/leads')}
-                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all"
+                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all w-full sm:w-auto text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   View All
                 </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {recentLeads.length > 0 ? (
                   recentLeads.map((lead) => (
                     <div
                       key={lead.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '12px',
-                        backgroundColor: 'white',
-                        borderRadius: '16px', // CONSISTENT WITH ADMIN DASHBOARD
-                        border: '1px solid rgba(1, 188, 198, 0.2)',
-                        cursor: 'pointer'
-                      }}
+                      className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20 cursor-pointer hover:border-[#01bcc6]/40 transition-colors"
                       onClick={() => {
                         const leadSlug = `${lead.first_name.toLowerCase()}-${lead.last_name.toLowerCase()}-${lead.id.slice(-8)}`;
                         router.push(`/officers/leads/${leadSlug}`);
                       }}
                     >
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: 'rgba(1, 188, 198, 0.1)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '12px'
-                      }}>
-                        <span style={{ 
-                          fontSize: '14px', 
-                          fontWeight: 'medium', 
-                          color: '#008eab' 
-                        }}>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-xs sm:text-sm font-medium text-[#008eab]">
                           {lead.first_name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 'medium', color: '#111827', fontSize: '14px' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {lead.first_name} {lead.last_name}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {lead.status} • {lead.priority} priority
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  <p className="text-gray-500 text-center py-5 text-sm sm:text-base">
                     No leads yet
                   </p>
                 )}
@@ -521,72 +496,47 @@ export default function OfficersDashboardPage() {
             </SpotlightCard>
 
             {/* Priority Leads Card */}
-            <SpotlightCard variant="default" className="dashboard-card p-6 animate-card-stagger-2">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#005b7c'
-                }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-6 animate-card-stagger-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-[#005b7c]">
                   Priority Leads
                 </h3>
                 <Button
                   variant="primary"
                   onClick={() => router.push('/officers/leads?priority=high')}
-                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all"
+                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all w-full sm:w-auto text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   View All
                 </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {priorityLeads.length > 0 ? (
                   priorityLeads.map((lead) => (
                     <div
                       key={lead.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '12px',
-                        backgroundColor: 'white',
-                        borderRadius: '16px', // CONSISTENT WITH ADMIN DASHBOARD
-                        border: '1px solid rgba(1, 188, 198, 0.2)',
-                        cursor: 'pointer'
-                      }}
+                      className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20 cursor-pointer hover:border-[#01bcc6]/40 transition-colors"
                       onClick={() => {
                         const leadSlug = `${lead.first_name.toLowerCase()}-${lead.last_name.toLowerCase()}-${lead.id.slice(-8)}`;
                         router.push(`/officers/leads/${leadSlug}`);
                       }}
                     >
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: lead.priority === 'urgent' ? 'rgba(1, 188, 198, 0.1)' : 'rgba(1, 188, 198, 0.1)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '12px'
-                      }}>
-                        <span style={{ 
-                          fontSize: '14px', 
-                          fontWeight: 'medium', 
-                          color: lead.priority === 'urgent' ? '#008eab' : '#008eab' 
-                        }}>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-xs sm:text-sm font-medium text-[#008eab]">
                           {lead.first_name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 'medium', color: '#111827', fontSize: '14px' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {lead.first_name} {lead.last_name}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {lead.status} • {lead.priority} priority
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  <p className="text-gray-500 text-center py-5 text-sm sm:text-base">
                     No priority leads
                   </p>
                 )}
@@ -595,43 +545,29 @@ export default function OfficersDashboardPage() {
           </div>
 
           {/* Public Profile Information */}
-          <SpotlightCard variant="default" className="p-6">
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#005b7c',
-              marginBottom: '16px'
-            }}>
+          <SpotlightCard variant="default" className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-[#005b7c] mb-4">
               Public Profile
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Template Selection */}
               <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 'bold', color: '#005b7c', marginBottom: '12px' }}>
+                <h4 className="text-sm sm:text-base font-bold text-[#005b7c] mb-3">
                   Selected Template
                 </h4>
-                <SpotlightCard variant="default" className="dashboard-card p-4 animate-card-stagger-3" style={{ backgroundColor: '#f9fafb', border: '1px solid rgba(1, 188, 198, 0.2)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{
-                      width: '32px',
-                      height: '32px',
-                      backgroundColor: 'rgba(1, 188, 198, 0.1)',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: '12px'
-                    }}>
+                <SpotlightCard variant="default" className="dashboard-card p-3 sm:p-4 animate-card-stagger-3 bg-gray-50 border border-[#01bcc6]/20">
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
                       {React.createElement(icons.palette, { 
                         size: 16, 
                         style: { color: '#008eab' } 
                       })}
                     </div>
-                    <div>
-                      <p style={{ fontWeight: 'medium', color: '#111827' }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                         {getPublicProfileTemplateName(publicProfileTemplate)}
                       </p>
-                      <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">
                         Public Profile Template
                       </p>
                     </div>
@@ -639,17 +575,7 @@ export default function OfficersDashboardPage() {
                   <Button
                     variant="primary"
                     onClick={() => router.push('/officers/customizer')}
-                    style={{ 
-                      width: 'auto',
-                      minWidth: '140px',
-                      padding: '8px 16px',
-                      border: 'none',
-                      color: 'white',
-                      fontWeight: '500',
-                      fontSize: '14px',
-                      alignSelf: 'center'
-                    }}
-                    className="btn-primary-solid"
+                    className="btn-primary-solid w-full sm:w-auto min-w-[120px] sm:min-w-[140px] px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm"
                   >
                     Customize Template
                   </Button>
@@ -658,69 +584,40 @@ export default function OfficersDashboardPage() {
 
               {/* Public Link */}
               <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 'bold', color: '#005b7c', marginBottom: '12px' }}>
+                <h4 className="text-sm sm:text-base font-bold text-[#005b7c] mb-3">
                   Public Link
                 </h4>
-                <SpotlightCard variant="default" className="dashboard-card p-4 animate-card-stagger-3" style={{ backgroundColor: '#f9fafb', border: '1px solid rgba(1, 188, 198, 0.2)' }}>
+                <SpotlightCard variant="default" className="dashboard-card p-3 sm:p-4 animate-card-stagger-3 bg-gray-50 border border-[#01bcc6]/20">
                   {publicLink ? (
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: 'rgba(1, 188, 198, 0.1)',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginRight: '12px'
-                        }}>
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
                           {React.createElement(icons.link, { 
                             size: 16, 
                             style: { color: '#008eab' } 
                           })}
                         </div>
-                        <div>
-                          <p style={{ fontWeight: 'medium', color: '#111827' }}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm sm:text-base">
                             Active Public Link
                           </p>
-                          <p style={{ fontSize: '14px', color: '#6b7280' }}>
-                            {window.location.origin}/public/profile/{publicLink.public_slug}
+                          <p className="text-xs sm:text-sm text-gray-500 break-all">
+                            {typeof window !== 'undefined' ? `${window.location.origin}/public/profile/${publicLink.public_slug}` : ''}
                           </p>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                         <Button
                           variant="primary"
                           onClick={() => router.push('/officers/profile')}
-                          className="btn-primary-solid"
-                          style={{ 
-                            width: 'auto',
-                            minWidth: '120px',
-                            padding: '8px 16px',
-                            background: '#005b7c',
-                            border: 'none',
-                            color: 'white',
-                            fontWeight: '500',
-                            fontSize: '14px'
-                          }}
+                          className="btn-primary-solid w-full sm:w-auto min-w-[100px] sm:min-w-[120px] px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[#005b7c]"
                         >
                           Manage Profile
                         </Button>
                         <Button
                           variant="primary"
-                          onClick={() => window.open(`${window.location.origin}/public/profile/${publicLink.public_slug}`, '_blank')}
-                          className="btn-primary-solid"
-                          style={{ 
-                            width: 'auto',
-                            minWidth: '100px',
-                            padding: '8px 16px',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            border: 'none',
-                            color: 'white',
-                            fontWeight: '500',
-                            fontSize: '14px'
-                          }}
+                          onClick={() => typeof window !== 'undefined' && window.open(`${window.location.origin}/public/profile/${publicLink.public_slug}`, '_blank')}
+                          className="btn-primary-solid w-full sm:w-auto min-w-[80px] sm:min-w-[100px] px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gradient-to-r from-[#10b981] to-[#059669]"
                         >
                           Open Link
                         </Button>
@@ -728,46 +625,26 @@ export default function OfficersDashboardPage() {
                     </div>
                   ) : (
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: 'rgba(1, 188, 198, 0.1)',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginRight: '12px'
-                        }}>
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
                           {React.createElement(icons.alertCircle, { 
                             size: 16, 
                             style: { color: '#008eab' } 
                           })}
                         </div>
-                        <div>
-                          <p style={{ fontWeight: 'medium', color: '#111827' }}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm sm:text-base">
                             No Public Link
                           </p>
-                          <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                          <p className="text-xs sm:text-sm text-gray-500">
                             Create your public profile
-              </p>
-            </div>
-          </div>
+                          </p>
+                        </div>
+                      </div>
                       <Button
                         variant="primary"
                         onClick={() => router.push('/officers/profile')}
-                    style={{ 
-                      width: 'auto',
-                      minWidth: '140px',
-                      padding: '8px 16px',
-                      border: 'none',
-                      color: 'white',
-                      fontWeight: '500',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      alignSelf: 'center'
-                    }}
-                    className="btn-primary-solid"
+                        className="btn-primary-solid w-full sm:w-auto min-w-[120px] sm:min-w-[140px] px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-md"
                       >
                         Create Profile
                       </Button>
