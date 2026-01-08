@@ -190,6 +190,11 @@ export default function PublicProfileContent({
     scrollTabsIntoView();
   };
 
+  const handleHeroGetRates = () => {
+    handleTabChange('todays-rates');
+    scrollTabsIntoView();
+  };
+
   // Memoize user information
   const officerInfo = {
     officerName: `${profileData?.user.firstName || ''} ${profileData?.user.lastName || ''}`,
@@ -306,7 +311,7 @@ export default function PublicProfileContent({
                 borderTopRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
               }}
             >
-              <UnifiedHeroSection
+                <UnifiedHeroSection
                 isPublic={true}
                 publicUserData={{
                   name: officerInfo.officerName,
@@ -332,6 +337,7 @@ export default function PublicProfileContent({
                 }}
                 forceMobileView={forceMobileViewport}
                 onApplyNowRequest={handleHeroApplyNow}
+                onGetRates={handleHeroGetRates}
               />
             </div>
 
