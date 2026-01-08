@@ -6,7 +6,6 @@ import type { TabId } from '@/components/landingPage/LandingPageTabs';
 
 // Lazy load unified components
 const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
-const UnifiedRightSidebar = lazy(() => import('@/components/landingPage/UnifiedRightSidebar'));
 const LandingPageTabs = lazy(() => import('@/components/landingPage/LandingPageTabs'));
 
 interface PublicProfileContentProps {
@@ -190,6 +189,11 @@ export default function PublicProfileContent({
     scrollTabsIntoView();
   };
 
+  const handleHeroGetRates = () => {
+    handleTabChange('todays-rates');
+    scrollTabsIntoView();
+  };
+
   // Memoize user information
   const officerInfo = {
     officerName: `${profileData?.user.firstName || ''} ${profileData?.user.lastName || ''}`,
@@ -294,19 +298,14 @@ export default function PublicProfileContent({
           <div 
             className="overflow-auto w-full"
             style={{ 
-              borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
               minWidth: '300px'
             }}
           >
             {/* Hero Section - rounded top corners */}
             <div 
               className="overflow-hidden"
-              style={{ 
-                borderTopLeftRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                borderTopRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-              }}
             >
-              <UnifiedHeroSection
+                <UnifiedHeroSection
                 isPublic={true}
                 publicUserData={{
                   name: officerInfo.officerName,
@@ -332,6 +331,7 @@ export default function PublicProfileContent({
                 }}
                 forceMobileView={forceMobileViewport}
                 onApplyNowRequest={handleHeroApplyNow}
+                onGetRates={handleHeroGetRates}
               />
             </div>
 
@@ -461,16 +461,11 @@ export default function PublicProfileContent({
                     ? ''
                     : selectedTemplate === 'template2'
                       ? '@[48rem]:gap-6'
-                      : '@[48rem]:gap-6 @[80rem]:grid @[80rem]:grid-cols-4';
-                  const gridContentClasses = forceMobileViewport
-                    ? ''
-                    : selectedTemplate === 'template2'
-                      ? ''
-                      : '@[80rem]:col-span-3';
-                  // Grid Layout (Template1) - Responsive: Flex column on mobile, grid on desktop
+                      : '@[48rem]:gap-6';
+                  // Grid Layout (Template1) - Responsive: Flex column on mobile, full width on desktop
                   return (
                     <div className={`flex flex-col gap-4 w-full ${gridLayoutClasses}`}>
-                      <div className={`w-full overflow-x-auto ${gridContentClasses}`} ref={tabsSectionRef}>
+                      <div className={`w-full overflow-x-auto`} ref={tabsSectionRef}>
                         <LandingPageTabs
                           isPublic={true}
                           publicTemplateData={templateData}
@@ -483,19 +478,6 @@ export default function PublicProfileContent({
                           forceMobileView={forceMobileViewport}
                         />
                       </div>
-                      {selectedTemplate !== 'template2' && (
-                        <div className={`w-full overflow-x-auto ${forceMobileViewport ? '' : '@[80rem]:col-span-1'}`}>
-                          <div className={forceMobileViewport ? '' : '@[80rem]:sticky @[80rem]:top-6 @[96rem]:top-8'}>
-                            <UnifiedRightSidebar 
-                              isPublic={true}
-                              companyData={profileData.company}
-                              publicCompanyData={profileData.company}
-                              publicTemplateData={templateData}
-                              templateCustomization={profileData.template}
-                            />
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 }

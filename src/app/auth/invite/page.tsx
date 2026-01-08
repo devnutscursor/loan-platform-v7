@@ -242,6 +242,53 @@ function InvitePageContent() {
           console.error('❌ Error creating personal templates:', templateError);
           // Don't fail the activation process if template creation fails
         }
+
+        // Upload default content if company has access enabled
+        try {
+          console.log('📚 Checking default content access for company:', companyId);
+          
+          // Fetch company record to check hasDefaultContentAccess
+          const { data: company, error: companyFetchError } = await supabase
+            .from('companies')
+            .select('has_default_content_access')
+            .eq('id', companyId)
+            .single();
+
+          if (companyFetchError) {
+            console.error('❌ Error fetching company:', companyFetchError);
+            // Don't fail the activation process
+          } else if (company?.has_default_content_access) {
+            console.log('✅ Company has default content access enabled. Uploading content...');
+            
+            // Call API to upload default content
+            const contentResponse = await fetch('/api/officers/content/upload-default', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+              }
+            });
+
+            if (contentResponse.ok) {
+              const contentResult = await contentResponse.json();
+              if (contentResult.success) {
+                console.log(`✅ Default content uploaded: ${contentResult.data.faqsCount} FAQs, ${contentResult.data.guidesCount} guides, ${contentResult.data.videosCount} videos`);
+              } else {
+                console.error('❌ Error uploading default content:', contentResult.error);
+                // Don't fail the activation process if content upload fails
+              }
+            } else {
+              const errorText = await contentResponse.text();
+              console.error('❌ Error uploading default content:', errorText);
+              // Don't fail the activation process if content upload fails
+            }
+          } else {
+            console.log('ℹ️ Company does not have default content access enabled. Skipping upload.');
+          }
+        } catch (contentError) {
+          console.error('❌ Error checking/uploading default content:', contentError);
+          // Don't fail the activation process if content upload fails
+        }
       } else {
         // Update company status to accepted and activate for company admin
         const { error: companyError } = await supabase

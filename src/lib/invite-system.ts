@@ -30,7 +30,8 @@ export interface CompanyInviteStatus {
 export async function sendCompanyAdminInvite(
   companyName: string,
   adminEmail: string,
-  website?: string
+  website?: string,
+  includeDefaultContent?: boolean
 ): Promise<InviteResult> {
   try {
     // Validate email format
@@ -80,6 +81,7 @@ export async function sendCompanyAdminInvite(
           invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
           is_active: false,
           deactivated: false, // Reset deactivation status
+          has_default_content_access: includeDefaultContent || false,
         })
         .eq('id', existingCompany.id)
         .select()
@@ -102,6 +104,7 @@ export async function sendCompanyAdminInvite(
           invite_sent_at: new Date().toISOString(),
           invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
           is_active: false, // Company is inactive until invite is accepted
+          has_default_content_access: includeDefaultContent || false,
         })
         .select()
         .single();

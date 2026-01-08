@@ -956,7 +956,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   // Show landing page by default
   if (showLanding) {
     return (
-      <div className="min-h-screen">
+      <div className="">
         {/* Header */}
         {showHeader && (
           <header className="bg-white shadow-sm border-b">
@@ -982,13 +982,13 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
               {getTemplateContent().description}
             </p>
             
-            <div className="flex flex-col @sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col @xl:flex-row gap-4 justify-center items-center">
               <button 
                 onClick={() => {
                   setShowLanding(false);
                   setShowQuestionnaire(true);
                 }}
-                className="flex items-center justify-center space-x-2 px-4 py-3 @sm:px-8 @sm:py-4 text-sm @sm:text-lg font-semibold transition-colors shadow-lg w-full @sm:w-auto"
+                className="flex items-center justify-center space-x-2 px-4 py-3 @xl:px-8 @xl:py-4 text-sm @xl:text-lg font-semibold transition-colors shadow-lg w-full @xl:w-auto"
                 style={{ 
                   backgroundColor: colors.primary,
                   color: colors.background,
@@ -1007,7 +1007,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
               </button>
               <button 
                 onClick={() => setShowLanding(false)}
-                className="flex items-center justify-center space-x-2 px-4 py-3 @sm:px-8 @sm:py-4 text-sm @sm:text-lg font-semibold transition-colors border-2 w-full @sm:w-auto"
+                className="flex items-center justify-center space-x-2 px-[14px] py-[10px] @xl:px-[30px] @xl:py-[14px] text-sm @xl:text-lg font-semibold transition-colors border-2 w-full @xl:w-auto"
                 style={{ 
                   backgroundColor: colors.background,
                   color: colors.primary,
@@ -1046,7 +1046,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   // Show questionnaire section
   if (showQuestionnaire) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${className}`}>
+      <div className={` bg-gray-50 ${className}`}>
         {/* Header */}
         {showHeader && (
           <header className="bg-white shadow-sm border-b">
@@ -1123,7 +1123,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
   // Show search form and results
   return (
-      <div className={`min-h-screen bg-gray-50 ${className}`}>
+      <div className={` bg-gray-50 ${className}`}>
       {/* Header */}
       {showHeader && (
         <header className="bg-white shadow-sm border-b">
