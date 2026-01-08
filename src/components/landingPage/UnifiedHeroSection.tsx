@@ -25,6 +25,10 @@ interface UnifiedHeroSectionProps {
       avatar?: string;
       applyNowText?: string;
       applyNowLink?: string;
+      facebook?: string;
+      twitter?: string;
+      linkedin?: string;
+      instagram?: string;
     };
     rightSidebarModifications?: {
       companyName?: string;
@@ -154,6 +158,30 @@ export default function UnifiedHeroSection({
   };
 
   const getCompanySocialMedia = () => {
+    // Priority 1: Check headerModifications (new location)
+    if (isPublic && publicTemplateData?.template?.headerModifications) {
+      const mods = publicTemplateData.template.headerModifications;
+      if (mods.facebook || mods.twitter || mods.linkedin || mods.instagram) {
+        return {
+          facebook: mods.facebook,
+          twitter: mods.twitter,
+          linkedin: mods.linkedin,
+          instagram: mods.instagram
+        };
+      }
+    }
+    if (templateCustomization?.headerModifications) {
+      const mods = templateCustomization.headerModifications;
+      if (mods.facebook || mods.twitter || mods.linkedin || mods.instagram) {
+        return {
+          facebook: mods.facebook,
+          twitter: mods.twitter,
+          linkedin: mods.linkedin,
+          instagram: mods.instagram
+        };
+      }
+    }
+    // Priority 2: Fallback to rightSidebarModifications (for backward compatibility)
     if (isPublic && publicTemplateData?.template?.rightSidebarModifications) {
       const mods = publicTemplateData.template.rightSidebarModifications;
       if (mods.facebook || mods.twitter || mods.linkedin || mods.instagram) {
@@ -176,6 +204,7 @@ export default function UnifiedHeroSection({
         };
       }
     }
+    // Priority 3: Fallback to company data
     return companyData?.company_social_media || null;
   };
 
@@ -262,7 +291,7 @@ export default function UnifiedHeroSection({
   if (authLoading) {
     return (
       <section className={`relative overflow-hidden ${className}`}>
-        <div className="min-h-[400px] flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})` }}>
+        <div className="min-h-[400px] flex items-center justify-center" style={{ backgroundColor: colors.primary }}>
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: colors.heroTextColor || '#ffffff' }}></div>
             <p style={{ color: colors.heroTextColor || '#ffffff' }}>Loading profile...</p>
@@ -272,58 +301,62 @@ export default function UnifiedHeroSection({
     );
   }
 
-  // Derive tertiary color for third orb (mix of primary and secondary)
-  const tertiaryColor = colors.secondary || '#06b6d4';
-
   return (
     <section 
       className={`@container relative overflow-hidden ${className}`}
       style={{ fontFamily: typography.fontFamily }}
     >
-      {/* Animated Gradient Background - Uses primary/secondary colors with rich saturation */}
+      {/* Background - Primary color base with secondary color blobs */}
       <div 
         className="absolute inset-0 overflow-hidden pointer-events-none"
         style={{ 
-          background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary || colors.primary} 50%, ${colors.primary} 100%)`
+          backgroundColor: colors.primary
         }}
       >
-        {/* Floating Gradient Orbs - More vibrant for glass effect contrast */}
+        {/* Stationary Secondary Color Blobs for dynamic look */}
         <div 
-          className="hero-gradient-orb hero-gradient-orb-1 absolute"
+          className="absolute"
           style={{
-            width: forceMobileView ? '350px' : '800px',
-            height: forceMobileView ? '350px' : '800px',
-            background: `radial-gradient(circle, ${colors.secondary || colors.primary} 0%, ${colors.secondary || colors.primary}80 30%, transparent 70%)`,
-            top: '-250px',
-            right: '-150px',
-            filter: forceMobileView ? 'blur(50px)' : 'blur(80px)',
-            opacity: forceMobileView ? 0.6 : 0.7
+            width: forceMobileView ? '300px' : '400px',
+            height: forceMobileView ? '300px' : '400px',
+            background: `radial-gradient(circle, ${colors.secondary || colors.primary} 0%, ${colors.secondary || colors.primary}90 20%, ${colors.secondary || colors.primary}40 50%, transparent 70%)`,
+            top: '-20%',
+            right: '-10%',
+            filter: forceMobileView ? 'blur(60px)' : 'blur(100px)',
+            opacity: 0.8,
+            borderRadius: '50%'
+          }}
+        />
+
+        <div 
+          className="absolute"
+          style={{
+            width: forceMobileView ? '300px' : '400px',
+            height: forceMobileView ? '300px' : '400px',
+            background: `radial-gradient(circle, ${colors.secondary || colors.primary} 0%, ${colors.secondary || colors.primary}70 30%, transparent 70%)`,
+            top: '90%',
+            left: '60%',
+            transform: 'translate(-50%, -50%)',
+            filter: forceMobileView ? 'blur(40px)' : 'blur(70px)',
+            opacity: 0.5,
+            borderRadius: '50%'
           }}
         />
         <div 
-          className="hero-gradient-orb hero-gradient-orb-2 absolute"
+          className="absolute"
           style={{
-            width: forceMobileView ? '300px' : '700px',
-            height: forceMobileView ? '300px' : '700px',
-            background: `radial-gradient(circle, ${colors.primary} 0%, ${colors.primary}80 30%, transparent 70%)`,
-            bottom: '-150px',
-            left: '-100px',
-            filter: forceMobileView ? 'blur(50px)' : 'blur(80px)',
-            opacity: forceMobileView ? 0.6 : 0.7
+            width: forceMobileView ? '300px' : '400px',
+            height: forceMobileView ? '300px' : '400px',
+            background: `radial-gradient(circle, ${colors.secondary || colors.primary} 0%, ${colors.secondary || colors.primary}70 30%, transparent 70%)`,
+            top: '-10%',
+            left: '20%',
+            transform: 'translate(-50%, -50%)',
+            filter: forceMobileView ? 'blur(40px)' : 'blur(70px)',
+            opacity: 0.5,
+            borderRadius: '50%'
           }}
         />
-        <div 
-          className="hero-gradient-orb hero-gradient-orb-3 absolute"
-          style={{
-            width: forceMobileView ? '250px' : '600px',
-            height: forceMobileView ? '250px' : '600px',
-            background: `radial-gradient(circle, ${tertiaryColor} 0%, ${tertiaryColor}60 30%, transparent 70%)`,
-            top: '30%',
-            left: '25%',
-            filter: forceMobileView ? 'blur(60px)' : 'blur(90px)',
-            opacity: forceMobileView ? 0.5 : 0.6
-          }}
-        />
+
       </div>
 
       {/* Main Content */}
@@ -333,8 +366,8 @@ export default function UnifiedHeroSection({
           className="hero-glass-card relative w-full max-w-[900px] @[1024px]:max-w-[1000px] overflow-hidden"
           style={{ borderRadius: `${Math.max(layout.borderRadius, 20)}px` }}
         >
-          {/* Decorative curved background */}
-          <div className="hero-card-decoration hidden @[768px]:block">
+          {/* Decorative curved background - Desktop (from left) */}
+          <div className={`hero-card-decoration ${forceMobileView ? 'hidden' : 'hidden @[768px]:block'}`}>
             <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="w-full h-full">
               <path 
                 d="M0,0 L180,0 Q220,150 180,300 L0,300 Z" 
@@ -344,6 +377,22 @@ export default function UnifiedHeroSection({
                 <linearGradient id={`heroDecorationGradient-${template}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor={`${colors.primary}25`} />
                   <stop offset="100%" stopColor={`${colors.secondary || colors.primary}10`} />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Decorative curved background - Mobile (from top) */}
+          <div className={`absolute inset-x-0 top-0 h-[45%] pointer-events-none z-0 ${forceMobileView ? 'block' : 'block @[768px]:hidden'}`}>
+            <svg viewBox="0 0 400 200" preserveAspectRatio="none" className="w-full h-full">
+              <path 
+                d="M0,0 L400,0 L400,120 Q200,180 0,120 Z" 
+                fill={`url(#heroDecorationGradientMobile-${template})`}
+              />
+              <defs>
+                <linearGradient id={`heroDecorationGradientMobile-${template}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={`${colors.primary}30`} />
+                  <stop offset="100%" stopColor={`${colors.secondary || colors.primary}08`} />
                 </linearGradient>
               </defs>
             </svg>
@@ -360,7 +409,7 @@ export default function UnifiedHeroSection({
                 <div 
                   className="hero-avatar-ring w-[140px] h-[140px] @[1024px]:w-[160px] @[1024px]:h-[160px]"
                   style={{ 
-                    background: `linear-gradient(135deg, ${colors.primary}, ${tertiaryColor})`,
+                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
                     borderRadius: `${Math.max(layout.borderRadius, 20)}px`
                   }}
                 >
@@ -430,6 +479,7 @@ export default function UnifiedHeroSection({
                       borderRadius: `${layout.borderRadius}px`
                     }}
                   >
+                    <ChevronRight size={16} />
                     <span>{getApplyNowText()}</span>
                   </button>
                   <a
@@ -465,7 +515,7 @@ export default function UnifiedHeroSection({
                     <div className="flex items-center gap-2">
                       <span 
                         className="text-sm font-medium"
-                        style={{ color: colors.primary }}
+                        style={{ color: colors.heroTextColor }}
                       >
                         NMLS #{displayNmls}
                       </span>
@@ -558,19 +608,20 @@ export default function UnifiedHeroSection({
 
           {/* Mobile Layout - shown at container width < 768px or when forceMobileView */}
           <div className={`${forceMobileView ? 'flex' : 'flex @[768px]:hidden'} flex-col relative z-[2] p-4 @[400px]:p-6`}>
-            {/* Mobile Header - Avatar + Social Links */}
-            <div className="flex justify-between items-start mb-4">
-              <div className="relative">
+            {/* Mobile Header - Avatar + Officer Details side by side */}
+            <div className="flex items-start justify-center gap-4 mb-4">
+              {/* Avatar - Larger size */}
+              <div className="relative flex-shrink-0">
                 <div 
-                  className="hero-avatar-ring w-[80px] h-[80px] @[400px]:w-[100px] @[400px]:h-[100px]"
+                  className="hero-avatar-ring w-[110px] h-[110px] @[400px]:w-[140px] @[400px]:h-[140px]"
                   style={{ 
-                    background: `linear-gradient(135deg, ${colors.primary}, ${tertiaryColor})`,
+                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
                     borderRadius: `${Math.max(layout.borderRadius, 20)}px`
                   }}
                 >
                   {showInitials ? (
                     <div
-                      className="w-full h-full flex items-center justify-center text-white font-bold text-xl @[400px]:text-2xl"
+                      className="w-full h-full flex items-center justify-center text-white font-bold text-2xl @[400px]:text-3xl"
                       style={{ 
                         backgroundColor: colors.primary, 
                         borderRadius: `${Math.max(layout.borderRadius - 3, 17)}px` 
@@ -588,7 +639,7 @@ export default function UnifiedHeroSection({
                         alt={displayName}
                         fill
                         className="object-cover"
-                        sizes="100px"
+                        sizes="130px"
                         onError={() => setImageError(true)}
                       />
                     </div>
@@ -596,127 +647,121 @@ export default function UnifiedHeroSection({
                 </div>
                 {/* Verified Badge - Mobile */}
                 <button 
-                  className="absolute bottom-[-4px] right-[-4px] w-[20px] h-[20px] @[400px]:w-[22px] @[400px]:h-[22px] flex items-center justify-center rounded-full cursor-default"
+                  className="absolute bottom-[-4px] right-[-4px] w-[22px] h-[22px] @[400px]:w-[24px] @[400px]:h-[24px] flex items-center justify-center rounded-full cursor-default"
                   style={{ 
                     backgroundColor: colors.primary,
                     boxShadow: `0 3px 10px ${colors.primary}60`
                   }}
                   aria-label="Verified"
                 >
-                  <Check size={10} strokeWidth={2.5} color={colors.heroTextColor || '#ffffff'} />
+                  <Check size={12} strokeWidth={2.5} color={colors.heroTextColor || '#ffffff'} />
                 </button>
               </div>
 
-              {/* Social Links - Mobile */}
-              {hasSocialMedia && (
-                <div className="flex gap-2">
-                  {socialMedia?.facebook && (
-                    <a
-                      href={socialMedia.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
-                      style={{ color: colors.heroTextColor || '#ffffff' }}
-                      aria-label="Facebook"
-                    >
-                      <Facebook size={16} />
-                    </a>
-                  )}
-                  {socialMedia?.instagram && (
-                    <a
-                      href={socialMedia.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
-                      style={{ color: colors.heroTextColor || '#ffffff' }}
-                      aria-label="Instagram"
-                    >
-                      <Instagram size={16} />
-                    </a>
-                  )}
-                  {socialMedia?.linkedin && (
-                    <a
-                      href={socialMedia.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
-                      style={{ color: colors.heroTextColor || '#ffffff' }}
-                      aria-label="LinkedIn"
-                    >
-                      <Linkedin size={16} />
-                    </a>
-                  )}
-                  {socialMedia?.twitter && (
-                    <a
-                      href={socialMedia.twitter}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
-                      style={{ color: colors.heroTextColor || '#ffffff' }}
-                      aria-label="X (Twitter)"
-                    >
-                      <Twitter size={16} />
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Profile Info - Mobile */}
-            <div className="mb-3">
-              <h1 
-                className="text-xl @[400px]:text-2xl font-bold mb-1"
-                style={{ 
-                  color: colors.heroTextColor || '#ffffff',
-                  fontWeight: typography.fontWeight.bold
-                }}
-              >
-                {displayName}
-              </h1>
-              {displayNmls && (
-                <span 
-                  className="text-xs @[400px]:text-sm font-medium"
-                  style={{ color: colors.primary }}
+              {/* Officer Details - Next to avatar */}
+              <div className="flex flex-col justify-center min-w-0">
+                {/* Name */}
+                <h1 
+                  className="text-lg @[400px]:text-xl font-bold mb-1"
+                  style={{ 
+                    color: colors.heroTextColor || '#ffffff',
+                    fontWeight: typography.fontWeight.bold
+                  }}
                 >
-                  NMLS #{displayNmls}
-                </span>
-              )}
+                  {displayName}
+                </h1>
+                
+                {/* NMLS */}
+                {displayNmls && (
+                  <span 
+                    className="text-xs @[400px]:text-sm font-medium mb-2"
+                    style={{ color: colors.heroTextColor }}
+                  >
+                    NMLS #{displayNmls}
+                  </span>
+                )}
+
+                {/* Contact Info */}
+                <div className="flex flex-col gap-1">
+                  {displayPhone && (
+                    <div className="flex items-center gap-2">
+                      <Phone size={12} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
+                      <span 
+                        className="text-xs @[400px]:text-sm"
+                        style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.9 }}
+                      >
+                        {displayPhone}
+                      </span>
+                    </div>
+                  )}
+                  {displayEmail && (
+                    <div className="flex items-center gap-2">
+                      <Mail size={12} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
+                      <span 
+                        className="text-xs @[400px]:text-sm break-all"
+                        style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.9 }}
+                      >
+                        {displayEmail}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Contact Info - Mobile */}
-            <div className="flex flex-col @[400px]:flex-row @[400px]:items-center gap-2 @[400px]:gap-4 mb-3">
-              {displayPhone && (
-                <div className="flex items-center gap-2">
-                  <Phone size={14} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
-                  <span 
-                    className="text-sm"
-                    style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.9 }}
+            {/* Social Links - Below officer details */}
+            {hasSocialMedia && (
+              <div className="flex gap-2 mb-4 justify-center">
+                {socialMedia?.facebook && (
+                  <a
+                    href={socialMedia.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
+                    aria-label="Facebook"
                   >
-                    {displayPhone}
-                  </span>
-                </div>
-              )}
-              {displayEmail && (
-                <div className="flex items-center gap-2">
-                  <Mail size={14} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
-                  <span 
-                    className="text-sm break-all"
-                    style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.9 }}
+                    <Facebook size={16} />
+                  </a>
+                )}
+                {socialMedia?.instagram && (
+                  <a
+                    href={socialMedia.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
+                    aria-label="Instagram"
                   >
-                    {displayEmail}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Get Rates Link - Mobile */}
-            <button
-              onClick={handleGetRates}
-              className="text-left mb-4 text-sm font-medium transition-all hover:underline"
-              style={{ color: colors.primary }}
-            >
-              Get Rates
-            </button>
+                    <Instagram size={16} />
+                  </a>
+                )}
+                {socialMedia?.linkedin && (
+                  <a
+                    href={socialMedia.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
+                    aria-label="LinkedIn"
+                  >
+                    <Linkedin size={16} />
+                  </a>
+                )}
+                {socialMedia?.twitter && (
+                  <a
+                    href={socialMedia.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
+                    aria-label="X (Twitter)"
+                  >
+                    <Twitter size={16} />
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Action Buttons - Mobile */}
             <div className="flex gap-2">

@@ -299,17 +299,12 @@ export default function PublicProfileContent({
           <div 
             className="overflow-auto w-full"
             style={{ 
-              borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
               minWidth: '300px'
             }}
           >
             {/* Hero Section - rounded top corners */}
             <div 
               className="overflow-hidden"
-              style={{ 
-                borderTopLeftRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                borderTopRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-              }}
             >
                 <UnifiedHeroSection
                 isPublic={true}

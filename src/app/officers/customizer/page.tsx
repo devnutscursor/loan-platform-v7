@@ -31,6 +31,10 @@ interface Template {
     avatar?: string;
     applyNowText?: string;
     applyNowLink?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
   };
   bodyModifications?: {
     enabledTabs?: string[];
@@ -66,14 +70,13 @@ import {
 
 // Lazy load preview components
 const UnifiedHeroSection = React.lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
-const UnifiedRightSidebar = React.lazy(() => import('@/components/landingPage/UnifiedRightSidebar'));
 const LandingPageTabs = React.lazy(() => import('@/components/landingPage/LandingPageTabs'));
 
 interface CustomizerState {
   selectedTemplate: string;
   customSettings: Partial<Template>;
   isPreviewMode: boolean;
-  activeSection: 'general' | 'header' | 'body' | 'rightSidebar';
+  activeSection: 'general' | 'header' | 'body';
   showSectionDetails: boolean;
 }
 
@@ -1202,9 +1205,8 @@ export default function CustomizerPage() {
                     <div className="space-y-2">
                       {[
                         { id: 'general', label: 'General Settings', icon: Settings, description: 'Colors, typography, layout, advanced' },
-                        { id: 'header', label: 'Header Modifications', icon: Layout, description: 'Officer name, avatar, contact info, Apply Now link' },
-                        { id: 'body', label: 'Body Section', icon: Type, description: 'Tab management and content preview' },
-                        { id: 'rightSidebar', label: 'Company Info', icon: Palette, description: 'Social media, company info, reviews' }
+                        { id: 'header', label: 'Header Modifications', icon: Layout, description: 'Officer name, avatar, contact info, Apply Now link, social media' },
+                        { id: 'body', label: 'Body Section', icon: Type, description: 'Tab management and content preview' }
                       ].map(section => (
                         <button
                           key={section.id}
@@ -1249,8 +1251,7 @@ export default function CustomizerPage() {
                         const sections = [
                           { id: 'general', label: 'General Settings' },
                           { id: 'header', label: 'Header Modifications' },
-                          { id: 'body', label: 'Body Section' },
-                          { id: 'rightSidebar', label: 'Company Info' }
+                          { id: 'body', label: 'Body Section' }
                         ];
                         const currentSection = sections.find(s => s.id === customizerState.activeSection);
                         if (currentSection) {
@@ -1287,13 +1288,6 @@ export default function CustomizerPage() {
                         <BodyModifications 
                           template={mergedTemplate} 
                           onChange={(path, value) => handleSettingChange(`bodyModifications.${path}`, value)}
-                        />
-                      )}
-                      
-                      {customizerState.activeSection === 'rightSidebar' && (
-                        <RightSidebarModifications 
-                          template={mergedTemplate} 
-                          onChange={(path, value) => handleSettingChange(`rightSidebarModifications.${path}`, value)}
                         />
                       )}
                     </div>
@@ -1870,6 +1864,55 @@ function HeaderModifications({ template, officerInfo, onChange, onSave, setIsDel
           </div>
         </div>
       </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Social Media Links</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Facebook URL</label>
+            <input
+              type="url"
+              value={headerMods.facebook ?? ''}
+              onChange={(e) => onChange('facebook', e.target.value)}
+              placeholder="https://facebook.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Twitter URL</label>
+            <input
+              type="url"
+              value={headerMods.twitter ?? ''}
+              onChange={(e) => onChange('twitter', e.target.value)}
+              placeholder="https://twitter.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn URL</label>
+            <input
+              type="url"
+              value={headerMods.linkedin ?? ''}
+              onChange={(e) => onChange('linkedin', e.target.value)}
+              placeholder="https://linkedin.com/company/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Instagram URL</label>
+            <input
+              type="url"
+              value={headerMods.instagram ?? ''}
+              onChange={(e) => onChange('instagram', e.target.value)}
+              placeholder="https://instagram.com/yourcompany"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1976,125 +2019,6 @@ function BodyModifications({ template, onChange }: SettingsProps) {
   );
 }
 
-// Right Sidebar Modifications Component
-function RightSidebarModifications({ template, onChange }: SettingsProps) {
-  if (!template) return null;
-
-  const sidebarMods = template.rightSidebarModifications || {};
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-md font-semibold text-gray-900 mb-4">Company Information</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-            <input
-              type="text"
-              value={sidebarMods.companyName ?? ''}
-              onChange={(e) => onChange('companyName', e.target.value)}
-              placeholder="Your Brand™"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo URL</label>
-            <input
-              type="url"
-              value={sidebarMods.logo ?? ''}
-              onChange={(e) => onChange('logo', e.target.value)}
-              placeholder="https://example.com/logo.png"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-            <input
-              type="tel"
-              value={sidebarMods.phone ?? ''}
-              onChange={(e) => onChange('phone', e.target.value)}
-              placeholder="(555) 123-4567"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-            <input
-              type="email"
-              value={sidebarMods.email ?? ''}
-              onChange={(e) => onChange('email', e.target.value)}
-              placeholder="info@yourbrand.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-            <textarea
-              value={sidebarMods.address ?? ''}
-              onChange={(e) => onChange('address', e.target.value)}
-              placeholder="123 Main St. City"
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-md font-semibold text-gray-900 mb-4">Social Media Links</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Facebook URL</label>
-            <input
-              type="url"
-              value={sidebarMods.facebook ?? ''}
-              onChange={(e) => onChange('facebook', e.target.value)}
-              placeholder="https://facebook.com/yourcompany"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Twitter URL</label>
-            <input
-              type="url"
-              value={sidebarMods.twitter ?? ''}
-              onChange={(e) => onChange('twitter', e.target.value)}
-              placeholder="https://twitter.com/yourcompany"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn URL</label>
-            <input
-              type="url"
-              value={sidebarMods.linkedin ?? ''}
-              onChange={(e) => onChange('linkedin', e.target.value)}
-              placeholder="https://linkedin.com/company/yourcompany"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Instagram URL</label>
-            <input
-              type="url"
-              value={sidebarMods.instagram ?? ''}
-              onChange={(e) => onChange('instagram', e.target.value)}
-              placeholder="https://instagram.com/yourcompany"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ColorsSettings({ template, onChange }: SettingsProps) {
   if (!template) return null;
