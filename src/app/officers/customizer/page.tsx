@@ -1008,8 +1008,22 @@ export default function CustomizerPage() {
           }
           
           /* Prevent child elements from being constrained in customizer preview (desktop only) */
+          /* Exclude hero section to preserve its max-width constraint */
           .customizer-container .public-profile-container * {
             max-width: none !important;
+          }
+          
+          /* Preserve hero section max-width in customizer - must come after the general rule */
+          .customizer-container .public-profile-container section .hero-glass-card,
+          .customizer-container .public-profile-container .hero-glass-card {
+            max-width: 900px !important;
+          }
+          
+          @media (min-width: 1024px) {
+            .customizer-container .public-profile-container section .hero-glass-card,
+            .customizer-container .public-profile-container .hero-glass-card {
+              max-width: 1000px !important;
+            }
           }
           
           /* Override fixed-width rules for mobile preview */
@@ -1033,6 +1047,19 @@ export default function CustomizerPage() {
             
             .customizer-container .public-profile-container * {
               max-width: none !important;
+            }
+            
+            /* Preserve hero section max-width in customizer - must come after the general rule */
+            .customizer-container .public-profile-container section .hero-glass-card,
+            .customizer-container .public-profile-container .hero-glass-card {
+              max-width: 900px !important;
+            }
+            
+            @media (min-width: 1024px) {
+              .customizer-container .public-profile-container section .hero-glass-card,
+              .customizer-container .public-profile-container .hero-glass-card {
+                max-width: 1000px !important;
+              }
             }
             
             /* Ensure mobile preview still works at 768px */

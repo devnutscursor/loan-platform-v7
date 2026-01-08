@@ -360,7 +360,7 @@ export default function UnifiedHeroSection({
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[400px] py-8 @[768px]:py-12 @[1024px]:py-16 px-4 @[768px]:px-6">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[400px] py-4 @[768px]:py-12 @[1024px]:py-16 px-4 @[768px]:px-6">
         {/* Profile Card */}
         <div 
           className="hero-glass-card relative w-full max-w-[900px] @[1024px]:max-w-[1000px] overflow-hidden"
@@ -609,7 +609,7 @@ export default function UnifiedHeroSection({
           {/* Mobile Layout - shown at container width < 768px or when forceMobileView */}
           <div className={`${forceMobileView ? 'flex' : 'flex @[768px]:hidden'} flex-col relative z-[2] p-4 @[400px]:p-6`}>
             {/* Mobile Header - Avatar + Officer Details side by side */}
-            <div className="flex items-start justify-center gap-4 mb-4">
+            <div className="flex flex-col items-center justify-center gap-4 mb-4">
               {/* Avatar - Larger size */}
               <div className="relative flex-shrink-0">
                 <div 
@@ -659,7 +659,7 @@ export default function UnifiedHeroSection({
               </div>
 
               {/* Officer Details - Next to avatar */}
-              <div className="flex flex-col justify-center min-w-0">
+              <div className="flex flex-col justify-center items-center min-w-0">
                 {/* Name */}
                 <h1 
                   className="text-lg @[400px]:text-xl font-bold mb-1"
@@ -682,9 +682,9 @@ export default function UnifiedHeroSection({
                 )}
 
                 {/* Contact Info */}
-                <div className="flex flex-col gap-1">
+                <div className="flex gap-4">
                   {displayPhone && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Phone size={12} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
                       <span 
                         className="text-xs @[400px]:text-sm"
@@ -695,7 +695,7 @@ export default function UnifiedHeroSection({
                     </div>
                   )}
                   {displayEmail && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Mail size={12} style={{ color: colors.heroTextColor || '#ffffff', opacity: 0.7 }} />
                       <span 
                         className="text-xs @[400px]:text-sm break-all"
