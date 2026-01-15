@@ -1,9 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { createMortechAPI } from '@/lib/mortech/api';
+import { checkRateLimit, recordApiCall } from '@/lib/mortech/rate-limit';
+import { db, userCompanies } from '@/lib/db';
+import { eq, and } from 'drizzle-orm';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  
+  if (authError || !user) {
+    return null;
+  }
+
+  // Get user's company ID
+  const userCompanyResult = await db
+    .select({ companyId: userCompanies.companyId })
+    .from(userCompanies)
+    .where(
+      and(
+        eq(userCompanies.userId, user.id),
+        eq(userCompanies.isActive, true)
+      )
+    )
+    .limit(1);
+
+  if (userCompanyResult.length === 0) {
+    return null;
+  }
+
+  return {
+    user,
+    companyId: userCompanyResult[0].companyId,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🚀 GET /api/mortech/search - Starting Mortech rate search');
+
+    // Check authentication and rate limit
+    const auth = await getAuthenticatedUser(request);
+    if (!auth) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check rate limit
+    const rateLimit = await checkRateLimit(auth.user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Rate limit exceeded',
+          rateLimit: {
+            remaining: rateLimit.remaining,
+            resetAt: rateLimit.resetAt,
+            used: rateLimit.used,
+          },
+        },
+        { status: 429 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     
@@ -134,6 +203,11 @@ export async function GET(request: NextRequest) {
       rates: transformedRates,
       source: 'mortech_api',
       isMockData: false,
+      rateLimit: {
+        remaining: rateLimit.remaining - 1,
+        resetAt: rateLimit.resetAt,
+        used: rateLimit.used + 1,
+      },
       searchParams: {
         loanAmount,
         propertyValue,
@@ -164,6 +238,32 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 POST /api/mortech/search - Starting Mortech rate search');
+
+    // Check authentication and rate limit
+    const auth = await getAuthenticatedUser(request);
+    if (!auth) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check rate limit
+    const rateLimit = await checkRateLimit(auth.user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Rate limit exceeded',
+          rateLimit: {
+            remaining: rateLimit.remaining,
+            resetAt: rateLimit.resetAt,
+            used: rateLimit.used,
+          },
+        },
+        { status: 429 }
+      );
+    }
 
     const body = await request.json();
     console.log('📥 Raw request body:', body);
@@ -274,6 +374,18 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Record API call for rate limiting (only on success)
+    await recordApiCall(auth.user.id, auth.companyId, {
+      finalLoanAmount,
+      finalPropertyValue,
+      finalCreditScore,
+      propertyZip,
+      finalLoanPurpose,
+      finalPropertyType,
+      occupancy,
+      finalLoanTerm,
+    });
+
     // Transform response to match your existing frontend format
     const transformedRates = response.quotes?.map(quote => ({
       id: quote.productId,
@@ -321,6 +433,11 @@ export async function POST(request: NextRequest) {
       rates: transformedRates,
       source: 'mortech_api',
       isMockData: false,
+      rateLimit: {
+        remaining: rateLimit.remaining - 1,
+        resetAt: rateLimit.resetAt,
+        used: rateLimit.used + 1,
+      },
       searchParams: {
         finalLoanAmount,
         finalPropertyValue,

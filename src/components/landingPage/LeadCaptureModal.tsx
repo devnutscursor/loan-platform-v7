@@ -22,6 +22,13 @@ interface LeadCaptureModalProps {
     points: number;
     credits: number;
     lockPeriod: number;
+    searchParams?: {
+      purchasePrice?: number;
+      downPayment?: number;
+      loanAmount?: number;
+      creditScore?: string;
+      loanPurpose?: 'Purchase' | 'Refinance';
+    };
   };
   onSubmit: (leadData: LeadData) => Promise<void>;
   template?: 'template1' | 'template2';
@@ -230,14 +237,18 @@ button: {
     try {
       console.log('🔍 LeadCaptureModal - loanProduct:', loanProduct);
       
+      // Extract loanAmount and downPayment from props or product searchParams
+      const finalLoanAmount = loanAmount ?? loanProduct.searchParams?.loanAmount;
+      const finalDownPayment = downPayment ?? loanProduct.searchParams?.downPayment;
+      
       const leadData: LeadData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         creditScore: formData.creditScore.trim(),
-        ...(loanAmount !== undefined && { loanAmount }),
-        ...(downPayment !== undefined && { downPayment }),
+        ...(finalLoanAmount !== undefined && finalLoanAmount !== null && { loanAmount: finalLoanAmount }),
+        ...(finalDownPayment !== undefined && finalDownPayment !== null && { downPayment: finalDownPayment }),
         loanDetails: {
           productId: loanProduct.id,
           lenderName: loanProduct.lenderName,

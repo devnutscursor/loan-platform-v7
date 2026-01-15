@@ -78,6 +78,13 @@
       "when": 1764935457705,
       "tag": "0010_spicy_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1767947821233,
+      "tag": "0011_spooky_night_thrasher",
+      "breakpoints": true
     }
   ]
 }

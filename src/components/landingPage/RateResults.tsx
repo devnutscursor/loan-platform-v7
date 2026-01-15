@@ -22,6 +22,13 @@ interface RateProduct {
   points: number;
   credits: number;
   lockPeriod: number;
+  searchParams?: {
+    purchasePrice?: number;
+    downPayment?: number;
+    loanAmount: number;
+    creditScore: string;
+    loanPurpose: 'Purchase' | 'Refinance';
+  };
 }
 
 interface ApiProduct {
@@ -545,86 +552,118 @@ function RateResults({
                 <tbody className="divide-y"
                        style={{ borderColor: colors.border }}>
                   {filteredAndSortedProducts.map((product, index) => (
-                    <tr key={`${product.id}-${index}-${product.interestRate}-${product.apr}`} 
-                        className="transition-colors hover:opacity-90">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center space-x-2">
-                          {React.createElement(icons.document, { 
-                            size: 16, 
-                            color: colors.primary 
-                          })}
-                          <span className="text-sm font-medium"
+                    <React.Fragment key={`${product.id}-${index}-${product.interestRate}-${product.apr}`}>
+                      <tr className="transition-colors hover:opacity-90">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center space-x-2">
+                            {React.createElement(icons.document, { 
+                              size: 16, 
+                              color: colors.primary 
+                            })}
+                            <span className="text-sm font-medium"
+                                  style={{ color: colors.text }}>
+                              {product.loanTerm}-Year Fixed
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm font-semibold"
                                 style={{ color: colors.text }}>
-                            {product.loanTerm}-Year Fixed
+                            {formatRate(product.interestRate)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm font-semibold"
-                              style={{ color: colors.text }}>
-                          {formatRate(product.interestRate)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm"
-                              style={{ color: colors.textSecondary }}>
-                          {formatRate(product.apr)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm"
-                              style={{ color: colors.textSecondary }}>
-                          {formatPoints(product.points)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm font-semibold"
-                              style={{ color: colors.text }}>
-                          {formatCurrency(product.monthlyPayment)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() => handleGetStarted(product)}
-                            className="flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium transition-colors w-full"
-                            style={{
-                              backgroundColor: colors.primary,
-                              color: colors.background,
-                              borderRadius: `${layout.borderRadius}px`,
-                              border: 'none'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = colors.secondary;
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = colors.primary;
-                            }}
-                          >
-                            {React.createElement(icons.arrowRight, { size: 16, color: colors.background })}
-                            <span>Get Started</span>
-                          </button>
-                          <button 
-                            onClick={() => handleViewDetails(product)}
-                            className="flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors w-full"
-                            style={{
-                              backgroundColor: colors.background,
-                              color: colors.text,
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: `${layout.borderRadius}px`
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = colors.backgroundSecondary || '#f9fafb';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = colors.background;
-                            }}
-                          >
-                            View Details
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm"
+                                style={{ color: colors.textSecondary }}>
+                            {formatRate(product.apr)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm"
+                                style={{ color: colors.textSecondary }}>
+                            {formatPoints(product.points)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm font-semibold"
+                                style={{ color: colors.text }}>
+                            {formatCurrency(product.monthlyPayment)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleGetStarted(product)}
+                              className="flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium transition-colors w-full"
+                              style={{
+                                backgroundColor: colors.primary,
+                                color: colors.background,
+                                borderRadius: `${layout.borderRadius}px`,
+                                border: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.secondary;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.primary;
+                              }}
+                            >
+                              {React.createElement(icons.arrowRight, { size: 16, color: colors.background })}
+                              <span>Get Started</span>
+                            </button>
+                            <button 
+                              onClick={() => handleViewDetails(product)}
+                              className="flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors w-full"
+                              style={{
+                                backgroundColor: colors.background,
+                                color: colors.text,
+                                border: `1px solid ${colors.border}`,
+                                borderRadius: `${layout.borderRadius}px`
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.backgroundSecondary || '#f9fafb';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.background;
+                              }}
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Search Parameters Row */}
+                      {product.searchParams && (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-3 border-t" style={{ borderColor: colors.border }}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                              {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.purchasePrice !== undefined && (
+                                <div>
+                                  <span style={{ color: colors.textSecondary }}>Purchase Price: </span>
+                                  <span style={{ color: colors.text }} className="font-medium">
+                                    {formatCurrency(product.searchParams.purchasePrice)}
+                                  </span>
+                                </div>
+                              )}
+                              {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.downPayment !== undefined && (
+                                <div>
+                                  <span style={{ color: colors.textSecondary }}>Down Payment: </span>
+                                  <span style={{ color: colors.text }} className="font-medium">
+                                    {formatCurrency(product.searchParams.downPayment)}
+                                  </span>
+                                </div>
+                              )}
+                              <div>
+                                <span style={{ color: colors.textSecondary }}>Loan Amount: </span>
+                                <span style={{ color: colors.text }} className="font-medium">
+                                  {formatCurrency(product.searchParams.loanAmount)}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -649,25 +688,6 @@ function RateResults({
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-            <span>4.9</span>
-            <div className="flex text-yellow-400">
-              {'★★★★★'.split('').map((star, i) => (
-                <span key={i}>{star}</span>
-              ))}
-            </div>
-            <span>(20,672 reviews)</span>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Want more personalized rates? <span 
-              className="cursor-pointer hover:underline"
-              style={{ color: colors.primary }}
-            >Get a custom quote</span>
-          </p>
         </div>
       </div>
 
@@ -883,8 +903,8 @@ function RateResults({
           onSubmit={handleLeadSubmit}
           isPublic={isPublic}
           publicTemplateData={publicTemplateData}
-          loanAmount={loanAmount}
-          downPayment={downPayment}
+          loanAmount={loanAmount ?? selectedLoanProduct.searchParams?.loanAmount}
+          downPayment={downPayment ?? selectedLoanProduct.searchParams?.downPayment}
         />
       )}
     </div>
