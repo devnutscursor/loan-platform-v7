@@ -4,6 +4,7 @@ import React, { useState, useCallback, memo, useEffect, useMemo } from 'react';
 import { spacing, borderRadius, shadows, typography, colors } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import SmartDropdown, { type SmartDropdownOption } from '@/components/ui/SmartDropdown';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SearchFormData {
   zipCode: string;
@@ -51,7 +52,7 @@ interface SearchFormData {
 }
 
 interface MortgageSearchFormProps {
-  onSearch: (data: SearchFormData) => void;
+  onSearch: (data: SearchFormData, email?: string) => void;
   loading: boolean;
   template?: 'template1' | 'template2';
   // NEW: Public mode props
@@ -59,6 +60,8 @@ interface MortgageSearchFormProps {
   publicTemplateData?: any;
   // Initial values from questionnaire
   initialValues?: Partial<SearchFormData>;
+  // Verified email from questionnaire (for unauthenticated users)
+  verifiedEmail?: string;
 }
 
 function MortgageSearchForm({ 
@@ -69,9 +72,27 @@ function MortgageSearchForm({
   isPublic = false,
   publicTemplateData,
   // Initial values from questionnaire
-  initialValues
+  initialValues,
+  // Verified email from questionnaire
+  verifiedEmail: verifiedEmailProp
 }: MortgageSearchFormProps) {
   const { getTemplateSync } = useEfficientTemplates();
+  const { user } = useAuth();
+  // Use verified email from prop (from questionnaire) or fallback to sessionStorage
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(() => {
+    if (verifiedEmailProp) return verifiedEmailProp;
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('mortech_verified_email');
+    }
+    return null;
+  });
+  
+  // Update verifiedEmail when prop changes
+  useEffect(() => {
+    if (verifiedEmailProp) {
+      setVerifiedEmail(verifiedEmailProp);
+    }
+  }, [verifiedEmailProp]);
   
   // Template data fetching - support both public and auth modes
   const templateData = isPublic && publicTemplateData 
@@ -239,10 +260,12 @@ function MortgageSearchForm({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Email verification is now handled in the questionnaire, so we just submit
     console.log('🔄 MortgageSearchForm: Form submitted with data:', formData);
     console.log('🔄 MortgageSearchForm: Calling onSearch callback');
-    onSearch(formData);
-  }, [onSearch, formData]);
+    onSearch(formData, verifiedEmail || undefined);
+  }, [onSearch, formData, verifiedEmail]);
 
   return (
     <>
@@ -931,6 +954,7 @@ function MortgageSearchForm({
 
       </form>
       </div>
+
     </>
   );
 }

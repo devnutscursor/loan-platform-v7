@@ -426,6 +426,34 @@ export const mortechApiCalls = pgTable('mortech_api_calls', {
   officerCalledAtIdx: index('mortech_api_calls_officer_called_at_idx').on(table.officerId, table.calledAt),
 }));
 
+
+// Email Verifications table - Tracks email verification with OTP codes for public users
+export const emailVerifications = pgTable('email_verifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  verificationCode: text('verification_code').notNull(),
+  codeExpiresAt: timestamp('code_expires_at').notNull(),
+  isVerified: boolean('is_verified').default(false).notNull(),
+  verifiedAt: timestamp('verified_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index('email_verifications_email_idx').on(table.email),
+  codeExpiresAtIdx: index('email_verifications_code_expires_at_idx').on(table.codeExpiresAt),
+}));
+
+// Mortech Email Rate Limits table - Tracks API calls by email for public users
+export const mortechEmailRateLimits = pgTable('mortech_email_rate_limits', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull(),
+  calledAt: timestamp('called_at').defaultNow().notNull(),
+  searchParams: jsonb('search_params').default('{}'), // Store search parameters for reference
+}, (table) => ({
+  emailIdx: index('mortech_email_rate_limits_email_idx').on(table.email),
+  calledAtIdx: index('mortech_email_rate_limits_called_at_idx').on(table.calledAt),
+  emailCalledAtIdx: index('mortech_email_rate_limits_email_called_at_idx').on(table.email, table.calledAt),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -461,3 +489,7 @@ export type SelectedRate = typeof selectedRates.$inferSelect;
 export type NewSelectedRate = typeof selectedRates.$inferInsert;
 export type MortechApiCall = typeof mortechApiCalls.$inferSelect;
 export type NewMortechApiCall = typeof mortechApiCalls.$inferInsert;
+export type EmailVerification = typeof emailVerifications.$inferSelect;
+export type NewEmailVerification = typeof emailVerifications.$inferInsert;
+export type MortechEmailRateLimit = typeof mortechEmailRateLimits.$inferSelect;
+export type NewMortechEmailRateLimit = typeof mortechEmailRateLimits.$inferInsert;

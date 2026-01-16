@@ -198,7 +198,7 @@ export default function TodaysRatesPage() {
   }, [activeTab, fetchSelectedRates]);
 
   // Handle search form updates
-  const handleSearchFormUpdate = useCallback(async (formData: SearchFormData) => {
+  const handleSearchFormUpdate = useCallback(async (formData: SearchFormData, email?: string) => {
     if (!user?.id) return;
 
     setLoading(true);

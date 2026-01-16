@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createMortechAPI } from '@/lib/mortech/api';
 import { checkRateLimit, recordApiCall } from '@/lib/mortech/rate-limit';
+import { checkEmailRateLimit, recordEmailApiCall } from '@/lib/mortech/email-rate-limit';
 import { db, userCompanies } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
 
@@ -239,34 +240,111 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🚀 POST /api/mortech/search - Starting Mortech rate search');
 
-    // Check authentication and rate limit
-    const auth = await getAuthenticatedUser(request);
-    if (!auth) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Check rate limit
-    const rateLimit = await checkRateLimit(auth.user.id);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Rate limit exceeded',
-          rateLimit: {
-            remaining: rateLimit.remaining,
-            resetAt: rateLimit.resetAt,
-            used: rateLimit.used,
-          },
-        },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
     console.log('📥 Raw request body:', body);
+
+    // Check authentication - support both authenticated and unauthenticated (email-based) users
+    const auth = await getAuthenticatedUser(request);
+    let rateLimit: { allowed: boolean; remaining: number; resetAt: Date; used: number; verified?: boolean };
+    let userId: string | null = null;
+    let companyId: string | null = null;
+    let userEmail: string | null = null;
+
+    if (auth) {
+      // Authenticated user flow (existing)
+      userId = auth.user.id;
+      companyId = auth.companyId;
+      rateLimit = await checkRateLimit(auth.user.id);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Rate limit exceeded',
+            rateLimit: {
+              remaining: rateLimit.remaining,
+              resetAt: rateLimit.resetAt,
+              used: rateLimit.used,
+            },
+          },
+          { status: 429 }
+        );
+      }
+      
+      // For authenticated users on public profiles, also check email verification if email is provided
+      // This allows testing email verification flow even when logged in
+      const { email } = body;
+      if (email && typeof email === 'string') {
+        userEmail = email.toLowerCase().trim();
+        const emailRateLimit = await checkEmailRateLimit(userEmail);
+        
+        if (!emailRateLimit.verified) {
+          // Email provided but not verified - return error
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Email not verified. Please verify your email before searching for rates.',
+            },
+            { status: 403 }
+          );
+        }
+        
+        // Enforce email rate limit for public profiles (3/day)
+        // This applies even to authenticated users when using public profile flow
+        if (!emailRateLimit.allowed) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Rate limit exceeded. You have reached the maximum of 3 searches per day.',
+              rateLimit: {
+                remaining: emailRateLimit.remaining,
+                resetAt: emailRateLimit.resetAt,
+                used: emailRateLimit.used,
+              },
+            },
+            { status: 429 }
+          );
+        }
+      }
+    } else {
+      // Unauthenticated user flow - check for email verification
+      const { email } = body;
+      if (!email || typeof email !== 'string') {
+        return NextResponse.json(
+          { error: 'Email is required for unauthenticated users' },
+          { status: 401 }
+        );
+      }
+
+      userEmail = email.toLowerCase().trim();
+      const emailRateLimit = await checkEmailRateLimit(userEmail);
+
+      if (!emailRateLimit.verified) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Email not verified. Please verify your email before searching for rates.',
+          },
+          { status: 403 }
+        );
+      }
+
+      if (!emailRateLimit.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Rate limit exceeded. You have reached the maximum of 3 searches per day.',
+            rateLimit: {
+              remaining: emailRateLimit.remaining,
+              resetAt: emailRateLimit.resetAt,
+              used: emailRateLimit.used,
+            },
+          },
+          { status: 429 }
+        );
+      }
+
+      rateLimit = emailRateLimit;
+    }
     
     // Accept BOTH formats for flexibility
     const {
@@ -375,16 +453,45 @@ export async function POST(request: NextRequest) {
     }
 
     // Record API call for rate limiting (only on success)
-    await recordApiCall(auth.user.id, auth.companyId, {
-      finalLoanAmount,
-      finalPropertyValue,
-      finalCreditScore,
-      propertyZip,
-      finalLoanPurpose,
-      finalPropertyType,
-      occupancy,
-      finalLoanTerm,
-    });
+    if (auth) {
+      // Authenticated user - record in mortechApiCalls
+      await recordApiCall(auth.user.id, auth.companyId, {
+        finalLoanAmount,
+        finalPropertyValue,
+        finalCreditScore,
+        propertyZip,
+        finalLoanPurpose,
+        finalPropertyType,
+        occupancy,
+        finalLoanTerm,
+      });
+      
+      // Also record email-based call if email is provided (for testing/tracking)
+      if (userEmail) {
+        await recordEmailApiCall(userEmail, {
+          finalLoanAmount,
+          finalPropertyValue,
+          finalCreditScore,
+          propertyZip,
+          finalLoanPurpose,
+          finalPropertyType,
+          occupancy,
+          finalLoanTerm,
+        });
+      }
+    } else if (userEmail) {
+      // Unauthenticated user - record in mortechEmailRateLimits
+      await recordEmailApiCall(userEmail, {
+        finalLoanAmount,
+        finalPropertyValue,
+        finalCreditScore,
+        propertyZip,
+        finalLoanPurpose,
+        finalPropertyType,
+        occupancy,
+        finalLoanTerm,
+      });
+    }
 
     // Transform response to match your existing frontend format
     const transformedRates = response.quotes?.map(quote => ({
