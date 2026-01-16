@@ -164,13 +164,22 @@ button: {
   const fallbackUrl = 'http://app.cloudcma.com/api_widget/8b8c909dd5012044c05bc689000879ee/show?post_url=https://app.cloudcma.com&source_url=ua';
   const cloudCmaWidgetUrl = templateData?.template?.bodyModifications?.homeValueWidgetUrl || fallbackUrl;
   
+  // Check if URL is valid (not empty, null, or undefined)
+  const hasValidUrl = cloudCmaWidgetUrl && 
+    cloudCmaWidgetUrl.trim() !== '' && 
+    (cloudCmaWidgetUrl.startsWith('http://') || cloudCmaWidgetUrl.startsWith('https://'));
+  
   // Loading state for iframe
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   
   // Reset loading state when URL changes
   useEffect(() => {
-    setIsIframeLoading(true);
-  }, [cloudCmaWidgetUrl]);
+    if (hasValidUrl) {
+      setIsIframeLoading(true);
+    } else {
+      setIsIframeLoading(false);
+    }
+  }, [cloudCmaWidgetUrl, hasValidUrl]);
   
   const handleIframeLoad = () => {
     setIsIframeLoading(false);
@@ -197,8 +206,52 @@ button: {
           border: `1px solid ${colors.border}`
         }}
       >
+        {/* No URL Provided Message */}
+        {!hasValidUrl && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center z-10"
+            style={{
+              backgroundColor: colors.background,
+              borderRadius: `${layout.borderRadius}px`
+            }}
+          >
+            <div className="text-center px-6">
+              <div 
+                className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full"
+                style={{ 
+                  backgroundColor: `${colors.primary}10`,
+                  color: colors.primary
+                }}
+              >
+                <Icon name="home" size={32} color={colors.primary} />
+              </div>
+              <h3 
+                style={{ 
+                  color: colors.text,
+                  fontSize: getFontSize('xl'),
+                  fontWeight: typography.fontWeight.semibold,
+                  fontFamily: typography.fontFamily,
+                  marginBottom: '8px'
+                }}
+              >
+                Home Value Estimator Not Available
+              </h3>
+              <p 
+                style={{ 
+                  color: colors.textSecondary,
+                  fontSize: getFontSize('base'),
+                  fontFamily: typography.fontFamily,
+                  lineHeight: '1.6'
+                }}
+              >
+                The loan officer has not provided a home value estimator link. Please contact them directly for assistance with home valuation.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Loading Spinner */}
-        {isIframeLoading && (
+        {hasValidUrl && isIframeLoading && (
           <div 
             className="absolute inset-0 flex items-center justify-center z-10"
             style={{
@@ -224,21 +277,23 @@ button: {
           </div>
         )}
         
-        <iframe
-          src={cloudCmaWidgetUrl}
-          title="Home Value Estimator"
-          className="w-full h-full border-0"
-          style={{
-            minHeight: '800px',
-            width: '100%',
-            display: 'block',
-            opacity: isIframeLoading ? 0 : 1,
-            transition: 'opacity 0.3s ease-in-out'
-          }}
-          allow="clipboard-read; clipboard-write"
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
-        />
+        {hasValidUrl && (
+          <iframe
+            src={cloudCmaWidgetUrl}
+            title="Home Value Estimator"
+            className="w-full h-full border-0"
+            style={{
+              minHeight: '800px',
+              width: '100%',
+              display: 'block',
+              opacity: isIframeLoading ? 0 : 1,
+              transition: 'opacity 0.3s ease-in-out'
+            }}
+            allow="clipboard-read; clipboard-write"
+            onLoad={handleIframeLoad}
+            onError={handleIframeError}
+          />
+        )}
       </div>
 
       {/* Global styles for iframe to ensure proper rendering */}

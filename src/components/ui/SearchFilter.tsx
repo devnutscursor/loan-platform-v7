@@ -63,20 +63,17 @@ export const SearchFilter: React.FC<SearchFilterProps> = ({
       {/* Search and toggle row */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         {/* Search input */}
-        <div className="flex-1 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            {React.createElement(icons.search, { 
-              size: 20, 
-              style: { color: colors.gray[400] }
-            })}
-          </div>
+        <div className="flex-1 w-full min-w-0">
           <Input
             type="text"
             placeholder={placeholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-            style={{ paddingLeft: '2.5rem' }}
+            leftIcon={React.createElement(icons.search, { 
+              size: 20, 
+              style: { color: colors.gray[400] }
+            })}
+            className="w-full"
           />
         </div>
 

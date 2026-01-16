@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
-import { useTemplateSelection } from '@/contexts/UnifiedTemplateContext';
+import { useTemplateSelection, useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { DashboardLoadingState } from '@/components/ui/LoadingState';
 import { supabase } from '@/lib/supabase/client';
 import { icons } from '@/components/ui/Icon';
@@ -92,8 +92,25 @@ type TabType = 'search' | 'selected';
 export default function TodaysRatesPage() {
   const { user, companyId, loading: authLoading } = useAuth();
   const { selectedTemplate } = useTemplateSelection();
+  const { getTemplateSync } = useEfficientTemplates();
   const router = useRouter();
   const { showNotification } = useNotification();
+  
+  // Get template data for colors and layout
+  const templateData = getTemplateSync(selectedTemplate || 'template1');
+  const templateColors = templateData?.template?.colors || {
+    primary: '#01bcc6',
+    secondary: '#01bcc6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb'
+  };
+  const templateLayout = templateData?.template?.layout || {
+    borderRadius: 8,
+    padding: { small: 8, medium: 16, large: 24 },
+    spacing: 16
+  };
 
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [loading, setLoading] = useState(false);
@@ -539,24 +556,37 @@ export default function TodaysRatesPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-4 border-b border-gray-200">
+          <div 
+            className="toggle-switch relative inline-flex p-1 mb-4"
+            style={{
+              backgroundColor: templateColors.border,
+              borderRadius: `${templateLayout.borderRadius}px`,
+              width: 'fit-content'
+            }}
+          >
             <button
+              type="button"
               onClick={() => setActiveTab('search')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'search'
-                  ? 'text-[#01bcc6] border-b-2 border-[#01bcc6]'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`relative z-10 px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                activeTab === 'search' ? 'text-white' : 'text-gray-600'
               }`}
+              style={{
+                borderRadius: `${templateLayout.borderRadius}px`,
+                backgroundColor: activeTab === 'search' ? templateColors.primary : 'transparent'
+              }}
             >
               Search Rates
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('selected')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'selected'
-                  ? 'text-[#01bcc6] border-b-2 border-[#01bcc6]'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`relative z-10 px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                activeTab === 'selected' ? 'text-white' : 'text-gray-600'
               }`}
+              style={{
+                borderRadius: `${templateLayout.borderRadius}px`,
+                backgroundColor: activeTab === 'selected' ? templateColors.primary : 'transparent'
+              }}
             >
               Selected Rates
             </button>

@@ -26,6 +26,7 @@ const StaticHeader = memo(function StaticHeader() {
     avatar: null as string | null
   });
   const [profileLoading, setProfileLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Fetch user profile data from users table
   useEffect(() => {
@@ -115,6 +116,21 @@ const StaticHeader = memo(function StaticHeader() {
     }
   }, [stableUserData.role]);
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isMobileMenuOpen && !target.closest('nav')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
   // Don't render if auth is still loading OR if user role is not yet determined
   if (authLoading || roleLoading || profileLoading || !user || !userRole) {
     return (
@@ -194,128 +210,341 @@ const StaticHeader = memo(function StaticHeader() {
     } else {
       router.push('/officers/settings');
     }
+    // Close mobile menu after navigation
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleSignOutClick = async () => {
+    setIsMobileMenuOpen(false);
+    await handleSignOut();
   };
 
   return (
-    <nav style={dashboard.nav}>
-      <div style={dashboard.navContent}>
-        <div style={dashboard.navInner}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ flexShrink: 0 }}>
+    <>
+      <nav style={dashboard.nav}>
+        <div style={dashboard.navContent}>
+          <div style={dashboard.navInner}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              {/* Logo Section */}
+              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <button
+                  onClick={() => router.push(getDashboardUrl)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    transition: 'opacity 0.2s ease-in-out',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  <Image
+                    src="/images/logos/LoanOffW.png"
+                    alt="Loan Officer Platform"
+                    width={100}
+                    height={20}
+                    style={{
+                      height: 'auto',
+                      maxHeight: '20px',
+                      width: 'auto'
+                    }}
+                  />
+                </button>
+              </div>
+              
+              {/* Desktop User Info - Hidden on mobile */}
+              <div className="hidden md:flex items-center gap-3" style={{ alignItems: dashboard.userInfo.alignItems, gap: dashboard.userInfo.gap }}>
+                <button
+                  onClick={handleProfileClick}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.75rem',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#0177a385';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={dashboard.userDetails}>
+                    <p style={dashboard.userEmail}>
+                      {stableUserData.fullName || stableUserData.email}
+                    </p>
+                    <p style={dashboard.userRole}>{roleDisplayName}</p>
+                  </div>
+                  <div style={dashboard.userAvatar}>
+                    {stableUserData.avatar ? (
+                      <Image
+                        src={stableUserData.avatar}
+                        alt={stableUserData.fullName || stableUserData.email}
+                        width={32}
+                        height={32}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <span style={dashboard.userAvatarText}>
+                        {stableUserData.initial}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                
+                <button
+                  onClick={handleSignOut}
+                  style={{
+                    background: 'linear-gradient(135deg, #01bcc6 0%, #008eab 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(1, 188, 198, 0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(1, 188, 198, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(1, 188, 198, 0.3)';
+                  }}
+                >
+                  Sign Out
+                </button>
+              </div>
+
+              {/* Mobile Hamburger Button - Visible only on mobile */}
               <button
-                onClick={() => router.push(getDashboardUrl)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMobileMenuOpen(!isMobileMenuOpen);
+                }}
+                className="md:hidden flex items-center justify-center"
                 style={{
-                  background: 'none',
+                  background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '0',
-                  transition: 'opacity 0.2s ease-in-out',
+                  padding: '0.5rem',
+                  color: 'white',
+                  transition: 'opacity 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.8'; /* Semi-transparent on hover */
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1'; /* Back to full opacity */
-                }}
+                aria-label="Toggle menu"
               >
-                <Image
-                  src="/images/logos/LoanOffW.png"
-                  alt="Loan Officer Platform"
-                  width={100}
-                  height={20}
-                  style={{
-                    height: 'auto',
-                    maxHeight: '20px',
-                    width: 'auto'
-                  }}
-                />
+                {isMobileMenuOpen ? (
+                  React.createElement(icons.close, { size: 24 })
+                ) : (
+                  React.createElement(icons.menu, { size: 24 })
+                )}
               </button>
             </div>
           </div>
-          
-          <div style={dashboard.userInfo}>
-            <button
-              onClick={handleProfileClick}
-              style={{
-                ...dashboard.userInfo,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '0.5rem 1rem', /* Match breadcrumb button padding */
-                borderRadius: '0.75rem', /* 12px - match breadcrumb buttons */
-                transition: 'all 0.2s ease', /* Smooth transitions for all properties */
-                display: 'flex',
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            animation: 'fadeIn 0.2s ease-in-out'
+          }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl"
+            style={{
+              animation: 'slideIn 0.3s ease-out',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '1.5rem' }}>
+              {/* Mobile Menu Header */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
                 alignItems: 'center',
-                gap: '12px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0177a385'; /* Same hover color as breadcrumb */
-                e.currentTarget.style.transform = 'translateY(-1px)'; /* Lift effect */
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'; /* Subtle shadow */
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.transform = 'translateY(0)'; /* Reset position */
-                e.currentTarget.style.boxShadow = 'none'; /* Remove shadow */
-              }}
-            >
-              <div style={dashboard.userDetails}>
-                <p style={dashboard.userEmail}>
-                  {stableUserData.fullName || stableUserData.email}
-                </p>
-                <p style={dashboard.userRole}>{roleDisplayName}</p>
+                marginBottom: '1.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <h2 style={{ 
+                  fontSize: '1.25rem', 
+                  fontWeight: '600', 
+                  color: '#111827' 
+                }}>
+                  Menu
+                </h2>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0.25rem',
+                    color: '#6b7280'
+                  }}
+                  aria-label="Close menu"
+                >
+                  {React.createElement(icons.close, { size: 20 })}
+                </button>
               </div>
-              <div style={dashboard.userAvatar}>
-                {stableUserData.avatar ? (
-                  <Image
-                    src={stableUserData.avatar}
-                    alt={stableUserData.fullName || stableUserData.email}
-                    width={32}
-                    height={32}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <span style={dashboard.userAvatarText}>
-                    {stableUserData.initial}
-                  </span>
-                )}
-              </div>
-            </button>
-            
-            <button
-              onClick={handleSignOut}
-              style={{
-                background: 'linear-gradient(135deg, #01bcc6 0%, #008eab 100%)', /* Same as Settings button */
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.75rem', /* 12px - matches breadcrumb buttons */
-                padding: '0.5rem 1rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(1, 188, 198, 0.3)', /* Same shadow as Settings button */
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(1, 188, 198, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(1, 188, 198, 0.3)';
-              }}
-            >
-              Sign Out
-            </button>
+
+              {/* User Profile Section */}
+              <button
+                onClick={handleProfileClick}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.75rem',
+                  padding: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '1rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                  e.currentTarget.style.borderColor = '#01bcc6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                }}
+              >
+                <div style={dashboard.userAvatar}>
+                  {stableUserData.avatar ? (
+                    <Image
+                      src={stableUserData.avatar}
+                      alt={stableUserData.fullName || stableUserData.email}
+                      width={40}
+                      height={40}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <span style={{
+                      ...dashboard.userAvatarText,
+                      width: '40px',
+                      height: '40px',
+                      fontSize: '1rem'
+                    }}>
+                      {stableUserData.initial}
+                    </span>
+                  )}
+                </div>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <p style={{ 
+                    ...dashboard.userEmail,
+                    color: '#111827',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {stableUserData.fullName || stableUserData.email}
+                  </p>
+                  <p style={{ 
+                    ...dashboard.userRole,
+                    color: '#6b7280',
+                    fontSize: '0.875rem'
+                  }}>
+                    {roleDisplayName}
+                  </p>
+                </div>
+                {React.createElement(icons.chevronRight, { 
+                  size: 20, 
+                  style: { color: '#9ca3af' } 
+                })}
+              </button>
+
+              {/* Sign Out Button */}
+              <button
+                onClick={handleSignOutClick}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #01bcc6 0%, #008eab 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(1, 188, 198, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(1, 188, 198, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(1, 188, 198, 0.3)';
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      )}
+
+      {/* Add animations to globals.css via style tag */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+    </>
   );
 });
 

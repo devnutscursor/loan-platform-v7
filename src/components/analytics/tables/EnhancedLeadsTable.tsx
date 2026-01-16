@@ -372,12 +372,158 @@ const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
   // Filter out any null/undefined leads
   const validLeads = leads.filter(lead => lead != null);
 
+  const renderLeadCard = (lead: EnhancedLead) => {
+    const isEditingStatus = editingLead === lead.id && editingField === 'status';
+    const isEditingStage = editingLead === lead.id && editingField === 'conversionStage';
+    const isEditingPriority = editingLead === lead.id && editingField === 'priority';
+
+    return (
+      <div
+        key={lead.id}
+        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 hover:shadow-md transition-shadow"
+      >
+        {/* Card Header - Name and Source */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
+          <div className="flex-1">
+            <div className="font-semibold text-gray-900 text-base mb-1">
+              {lead.firstName || 'Unknown'} {lead.lastName || 'User'}
+            </div>
+            <div className="text-sm text-gray-600 mb-1">{lead.email || 'No email'}</div>
+            {lead.phone && <div className="text-sm text-gray-600">{lead.phone}</div>}
+          </div>
+          <div className="flex-shrink-0">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#01bcc6]/10 text-[#01bcc6]">
+              {lead.source?.replace('_', ' ').toUpperCase() || 'Unknown'}
+            </span>
+          </div>
+        </div>
+
+        {/* Status, Stage, Priority Row */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {/* Status */}
+          <div className="flex-shrink-0">
+            {isEditingStatus ? (
+              <SmartDropdown
+                value={tempValue}
+                onChange={(newValue) => handleEditSave(newValue)}
+                options={STATUS_OPTIONS}
+                placeholder="Select status"
+                buttonClassName="min-w-[140px]"
+                onOpenChange={(open) => {
+                  if (!open && editingLead === lead.id && editingField === 'status') {
+                    handleEditCancel();
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className={allowEditing ? "cursor-pointer" : "cursor-default"}
+                onClick={allowEditing ? () => handleEditStart(lead.id, 'status', lead.status) : undefined}
+              >
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  lead.status === 'new' ? 'bg-[#01bcc6]/10 text-[#01bcc6]' :
+                  lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
+                  lead.status === 'qualified' ? 'bg-green-100 text-green-800' :
+                  lead.status === 'converted' ? 'bg-purple-100 text-purple-800' :
+                  lead.status === 'lost' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Stage */}
+          <div className="flex-shrink-0">
+            {isEditingStage ? (
+              <SmartDropdown
+                value={tempValue}
+                onChange={(newValue) => handleEditSave(newValue)}
+                options={STAGE_OPTIONS}
+                placeholder="Select stage"
+                buttonClassName="min-w-[140px]"
+                onOpenChange={(open) => {
+                  if (!open && editingLead === lead.id && editingField === 'conversionStage') {
+                    handleEditCancel();
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className={allowEditing ? "cursor-pointer" : "cursor-default"}
+                onClick={allowEditing ? () => handleEditStart(lead.id, 'conversionStage', lead.conversionStage) : undefined}
+              >
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  lead.conversionStage === 'lead' ? 'bg-[#01bcc6]/10 text-[#01bcc6]' :
+                  lead.conversionStage === 'application' ? 'bg-yellow-100 text-yellow-800' :
+                  lead.conversionStage === 'approval' ? 'bg-green-100 text-green-800' :
+                  lead.conversionStage === 'closing' ? 'bg-purple-100 text-purple-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {lead.conversionStage.charAt(0).toUpperCase() + lead.conversionStage.slice(1)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Priority */}
+          <div className="flex-shrink-0">
+            {isEditingPriority ? (
+              <SmartDropdown
+                value={tempValue}
+                onChange={(newValue) => handleEditSave(newValue)}
+                options={PRIORITY_OPTIONS}
+                placeholder="Select priority"
+                buttonClassName="min-w-[140px]"
+                onOpenChange={(open) => {
+                  if (!open && editingLead === lead.id && editingField === 'priority') {
+                    handleEditCancel();
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className={allowEditing ? "cursor-pointer" : "cursor-default"}
+                onClick={allowEditing ? () => handleEditStart(lead.id, 'priority', lead.priority) : undefined}
+              >
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  lead.priority === 'low' ? 'bg-gray-100 text-gray-800' :
+                  lead.priority === 'medium' ? 'bg-[#01bcc6]/10 text-[#01bcc6]' :
+                  lead.priority === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                  lead.priority === 'urgent' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {lead.priority.charAt(0).toUpperCase() + lead.priority.slice(1)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Button */}
+        {onViewDetails && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onViewDetails(lead)}
+              className="w-full sm:w-auto"
+            >
+              View Details
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div 
       className="bg-white shadow-sm border border-gray-200 overflow-hidden"
       style={{ borderRadius: borderRadius.lg }}
     >
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Enhanced Leads Management</h3>
         <p className="text-sm text-gray-600 mt-1">
           {allowEditing 
@@ -386,12 +532,29 @@ const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
           }
         </p>
       </div>
-      <DataTable
-        data={validLeads}
-        columns={columns}
-        loading={loading}
-        emptyMessage="No leads found. Leads will appear here when borrowers submit information through your landing page."
-      />
+
+      {/* Cards View - Mobile/Tablet */}
+      <div className="block md:hidden p-4">
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Loading...</div>
+        ) : validLeads.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No leads found. Leads will appear here when borrowers submit information through your landing page.
+          </div>
+        ) : (
+          validLeads.map(lead => renderLeadCard(lead))
+        )}
+      </div>
+
+      {/* Table View - Desktop */}
+      <div className="hidden md:block">
+        <DataTable
+          data={validLeads}
+          columns={columns}
+          loading={loading}
+          emptyMessage="No leads found. Leads will appear here when borrowers submit information through your landing page."
+        />
+      </div>
     </div>
   );
 };
