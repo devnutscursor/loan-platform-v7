@@ -162,19 +162,40 @@ export async function GET(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // Process officers data
-    const officers = officersData.map(officerCompany => {
+    // Process officers data - deduplicate by user ID
+    const uniqueOfficersMap = new Map<string, any>();
+
+    officersData.forEach(officerCompany => {
       const user = officerCompany.users as any;
-      return {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        isActive: user.is_active,
-        joinedAt: officerCompany.joined_at,
-        createdAt: user.created_at
-      };
+      const userId = user.id;
+      
+      // If we haven't seen this user yet, or if this joined_at is more recent, use this entry
+      if (!uniqueOfficersMap.has(userId)) {
+        uniqueOfficersMap.set(userId, {
+          id: userId,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          isActive: user.is_active,
+          joinedAt: officerCompany.joined_at,
+          createdAt: user.created_at
+        });
+      } else {
+        // If duplicate found, keep the one with the most recent joined_at
+        const existing = uniqueOfficersMap.get(userId);
+        const existingJoinedAt = new Date(existing.joinedAt);
+        const currentJoinedAt = new Date(officerCompany.joined_at);
+        
+        if (currentJoinedAt > existingJoinedAt) {
+          uniqueOfficersMap.set(userId, {
+            ...existing,
+            joinedAt: officerCompany.joined_at
+          });
+        }
+      }
     });
+
+    const officers = Array.from(uniqueOfficersMap.values());
 
     // Process leads data
     const leads = leadsData.map(lead => ({

@@ -48,7 +48,7 @@ export function QuickActions({
       >
         {title}
       </h3>
-      <div style={{ display: 'flex', gap: `${gap}px`, overflowX: 'auto', overflowY: 'hidden' }}>
+      <div className='py-2' style={{ display: 'flex', gap: `${gap}px`, overflowX: 'auto', overflowY: 'hidden' }}>
         {actions.map(({ label, icon, href, minWidth }) => (
           <Button
             key={href}

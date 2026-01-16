@@ -436,9 +436,83 @@ const ConversionStatsDashboard: React.FC<ConversionStatsDashboardProps> = ({
 
       {/* Loan Officer Comparison (Super Admin only) */}
       {isSuperAdmin && companyComparison && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Loan Officer Comparison</h3>
-          <div className="overflow-x-auto">
+          
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-4">
+            {companyComparison.slice(0, 10).map((officer) => (
+              <div
+                key={`${officer.companyId}-${officer.officerId}`}
+                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                {/* Card Header - Officer Info (Centered) */}
+                <div className="flex flex-col items-center mb-3">
+                  <div className="h-12 w-12 flex-shrink-0 mb-2">
+                    <div className="h-12 w-12 rounded-full bg-[#01bcc6]/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-[#01bcc6]">
+                        {officer.officerName.split(' ').map(n => n.charAt(0)).join('').slice(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-md font-medium text-gray-900">
+                      {officer.officerName}
+                    </div>
+                    {officer.companyName && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {officer.companyName}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Body - Stats in 2 columns */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {/* Total Leads */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Leads</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {officer.totalLeads}
+                    </span>
+                  </div>
+
+                  {/* Closings */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Closings</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {officer.closedDeals}
+                    </span>
+                  </div>
+
+                  {/* Conversion Rate */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Conversion Rate</span>
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full w-fit ${
+                      officer.conversionRate >= 20 
+                        ? 'bg-[#01bcc6]/10 text-[#01bcc6]'
+                        : officer.conversionRate >= 10
+                        ? 'bg-[#008eab]/10 text-[#008eab]'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {officer.conversionRate.toFixed(3)}%
+                    </span>
+                  </div>
+
+                  {/* Revenue */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Revenue</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      ${officer.totalCommission.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>

@@ -188,10 +188,66 @@ export default function NeighborhoodReportsTab({
 
       // Step 3: Get HTML response and create blob URL for iframe
       const html = await response.text();
-      setReportHtml(html);
+
+      // Inject script to remove target div before iframe loads
+      const removalScript = `
+<script>
+(function() {
+  function removeTargetDiv() {
+    document.querySelectorAll('div').forEach(div => {
+      if (
+        div.classList.contains('flex') &&
+        div.classList.contains('w-44') &&
+        div.classList.contains('h-16')
+      ) {
+        div.remove();
+      }
+    });
+  }
+  
+  // Run immediately
+  removeTargetDiv();
+  
+  // Run on DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeTargetDiv);
+  } else {
+    removeTargetDiv();
+  }
+  
+  // Watch for dynamically added elements
+  if (document.body) {
+    const observer = new MutationObserver(removeTargetDiv);
+    observer.observe(document.body, { childList: true, subtree: true });
+  } else {
+    // Wait for body to exist
+    const checkBody = setInterval(() => {
+      if (document.body) {
+        clearInterval(checkBody);
+        const observer = new MutationObserver(removeTargetDiv);
+        observer.observe(document.body, { childList: true, subtree: true });
+        removeTargetDiv();
+      }
+    }, 100);
+  }
+})();
+</script>`;
+
+      // Inject script before closing </head> tag, or before </body> if no head tag
+      let modifiedHtml = html;
+      if (html.includes('</head>')) {
+        modifiedHtml = html.replace('</head>', removalScript + '</head>');
+      } else if (html.includes('</body>')) {
+        modifiedHtml = html.replace('</body>', removalScript + '</body>');
+      } else {
+        // No head or body tags, prepend to HTML
+        modifiedHtml = removalScript + html;
+      }
+
+      setReportHtml(modifiedHtml);
 
       // Create blob URL for iframe
-      const blob = new Blob([html], { type: 'text/html' });
+      const blob = new Blob([modifiedHtml], { type: 'text/html' });
       const blobUrl = URL.createObjectURL(blob);
       setReportBlobUrl(blobUrl);
 
@@ -347,6 +403,43 @@ export default function NeighborhoodReportsTab({
             style={{ 
               minHeight: '800px',
               overflow: 'auto', // Allow scrolling
+            }}
+            onLoad={(e) => {
+              // Fallback: try to remove div from iframe document after load
+              try {
+                const iframe = e.currentTarget;
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                
+                if (iframeDoc) {
+                  const removeTargetDiv = () => {
+                    iframeDoc.querySelectorAll('div').forEach((div: Element) => {
+                      if (
+                        div.classList.contains('flex') &&
+                        div.classList.contains('w-44') &&
+                        div.classList.contains('h-16')
+                      ) {
+                        div.remove();
+                      }
+                    });
+                  };
+
+                  // Run immediately if document is ready
+                  if (iframeDoc.readyState === 'complete' || iframeDoc.readyState === 'interactive') {
+                    removeTargetDiv();
+                  } else {
+                    iframeDoc.addEventListener('DOMContentLoaded', removeTargetDiv);
+                  }
+
+                  // Watch for dynamically added elements
+                  if (iframeDoc.body) {
+                    const observer = new MutationObserver(removeTargetDiv);
+                    observer.observe(iframeDoc.body, { childList: true, subtree: true });
+                  }
+                }
+              } catch (error) {
+                // CORS or other errors - script injection should have handled it
+                console.log('Could not access iframe document:', error);
+              }
             }}
           />
         </div>

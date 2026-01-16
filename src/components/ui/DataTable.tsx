@@ -239,7 +239,7 @@ export const DataTable = <T extends Record<string, any>>({
 export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & { 
   onViewDetails?: (companySlug: string) => void;
 }> = (props) => {
-  const { onViewDetails, ...restProps } = props;
+  const { onViewDetails, onResend, onDeactivate, onReactivate, onDelete, ...restProps } = props;
   
   // Wrap onViewDetails to extract slug from record
   const handleViewDetails = onViewDetails ? (record: any) => {
@@ -364,13 +364,215 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
     },
   ];
 
+  // Render company card for mobile view
+  const renderCompanyCard = (record: any) => {
+    const status = record.invite_status || 'pending';
+    const isDeactivated = record.deactivated === true;
+    const expiresAt = record.invite_expires_at;
+    const companyEmail = record.admin_email || record.email;
+    const createdDate = record.created_at || record.createdAt;
+
+    return (
+      <div
+        key={`company-card-${record.id}`}
+        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 hover:shadow-md transition-shadow"
+      >
+        {/* Card Header - Company Info (Centered) */}
+        <div className="flex flex-col items-center mb-3">
+          <div className="h-12 w-12 flex-shrink-0 mb-2">
+            <div className="h-12 w-12 rounded-full bg-[#01bcc6]/10 flex items-center justify-center">
+              <span className="text-sm font-medium text-[#01bcc6]">
+                {record.name?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-md font-medium text-gray-900">
+              {record.name}
+            </div>
+            {record.isActive && !isDeactivated && (
+              <div className="text-xs text-green-600 font-medium flex items-center justify-center mt-1">
+                <Icon name="checkCircle" className="w-3 h-3 mr-1" />
+                Active Company
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card Body - Details in 2 columns */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* Email */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Email</span>
+            <span 
+              className="text-sm text-gray-900 truncate" 
+              title={companyEmail}
+            >
+              {companyEmail}
+            </span>
+          </div>
+
+          {/* Slug */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Slug</span>
+            <span className="text-sm text-gray-900 font-medium">
+              {record.slug || '-'}
+            </span>
+          </div>
+
+          {/* Status */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Status</span>
+            <div>
+              {isDeactivated ? (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                  <Icon name="error" className="w-3 h-3 mr-1" />
+                  Deactivated
+                </span>
+              ) : (
+                <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+                  status === 'accepted' ? 'bg-green-100 text-green-800' :
+                  status === 'sent' ? 'bg-[#01bcc6]/10 text-[#01bcc6]' :
+                  status === 'expired' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {status === 'accepted' ? (
+                    <>
+                      <Icon name="checkCircle" className="w-3 h-3 mr-1" />
+                      Active
+                    </>
+                  ) : status === 'sent' ? (
+                    <>
+                      <Icon name="mail" className="w-3 h-3 mr-1" />
+                      Sent
+                    </>
+                  ) : status === 'expired' ? (
+                    <>
+                      <Icon name="clock" className="w-3 h-3 mr-1" />
+                      Expired
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="clock" className="w-3 h-3 mr-1" />
+                      Pending
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Created Date */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Created</span>
+            <span className="text-sm text-gray-900">
+              {createdDate ? new Date(createdDate).toLocaleDateString() : 'N/A'}
+            </span>
+          </div>
+
+          {/* Total Officers */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Total Officers</span>
+            <span className="text-sm text-gray-900 font-medium">
+              {record.totalOfficers || 0}
+            </span>
+          </div>
+
+          {/* Total Leads */}
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Total Leads</span>
+            <span className="text-sm text-gray-900 font-medium">
+              {record.totalLeads || 0}
+            </span>
+          </div>
+
+          {/* Expires Date (if applicable) */}
+          {status === 'sent' && expiresAt && (
+            <div className="flex flex-col col-span-2">
+              <span className="text-xs text-gray-500 mb-1">Expires</span>
+              <span className="text-sm text-gray-900">
+                {new Date(expiresAt).toLocaleString()}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Card Footer - Actions */}
+        <div className="pt-3 border-t border-gray-100">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {handleViewDetails && (
+              <button
+                onClick={() => handleViewDetails(record)}
+                className="inline-flex items-center px-3 py-1.5 border-0 text-xs font-medium rounded-md text-white bg-[#01bcc6] hover:bg-[#008eab] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01bcc6]"
+              >
+                View Details
+              </button>
+            )}
+            
+            {onResend && !record.isActive && !isDeactivated && (status === 'sent' || status === 'expired' || status === 'pending') && (
+              <ResendButton
+                role="super_admin"
+                onClick={() => onResend(record)}
+                className="text-xs px-2 py-1.5 h-auto"
+              />
+            )}
+            
+            {onDeactivate && record.isActive && !isDeactivated && (
+              <DeactivateButton
+                role="super_admin"
+                onClick={() => onDeactivate(record)}
+                className="text-xs px-2 py-1.5 h-auto"
+              />
+            )}
+            
+            {onReactivate && isDeactivated && (
+              <ReactivateButton
+                role="super_admin"
+                onClick={() => onReactivate(record)}
+                className="text-xs px-2 py-1.5 h-auto"
+              />
+            )}
+            
+            {onDelete && (
+              <DeleteButton
+                role="super_admin"
+                onClick={() => onDelete(record)}
+                className="text-xs px-2 py-1.5 h-auto"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <DataTable
-      {...restProps}
-      role="super_admin"
-      columns={companyColumns}
-      onViewDetails={handleViewDetails}
-    />
+    <>
+      {/* Mobile Card View */}
+      <div className="block md:hidden">
+        {restProps.loading ? (
+          <TableLoadingState text="Loading companies..." />
+        ) : restProps.data.length > 0 ? (
+          restProps.data.map(renderCompanyCard)
+        ) : (
+          <div className="text-center py-8 text-gray-500">{restProps.emptyMessage || 'No companies found.'}</div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <DataTable
+          {...restProps}
+          role="super_admin"
+          columns={companyColumns}
+          onViewDetails={handleViewDetails}
+          onResend={onResend}
+          onDeactivate={onDeactivate}
+          onReactivate={onReactivate}
+          onDelete={onDelete}
+        />
+      </div>
+    </>
   );
 };
 
