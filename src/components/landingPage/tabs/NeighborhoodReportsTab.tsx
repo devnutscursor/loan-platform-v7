@@ -205,31 +205,54 @@ export default function NeighborhoodReportsTab({
     });
   }
   
-  // Run immediately
+  // Strategy 1: Run immediately
   removeTargetDiv();
   
-  // Run on DOMContentLoaded
+  // Strategy 2: Run on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', removeTargetDiv);
   } else {
     removeTargetDiv();
   }
   
-  // Watch for dynamically added elements
-  if (document.body) {
-    const observer = new MutationObserver(removeTargetDiv);
-    observer.observe(document.body, { childList: true, subtree: true });
-  } else {
-    // Wait for body to exist
-    const checkBody = setInterval(() => {
-      if (document.body) {
-        clearInterval(checkBody);
-        const observer = new MutationObserver(removeTargetDiv);
-        observer.observe(document.body, { childList: true, subtree: true });
+  // Strategy 3: Run on window load (after all resources loaded)
+  window.addEventListener('load', removeTargetDiv);
+  
+  // Strategy 4: Use requestAnimationFrame for delayed elements
+  requestAnimationFrame(() => {
+    setTimeout(removeTargetDiv, 0);
+    setTimeout(removeTargetDiv, 100);
+    setTimeout(removeTargetDiv, 500);
+    setTimeout(removeTargetDiv, 1000);
+  });
+  
+  // Strategy 5: Watch for dynamically added elements with MutationObserver
+  function setupObserver() {
+    const targetNode = document.body || document.documentElement;
+    if (targetNode) {
+      const observer = new MutationObserver(function(mutations) {
         removeTargetDiv();
-      }
-    }, 100);
+      });
+      observer.observe(targetNode, { 
+        childList: true, 
+        subtree: true,
+        attributes: false,
+        attributeOldValue: false
+      });
+      
+      // Also try to remove periodically as fallback
+      setInterval(removeTargetDiv, 2000);
+    } else {
+      // Wait for body/documentElement to exist
+      setTimeout(setupObserver, 100);
+    }
   }
+  
+  setupObserver();
+  
+  // Strategy 6: Also run after a delay to catch very late elements
+  setTimeout(removeTargetDiv, 2000);
+  setTimeout(removeTargetDiv, 5000);
 })();
 </script>`;
 
@@ -423,17 +446,53 @@ export default function NeighborhoodReportsTab({
                     });
                   };
 
+                  // Run multiple times to catch dynamically added elements
+                  const runRemoval = () => {
+                    removeTargetDiv();
+                    setTimeout(removeTargetDiv, 100);
+                    setTimeout(removeTargetDiv, 500);
+                    setTimeout(removeTargetDiv, 1000);
+                    setTimeout(removeTargetDiv, 2000);
+                  };
+
                   // Run immediately if document is ready
                   if (iframeDoc.readyState === 'complete' || iframeDoc.readyState === 'interactive') {
-                    removeTargetDiv();
+                    runRemoval();
                   } else {
-                    iframeDoc.addEventListener('DOMContentLoaded', removeTargetDiv);
+                    iframeDoc.addEventListener('DOMContentLoaded', runRemoval);
+                    iframeDoc.addEventListener('load', runRemoval);
                   }
 
                   // Watch for dynamically added elements
                   if (iframeDoc.body) {
-                    const observer = new MutationObserver(removeTargetDiv);
-                    observer.observe(iframeDoc.body, { childList: true, subtree: true });
+                    const observer = new MutationObserver(() => {
+                      removeTargetDiv();
+                    });
+                    observer.observe(iframeDoc.body, { 
+                      childList: true, 
+                      subtree: true 
+                    });
+                    
+                    // Periodic cleanup as fallback
+                    const interval = setInterval(removeTargetDiv, 2000);
+                    
+                    // Stop interval after 30 seconds to avoid memory leaks
+                    setTimeout(() => clearInterval(interval), 30000);
+                  } else {
+                    // Wait for body and try again
+                    const checkBody = setInterval(() => {
+                      if (iframeDoc.body) {
+                        clearInterval(checkBody);
+                        const observer = new MutationObserver(() => {
+                          removeTargetDiv();
+                        });
+                        observer.observe(iframeDoc.body, { 
+                          childList: true, 
+                          subtree: true 
+                        });
+                        runRemoval();
+                      }
+                    }, 100);
                   }
                 }
               } catch (error) {
