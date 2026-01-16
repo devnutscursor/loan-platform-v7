@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
-import MortgageSearchForm from '@/components/landingPage/MortgageSearchForm';
 import RateResults from '@/components/landingPage/RateResults';
+import { supabase } from '@/lib/supabase/client';
 
 interface TodaysRatesTabProps {
   selectedTemplate: 'template1' | 'template2';
@@ -15,60 +15,16 @@ interface TodaysRatesTabProps {
   companyId?: string;
 }
 
-interface Rate {
+interface SelectedRate {
   id: string;
-  loanType: string;
-  rate: number;
-  apr: number;
-  points: number;
-  monthlyPayment: number;
-  lastUpdated: string;
-  category?: 'featured' | '30yr-fixed' | '20yr-fixed' | '15yr-fixed' | 'arm';
-}
-
-interface SearchFormData {
-  zipCode: string;
-  salesPrice: string;
-  downPayment: string;
-  downPaymentPercent: string;
-  creditScore: string;
-  propertyType: string;
-  occupancy: string;
-  loanType: string;
-  loanTerm: string;
-  eligibleForLowerRate: boolean;
-  loanPurpose: string;
-  homeValue: string;
-  mortgageBalance: string;
-  cashOut: string;
-  ltv: string;
-  firstName: string;
-  lastName: string;
-  vaFirstTimeUse: boolean;
-  firstTimeHomeBuyer: boolean;
-  monthsReserves: number;
-  selfEmployed: boolean;
-  waiveEscrows: boolean;
-  county: string;
-  state: string;
-  numberOfStories: number;
-  numberOfUnits: string;
-  lienType: string;
-  borrowerPaidMI: string;
-  baseLoanAmount: number;
-  loanLevelDebtToIncomeRatio: number;
-  totalMonthlyQualifyingIncome: number;
-  waiveEscrow: boolean;
-  militaryVeteran: boolean;
-  lockDays: string;
-  secondMortgageAmount: string;
-  amortizationTypes: string[];
-  armFixedTerms: string[];
-  loanTerms: string[];
+  rateData: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
- * TodaysRatesTab - Uses MortgageSearchForm UI (like old version) but with Mortech API logic
+ * TodaysRatesTab - Displays only selected rates from the loan officer
+ * No search form, just shows the rates the officer has selected
  */
 export default function TodaysRatesTab({
   selectedTemplate,
@@ -100,219 +56,72 @@ export default function TodaysRatesTab({
     padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
   };
   
-  const [rates, setRates] = useState<Rate[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRates, setSelectedRates] = useState<SelectedRate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [validationMessage, setValidationMessage] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string>('');
-  const [loanAmount, setLoanAmount] = useState<number | undefined>(undefined);
-  const [downPayment, setDownPayment] = useState<number | undefined>(undefined);
-  
-  // Map property type from form to Mortech format
-  const mapPropertyType = (type: string): string => {
-    const mapping: Record<string, string> = {
-      'SingleFamily': 'Single Family',
-      'Condo': 'Condo',
-      'Townhouse': 'Townhouse',
-      'MultiFamily': 'Multi-Family'
-    };
-    return mapping[type] || 'Single Family';
-  };
 
-  // Map occupancy from form to Mortech format
-  const mapOccupancy = (occ: string): string => {
-    const mapping: Record<string, string> = {
-      'PrimaryResidence': 'Primary',
-      'Secondary': 'Secondary',
-      'Investment': 'Investment'
-    };
-    return mapping[occ] || 'Primary';
-  };
-
-  // Normalize loan term to Mortech format
-  const normalizeLoanTerm = (term: string): string => {
-    if (!term) return '30 year fixed';
-    if (term.includes('year fixed')) return term;
-    return `${term} year fixed`;
-  };
-
-  // Map credit score from form to numeric value
-  const mapCreditScore = (creditScore: string): number => {
-    if (creditScore.includes('+')) {
-      return parseInt(creditScore.replace('+', '')) || 800;
-    }
-    if (creditScore.includes('-')) {
-      const parts = creditScore.split('-');
-      return parseInt(parts[0]) || 740;
-    }
-    return parseInt(creditScore) || 740;
-  };
-
-  // Handle search form updates - transform to Mortech format
-  const handleSearchFormUpdate = useCallback(async (formData: SearchFormData) => {
-    setIsLoading(true);
-    setError(null);
-    setValidationMessage(null);
-    
-    try {
-      let propertyValue: number;
-      
-      let calculatedLoanAmount: number;
-      let calculatedDownPayment: number | undefined;
-      
-      if (formData.loanPurpose === 'Refinance') {
-        // For refinance: loan amount = mortgage balance (no cash out field)
-        const mortgageBalance = parseFloat(formData.mortgageBalance || '0');
-        calculatedLoanAmount = mortgageBalance;
-        calculatedDownPayment = undefined; // No down payment for refinance
-        // Property value = loan amount (used for API, but not shown in form)
-        propertyValue = calculatedLoanAmount;
-        
-        // Validation for refinance
-        if (mortgageBalance <= 0) {
-          setValidationMessage('⚠️ Please enter a valid loan amount.');
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        // For purchase: loan amount = sales price - down payment
-        const salesPrice = parseFloat(formData.salesPrice || '0');
-        calculatedDownPayment = parseFloat(formData.downPayment || '0');
-        calculatedLoanAmount = salesPrice - calculatedDownPayment;
-        propertyValue = salesPrice;
-        
-        // Validation for purchase
-        if (salesPrice > 0 && calculatedLoanAmount > salesPrice) {
-          setValidationMessage('⚠️ Loan amount cannot be more than the property value. Please adjust your down payment or purchase price.');
-          setIsLoading(false);
-          return;
-        }
-        if (salesPrice <= 0) {
-          setValidationMessage('⚠️ Please enter a valid property value.');
-          setIsLoading(false);
-          return;
-        }
-        if (calculatedDownPayment < 0) {
-          setValidationMessage('⚠️ Down payment cannot be negative.');
-          setIsLoading(false);
-          return;
-        }
+  // Fetch selected rates on mount
+  useEffect(() => {
+    const fetchSelectedRates = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
       }
-      
-      // Store loan amount and down payment for lead capture
-      setLoanAmount(calculatedLoanAmount);
-      setDownPayment(calculatedDownPayment);
 
-      // Build Mortech API request from form data
-      const request: any = {
-        propertyZip: formData.zipCode || '75024',
-        appraisedvalue: propertyValue,
-        loan_amount: calculatedLoanAmount,
-        fico: mapCreditScore(formData.creditScore),
-        loanpurpose: formData.loanPurpose as 'Purchase' | 'Refinance',
-        proptype: mapPropertyType(formData.propertyType),
-        occupancy: mapOccupancy(formData.occupancy),
-        loanProduct1: normalizeLoanTerm(formData.loanTerm || '30')
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // For public profiles, we need to fetch selected rates for the officer
+        const response = await fetch(`/api/officers/selected-rates?officerId=${userId}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setSelectedRates(result.rates || []);
+          } else {
+            setError(result.error || 'Failed to fetch rates');
+          }
+        } else {
+          // Read the error response
+          const errorResult = await response.json().catch(() => ({ error: 'Unknown error' }));
+          setError(errorResult.error || `Failed to load rates (${response.status})`);
+          setSelectedRates([]);
+        }
+      } catch (err) {
+        setError('Failed to load rates');
+        setSelectedRates([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSelectedRates();
+  }, [userId]);
+
+  // Transform selected rates to RateResults format
+  const transformRatesToRateResults = () => {
+    return selectedRates.map((selectedRate) => {
+      const rate = selectedRate.rateData;
+      return {
+        id: rate.id || selectedRate.id,
+        lenderName: 'Today\'s Rates', // Always use this to pass the filter
+        loanProgram: rate.loanProgram || rate.productDesc || 'Mortgage Rate',
+        loanType: rate.loanType || rate.termType || 'Fixed',
+        loanTerm: rate.loanTerm || rate.productTerm || 30,
+        interestRate: rate.interestRate || rate.rate || 0,
+        apr: rate.apr || 0,
+        monthlyPayment: rate.monthlyPayment || 0,
+        fees: rate.fees || 0,
+        points: rate.points || 0,
+        credits: rate.credits || 0,
+        lockPeriod: rate.lockPeriod || rate.lockTerm || 30,
+        searchParams: rate.searchParams // Include search parameters if available
       };
-      
-      // Validate required fields
-      if (!request.propertyZip || request.propertyZip.trim() === '') {
-        setValidationMessage('⚠️ Please enter a valid ZIP code.');
-        setIsLoading(false);
-        return;
-      }
-      if (request.appraisedvalue <= 0) {
-        setValidationMessage('⚠️ Please enter a valid property value.');
-        setIsLoading(false);
-        return;
-      }
-      if (request.loan_amount <= 0) {
-        setValidationMessage('⚠️ Please enter a valid loan amount.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Optional fields - only include if explicitly set
-      if (formData.waiveEscrow === true) {
-        request.waiveEscrow = true;
-      }
-      if (formData.militaryVeteran === true) {
-        request.militaryVeteran = true;
-      }
-      if (formData.lockDays && formData.lockDays !== '30' && formData.lockDays !== '') {
-        request.lockDays = formData.lockDays;
-      }
-      if (formData.secondMortgageAmount && formData.secondMortgageAmount !== '0' && formData.secondMortgageAmount !== '') {
-        const amount = parseInt(formData.secondMortgageAmount);
-        if (!isNaN(amount) && amount > 0) {
-          request.secondMortgageAmount = amount;
-        }
-      }
-
-      console.log('🔍 Fetching today\'s rates with Mortech API:', request);
-
-      const response = await fetch('/api/mortech/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-
-      const result = await response.json();
-      console.log('📊 Mortech API Response:', result);
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to fetch rates');
-      }
-
-      // Transform Mortech rates to our display format
-      if (result.rates && Array.isArray(result.rates)) {
-        const transformedRates: Rate[] = result.rates.slice(0, 6).map((rate: any, index: number) => ({
-          id: rate.id || `rate-${index}`,
-          loanType: rate.productName || rate.loanProgram || '30 Year Fixed',
-          rate: rate.interestRate || 6.0,
-          apr: rate.apr || 6.1,
-          points: rate.points || 0,
-          monthlyPayment: rate.monthlyPayment || 2000,
-          lastUpdated: rate.lastUpdate || new Date().toLocaleString(),
-          category: index === 0 ? 'featured' : '30yr-fixed'
-        }));
-
-        setRates(transformedRates);
-        // Prefer latest quote's lastUpdate if available
-        const mostRecent = transformedRates
-          .map(r => new Date(r.lastUpdated))
-          .filter(d => !isNaN(d.getTime()))
-          .sort((a, b) => b.getTime() - a.getTime())[0];
-        setLastUpdated(mostRecent ? mostRecent.toLocaleString() : new Date().toLocaleString());
-        console.log('✅ Rates loaded successfully:', transformedRates.length);
-      } else {
-        throw new Error('No rates returned from API');
-      }
-    } catch (err) {
-      console.error('❌ Error fetching rates:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch rates');
-      setRates([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Transform rates to RateResults format
-  const transformRatesToRateResults = (rates: Rate[]) => {
-    return rates.map(rate => ({
-      id: rate.id,
-      lenderName: 'Today\'s Rates',
-      loanProgram: rate.loanType,
-      loanType: rate.loanType,
-      loanTerm: 30, // Default term
-      interestRate: rate.rate,
-      apr: rate.apr,
-      monthlyPayment: rate.monthlyPayment,
-      fees: 0,
-      points: rate.points,
-      credits: 0,
-      lockPeriod: 30
-    }));
+    });
   };
 
   return (
@@ -335,47 +144,9 @@ export default function TodaysRatesTab({
           className="text-base @md:text-lg"
           style={{ color: colors.textSecondary }}
         >
-          Current rates based on market conditions
+          Current rates selected by your loan officer
         </p>
-        {lastUpdated && (
-          <p className="text-sm mt-2" style={{ color: colors.textSecondary }}>
-            Last updated: {lastUpdated}
-          </p>
-        )}
       </div>
-
-      {/* Mortgage Search Form */}
-      <div 
-        className="bg-white"
-        style={{ 
-          backgroundColor: colors.background,
-          borderRadius: `${layout.borderRadius}px`
-        }}
-      >
-        <MortgageSearchForm
-          onSearch={handleSearchFormUpdate}
-          loading={isLoading}
-          template={selectedTemplate}
-          isPublic={isPublic}
-          publicTemplateData={publicTemplateData}
-        />
-      </div>
-
-      {/* Validation Message (Alert/Warning) */}
-      {validationMessage && (
-        <div
-          style={{
-            backgroundColor: '#fef3c7',
-            border: '1px solid #fbbf24',
-            borderRadius: `${layout.borderRadius}px`,
-            padding: '16px',
-            color: '#92400e'
-          }}
-        >
-          <p className="font-semibold">⚠️ Notice</p>
-          <p className="text-sm">{validationMessage}</p>
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (
@@ -387,22 +158,113 @@ export default function TodaysRatesTab({
         </div>
       )}
 
-      {/* Rate Results Component */}
-      <RateResults
-        products={transformRatesToRateResults(rates)}
-        loading={isLoading}
-        rawData={[]}
-        template={selectedTemplate}
-        isMockData={false}
-        dataSource="todays-rates"
-        isPublic={isPublic}
-        publicTemplateData={publicTemplateData}
-        userId={userId}
-        companyId={companyId}
-        showTodaysRatesOnly={true}
-        loanAmount={loanAmount}
-        downPayment={downPayment}
-      />
+      {/* Loading Skeleton */}
+      {isLoading && (
+        <div 
+          className="space-y-4"
+          style={{ 
+            backgroundColor: colors.background,
+            borderRadius: `${layout.borderRadius}px`,
+            padding: `${layout.padding.medium}px`
+          }}
+        >
+          {/* Skeleton for rate cards */}
+          {[1, 2, 3].map((index) => (
+            <div
+              key={index}
+              className="animate-pulse border rounded-lg p-4"
+              style={{
+                borderColor: colors.border,
+                borderRadius: `${layout.borderRadius}px`,
+              }}
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Loan Program Skeleton */}
+                <div>
+                  <div 
+                    className="h-3 w-20 mb-2 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                  <div 
+                    className="h-5 w-32 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                </div>
+                {/* Interest Rate Skeleton */}
+                <div>
+                  <div 
+                    className="h-3 w-20 mb-2 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                  <div 
+                    className="h-5 w-24 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                </div>
+                {/* APR Skeleton */}
+                <div>
+                  <div 
+                    className="h-3 w-16 mb-2 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                  <div 
+                    className="h-5 w-24 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                </div>
+                {/* Monthly Payment Skeleton */}
+                <div>
+                  <div 
+                    className="h-3 w-24 mb-2 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                  <div 
+                    className="h-5 w-28 rounded"
+                    style={{ backgroundColor: colors.border }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && selectedRates.length === 0 && (
+        <div 
+          className="text-center p-8 rounded-lg"
+          style={{ 
+            backgroundColor: colors.background,
+            border: `1px solid ${colors.border}`,
+            borderRadius: `${layout.borderRadius}px`,
+            color: colors.textSecondary 
+          }}
+        >
+          <p className="text-base font-medium mb-2" style={{ color: colors.text }}>
+            No rates available
+          </p>
+          <p className="text-sm">
+            Please contact your loan officer for current mortgage rates.
+          </p>
+        </div>
+      )}
+
+      {/* Rate Results Component - Only show if we have rates */}
+      {!isLoading && selectedRates.length > 0 && (
+        <RateResults
+          products={transformRatesToRateResults()}
+          loading={false}
+          rawData={[]}
+          template={selectedTemplate}
+          isMockData={false}
+          dataSource="todays-rates"
+          isPublic={isPublic}
+          publicTemplateData={publicTemplateData}
+          userId={userId}
+          companyId={companyId}
+          showTodaysRatesOnly={true}
+        />
+      )}
 
       {/* Disclaimer */}
       <div 

@@ -400,6 +400,60 @@ export const officerContentGuides = pgTable('officer_content_guides', {
   categoryIdx: index('officer_content_guides_category_idx').on(table.category),
 }));
 
+// Selected Rates table - Stores rates selected by loan officers for display
+export const selectedRates = pgTable('selected_rates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  companyId: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  rateData: jsonb('rate_data').notNull(), // Full rate object from Mortech API
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  officerIdx: index('selected_rates_officer_idx').on(table.officerId),
+  companyIdx: index('selected_rates_company_idx').on(table.companyId),
+}));
+
+// Mortech API Calls table - Tracks API calls for rate limiting
+export const mortechApiCalls = pgTable('mortech_api_calls', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  companyId: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  calledAt: timestamp('called_at').defaultNow().notNull(),
+  searchParams: jsonb('search_params').default('{}'), // Store search parameters for reference
+}, (table) => ({
+  officerIdx: index('mortech_api_calls_officer_idx').on(table.officerId),
+  calledAtIdx: index('mortech_api_calls_called_at_idx').on(table.calledAt),
+  officerCalledAtIdx: index('mortech_api_calls_officer_called_at_idx').on(table.officerId, table.calledAt),
+}));
+
+
+// Email Verifications table - Tracks email verification with OTP codes for public users
+export const emailVerifications = pgTable('email_verifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  verificationCode: text('verification_code').notNull(),
+  codeExpiresAt: timestamp('code_expires_at').notNull(),
+  isVerified: boolean('is_verified').default(false).notNull(),
+  verifiedAt: timestamp('verified_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index('email_verifications_email_idx').on(table.email),
+  codeExpiresAtIdx: index('email_verifications_code_expires_at_idx').on(table.codeExpiresAt),
+}));
+
+// Mortech Email Rate Limits table - Tracks API calls by email for public users
+export const mortechEmailRateLimits = pgTable('mortech_email_rate_limits', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull(),
+  calledAt: timestamp('called_at').defaultNow().notNull(),
+  searchParams: jsonb('search_params').default('{}'), // Store search parameters for reference
+}, (table) => ({
+  emailIdx: index('mortech_email_rate_limits_email_idx').on(table.email),
+  calledAtIdx: index('mortech_email_rate_limits_called_at_idx').on(table.calledAt),
+  emailCalledAtIdx: index('mortech_email_rate_limits_email_called_at_idx').on(table.email, table.calledAt),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -431,3 +485,11 @@ export type OfficerContentVideo = typeof officerContentVideos.$inferSelect;
 export type NewOfficerContentVideo = typeof officerContentVideos.$inferInsert;
 export type OfficerContentGuide = typeof officerContentGuides.$inferSelect;
 export type NewOfficerContentGuide = typeof officerContentGuides.$inferInsert;
+export type SelectedRate = typeof selectedRates.$inferSelect;
+export type NewSelectedRate = typeof selectedRates.$inferInsert;
+export type MortechApiCall = typeof mortechApiCalls.$inferSelect;
+export type NewMortechApiCall = typeof mortechApiCalls.$inferInsert;
+export type EmailVerification = typeof emailVerifications.$inferSelect;
+export type NewEmailVerification = typeof emailVerifications.$inferInsert;
+export type MortechEmailRateLimit = typeof mortechEmailRateLimits.$inferSelect;
+export type NewMortechEmailRateLimit = typeof mortechEmailRateLimits.$inferInsert;

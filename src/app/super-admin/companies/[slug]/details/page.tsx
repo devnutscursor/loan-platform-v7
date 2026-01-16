@@ -189,7 +189,7 @@ export default function CompanyDetailsPage({ params }: { params: Promise<{ slug:
         breadcrumbSize="md">
         <div className="space-y-6">
           {/* Company Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6">
             <SpotlightCard variant="primary" className="p-6 dashboard-card inner-page-card" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(235, 219, 199, 0.2)' }}>
@@ -317,7 +317,6 @@ export default function CompanyDetailsPage({ params }: { params: Promise<{ slug:
               </div>
             </div>
           </SpotlightCard>
-
           {/* Officers Section */}
           <SpotlightCard variant="primary" className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -329,6 +328,7 @@ export default function CompanyDetailsPage({ params }: { params: Promise<{ slug:
                 View All Officers
               </button>
             </div>
+              
             <div className="space-y-3">
               {companyDetails.officers.slice(0, 5).map((officer) => (
                 <div key={officer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

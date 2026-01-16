@@ -16,6 +16,13 @@ interface RateProduct {
   points: number;
   credits: number;
   lockPeriod: number;
+  searchParams?: {
+    purchasePrice?: number;
+    downPayment?: number;
+    loanAmount: number;
+    creditScore: string;
+    loanPurpose: 'Purchase' | 'Refinance';
+  };
 }
 
 interface RateProductCardProps {
@@ -120,6 +127,36 @@ export default function RateProductCard({
           </div>
         </div>
       </div>
+
+      {/* Search Parameters */}
+      {product.searchParams && (
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.purchasePrice !== undefined && (
+              <div>
+                <span style={{ color: colors.textSecondary }}>Purchase Price: </span>
+                <span style={{ color: colors.text }} className="font-medium">
+                  {formatCurrency(product.searchParams.purchasePrice)}
+                </span>
+              </div>
+            )}
+            {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.downPayment !== undefined && (
+              <div>
+                <span style={{ color: colors.textSecondary }}>Down Payment: </span>
+                <span style={{ color: colors.text }} className="font-medium">
+                  {formatCurrency(product.searchParams.downPayment)}
+                </span>
+              </div>
+            )}
+            <div>
+              <span style={{ color: colors.textSecondary }}>Loan Amount: </span>
+              <span style={{ color: colors.text }} className="font-medium">
+                {formatCurrency(product.searchParams.loanAmount)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons - Stack vertically on mobile, horizontal on larger screens */}
       <div className="flex flex-col @sm:flex-row gap-2 mt-4">

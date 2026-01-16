@@ -341,11 +341,11 @@ export default function LeadDetailsPage() {
       breadcrumbVariant="elevated"
       breadcrumbSize="md"
     >
-      <div style={{ padding: spacing[6] }}>
+      <div className='p-0 sm:p-6'>
         {/* Header Actions */}
         <div className="flex justify-between items-center mb-8">
           
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <SmartDropdown
               value={lead.status}
               onChange={(newValue) => handleUpdateField('status', newValue)}
@@ -359,7 +359,7 @@ export default function LeadDetailsPage() {
               onChange={(newValue) => handleUpdateField('conversionStage', newValue)}
               options={STAGE_OPTIONS}
               placeholder="Select stage"
-              buttonClassName="min-w-[180px]"
+              buttonClassName="min-w-[160px]"
             />
 
             <SmartDropdown
@@ -367,7 +367,7 @@ export default function LeadDetailsPage() {
               onChange={(newValue) => handleUpdateField('priority', newValue)}
               options={PRIORITY_OPTIONS}
               placeholder="Select priority"
-              buttonClassName="min-w-[150px]"
+              buttonClassName="min-w-[160px]"
             />
           </div>
         </div>

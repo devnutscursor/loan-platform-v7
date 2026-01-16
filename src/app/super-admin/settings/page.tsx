@@ -404,7 +404,7 @@ export default function SuperAdminSettingsPage() {
           {/* Personal Info Tab */}
           <div className={`tab-content ${activeTab === 'personal' ? 'active' : ''}`}>
             {activeTab === 'personal' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 md:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
               <p className="text-sm text-gray-600">Update your personal details</p>
@@ -471,7 +471,7 @@ export default function SuperAdminSettingsPage() {
           {/* Email Tab */}
           <div className={`tab-content ${activeTab === 'email' ? 'active' : ''}`}>
             {activeTab === 'email' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 md:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Email</h3>
               <p className="text-sm text-gray-600">Update your email address</p>
@@ -551,7 +551,7 @@ export default function SuperAdminSettingsPage() {
           {/* Password Tab */}
           <div className={`tab-content ${activeTab === 'password' ? 'active' : ''}`}>
             {activeTab === 'password' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 md:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
               <p className="text-sm text-gray-600">Update your password securely</p>
@@ -597,7 +597,7 @@ export default function SuperAdminSettingsPage() {
           {/* Avatar Tab */}
           <div className={`tab-content ${activeTab === 'avatar' ? 'active' : ''}`}>
             {activeTab === 'avatar' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 md:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Profile Picture</h3>
               <p className="text-sm text-gray-600">Upload and manage your avatar</p>

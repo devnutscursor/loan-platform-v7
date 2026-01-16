@@ -283,12 +283,12 @@ export default function AdminDashboardPage() {
           }
         ]}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-4 sm:gap-6">
           
 
           {/* Company Statistics */}
-          <div style={dashboard.grid.cols4}>
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -308,7 +308,7 @@ export default function AdminDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -328,7 +328,7 @@ export default function AdminDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -348,7 +348,7 @@ export default function AdminDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -370,8 +370,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Performance Metrics */}
-          <div style={dashboard.grid.cols3}>
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -391,7 +391,7 @@ export default function AdminDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -411,7 +411,7 @@ export default function AdminDashboardPage() {
               </div>
             </SpotlightCard>
 
-            <SpotlightCard variant="default" className="dashboard-card p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
@@ -444,65 +444,45 @@ export default function AdminDashboardPage() {
           />
 
           {/* Team Management & Analytics */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Recent Officers */}
-            <SpotlightCard variant="default" className="dashboard-card p-6 animate-card-stagger-2">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#005b7c'
-                }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-6 animate-card-stagger-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-[#005b7c]">
                   Recent Officers
                 </h3>
                 <Button
                   variant="primary"
                   onClick={() => router.push('/admin/loanofficers')}
-                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all"
+                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all w-full sm:w-auto text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   View All
                 </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {recentOfficers.length > 0 ? (
                   recentOfficers.map((officer, index) => (
                     <div
                       key={`officer-${officer.id}-${officer.created_at}-${index}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '12px',
-                        backgroundColor: 'white',
-                        borderRadius: '16px', // CONSISTENT WITH ALL BUTTONS
-                        border: '1px solid rgba(1, 188, 198, 0.2)'
-                      }}
+                      className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20"
                     >
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: 'rgba(1, 188, 198, 0.1)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '12px'
-                      }}>
-                        <span style={{ fontSize: '14px', fontWeight: 'medium', color: '#2563eb' }}>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-xs sm:text-sm font-medium text-[#008eab]">
                           {officer.full_name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 'medium', color: '#111827', fontSize: '14px' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {officer.full_name}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {officer.lead_count} leads • {officer.conversion_count} conversions
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  <p className="text-gray-500 text-center py-5 text-sm sm:text-base">
                     No officers yet
                   </p>
                 )}
@@ -510,67 +490,43 @@ export default function AdminDashboardPage() {
             </SpotlightCard>
 
             {/* Recent Leads */}
-            <SpotlightCard variant="default" className="dashboard-card p-6 animate-card-stagger-2">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#005b7c'
-                }}>
+            <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-6 animate-card-stagger-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-[#005b7c]">
                   Recent Leads
                 </h3>
                 <Button
                   variant="primary"
                   onClick={() => router.push('/admin/insights')}
-                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all"
+                  className="bg-[#01bcc6] hover:bg-[#008eab] text-white btn-view-all w-full sm:w-auto text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   View All
                 </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {recentLeads.length > 0 ? (
                   recentLeads.map((lead, index) => (
                     <div
                       key={`lead-${lead.id}-${lead.created_at}-${index}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '12px',
-                        backgroundColor: 'white',
-                        borderRadius: '16px', // CONSISTENT WITH ALL BUTTONS
-                        border: '1px solid rgba(1, 188, 198, 0.2)'
-                      }}
+                      className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20"
                     >
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: lead.priority === 'high' ? 'rgba(1, 188, 198, 0.1)' : 'rgba(1, 188, 198, 0.1)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '12px'
-                      }}>
-                        <span style={{ 
-                          fontSize: '14px', 
-                          fontWeight: 'medium', 
-                          color: lead.priority === 'high' ? '#008eab' : '#008eab' 
-                        }}>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#01bcc6]/10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-xs sm:text-sm font-medium text-[#008eab]">
                           {lead.first_name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 'medium', color: '#111827', fontSize: '14px' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
                           {lead.first_name} {lead.last_name}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {lead.status} • {lead.priority} priority
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  <p className="text-gray-500 text-center py-5 text-sm sm:text-base">
                     No leads yet
                   </p>
                 )}

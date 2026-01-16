@@ -410,7 +410,8 @@ export default function UnifiedHeroSection({
                   className="hero-avatar-ring w-[140px] h-[140px] @[1024px]:w-[160px] @[1024px]:h-[160px]"
                   style={{ 
                     background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
-                    borderRadius: `${Math.max(layout.borderRadius, 20)}px`
+                    borderRadius: `${Math.max(layout.borderRadius, 20)}px`,
+                    boxShadow: `0 8px 32px ${colors.primary}40, 0 0 0 1px rgba(255, 255, 255, 0.1)`
                   }}
                 >
                   {showInitials ? (
@@ -616,7 +617,8 @@ export default function UnifiedHeroSection({
                   className="hero-avatar-ring w-[110px] h-[110px] @[400px]:w-[140px] @[400px]:h-[140px]"
                   style={{ 
                     background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
-                    borderRadius: `${Math.max(layout.borderRadius, 20)}px`
+                    borderRadius: `${Math.max(layout.borderRadius, 20)}px`,
+                    boxShadow: `0 8px 32px ${colors.primary}40, 0 0 0 1px rgba(255, 255, 255, 0.1)`
                   }}
                 >
                   {showInitials ? (

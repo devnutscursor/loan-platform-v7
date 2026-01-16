@@ -7,6 +7,8 @@ import RateResults from '@/components/landingPage/RateResults';
 import { Button } from '@/components/ui/Button';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
+import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
 
 /**
  * Mortgage Rate Comparison Component
@@ -120,6 +122,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   companyId
 }: MortgageRateComparisonProps) {
   const searchParams = useSearchParams();
+  const { user } = useAuth(); // Check if current visitor is authenticated
   const [products, setProducts] = useState<RateProduct[]>([]);
   const [rawData, setRawData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
@@ -134,6 +137,53 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   const [pendingAutoSearchData, setPendingAutoSearchData] = useState<SearchFormData | null>(null);
   const [loanAmount, setLoanAmount] = useState<number | undefined>(undefined);
   const [downPayment, setDownPayment] = useState<number | undefined>(undefined);
+  
+  // Email verification state (for unauthenticated users)
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('mortech_verified_email');
+    }
+    return null;
+  });
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [emailVerificationStep, setEmailVerificationStep] = useState<'email' | 'verify' | 'verified'>('email');
+  const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  
+  // Sync verifiedEmail with sessionStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('mortech_verified_email');
+      if (stored && stored !== verifiedEmail) {
+        setVerifiedEmail(stored);
+        setEmail(stored);
+        setEmailVerificationStep('verified');
+      }
+    }
+  }, []); // Run once on mount
+
+  // Update emailVerificationStep when verifiedEmail changes
+  useEffect(() => {
+    if (verifiedEmail) {
+      setEmailVerificationStep('verified');
+      setEmail(verifiedEmail);
+    }
+  }, [verifiedEmail]);
+
+  // Debug logging for email verification
+  useEffect(() => {
+    console.log('🔍 MortgageRateComparison Debug:', {
+      isPublic,
+      hasUser: !!user,
+      verifiedEmail,
+      showEmailVerification,
+      emailVerificationStep
+    });
+  }, [isPublic, user, verifiedEmail, showEmailVerification, emailVerificationStep]);
 
   // Get template-specific styles and content
   const { getTemplateSync } = useEfficientTemplates();
@@ -169,12 +219,30 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       const newHistory = stepHistory.slice(0, -1);
       setStepHistory(newHistory);
       setCurrentStep(newHistory[newHistory.length - 1]);
+      // Don't reset email verification when going back - keep it visible if it was shown
     }
   };
 
   const handleQuestionnaireComplete = async (finalAnswer: any) => {
     const allAnswers = { ...questionnaireAnswers, [currentStep]: finalAnswer };
     setQuestionnaireAnswers(allAnswers);
+    
+    // For public profile pages, require email verification before proceeding
+    // This applies to both authenticated and unauthenticated users for testing purposes
+    // isPublic means it's a public profile page
+    // !verifiedEmail means email hasn't been verified yet
+    console.log('🔍 Email verification check:', {
+      isPublic,
+      user: !!user,
+      verifiedEmail,
+      shouldShow: isPublic && !verifiedEmail
+    });
+    
+    if (isPublic && !verifiedEmail) {
+      console.log('✅ Showing email verification step');
+      setShowEmailVerification(true);
+      return;
+    }
     
     // Generate form data from questionnaire answers
     const formData = await autoSearchFromQuestionnaire(allAnswers);
@@ -184,6 +252,85 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     // Hide questionnaire and show search form with pre-filled values
     setShowQuestionnaire(false);
     setShowLanding(false);
+  };
+  
+  // Email verification handlers
+  const handleSendOTP = async () => {
+    setEmailError(null);
+    
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
+    setIsSendingOTP(true);
+    try {
+      const response = await fetch('/api/mortech/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setEmailVerificationStep('verify');
+      } else {
+        setEmailError(result.message || 'Failed to send verification code');
+      }
+    } catch (error) {
+      setEmailError('Network error. Please try again.');
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+  
+  const handleVerifyOTP = async () => {
+    setOtpError(null);
+    
+    if (!otpCode.trim() || otpCode.length !== 6) {
+      setOtpError('Please enter a 6-digit verification code');
+      return;
+    }
+    
+    setIsVerifyingOTP(true);
+    try {
+      const response = await fetch('/api/mortech/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: email.trim(), 
+          code: otpCode.trim() 
+        }),
+      });
+      
+      const result = await response.json();
+      if (response.ok && result.success && result.verified) {
+        setVerifiedEmail(email.trim());
+        setEmailVerificationStep('verified');
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('mortech_verified_email', email.trim());
+        }
+        // Proceed with questionnaire completion
+        setShowEmailVerification(false);
+        const allAnswers = { ...questionnaireAnswers };
+        const formData = await autoSearchFromQuestionnaire(allAnswers);
+        setPendingAutoSearchData(formData);
+        setShowQuestionnaire(false);
+        setShowLanding(false);
+      } else {
+        setOtpError(result.message || 'Invalid verification code');
+      }
+    } catch (error) {
+      setOtpError('Network error. Please try again.');
+    } finally {
+      setIsVerifyingOTP(false);
+    }
   };
 
   // Map credit score from form to numeric value for Mortech
@@ -374,7 +521,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   };
 
   // Handle search - transform form data to Mortech API format
-  const handleSearch = async (formData: SearchFormData) => {
+  const handleSearch = async (formData: SearchFormData, email?: string) => {
     setLoading(true);
     setError(null);
     setValidationMessage(null);
@@ -476,10 +623,32 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
       console.log('📤 Sending request to Mortech API:', request);
 
+      // Build headers
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Get auth token if user is authenticated
+      let authToken: string | null = null;
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          authToken = session?.access_token || null;
+          if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to get auth token:', error);
+        }
+      }
+      
+      // Include email if provided (for unauthenticated users or testing)
+      const requestBody = email ? { ...request, email } : request;
+
       const response = await fetch('/api/mortech/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
+        headers,
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
@@ -524,9 +693,10 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       return;
     }
 
-    handleSearch(pendingAutoSearchData);
+    // Pass verifiedEmail to handleSearch for unauthenticated users
+    handleSearch(pendingAutoSearchData, verifiedEmail || undefined);
     setPendingAutoSearchData(null);
-  }, [pendingAutoSearchData, questionnaireFormData, handleSearch]);
+  }, [pendingAutoSearchData, questionnaireFormData, verifiedEmail, handleSearch]);
 
   // Get template content
   const getTemplateContent = () => {
@@ -1099,10 +1269,126 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
               </div>
             )}
             
+            {/* Email Verification Step (for unauthenticated users) */}
+            {showEmailVerification && (
+              <div className="p-0 @sm:p-6 bg-white mb-6" style={{ borderRadius: `${layout.borderRadius}px` }}>
+                <h3 className="text-md @sm:text-xl font-semibold text-black mb-2 text-center">
+                  Verify Your Email
+                </h3>
+                <p className="mb-6 text-center text-sm @sm:text-base" style={{ color: colors.text }}>
+                  To search for mortgage rates, please verify your email address. We'll send you a 6-digit verification code.
+                </p>
+                
+                {emailVerificationStep === 'email' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
+                        Email Address <span style={{ color: 'red' }}>*</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setEmailError(null);
+                          }}
+                          placeholder="your.email@example.com"
+                          className="flex-1 px-4 py-2 border rounded-lg"
+                          style={{
+                            borderColor: emailError ? 'red' : colors.border,
+                            borderRadius: `${layout.borderRadius}px`,
+                            outline: 'none'
+                          }}
+                        />
+                        <Button
+                          onClick={handleSendOTP}
+                          disabled={isSendingOTP || !email.trim()}
+                          {...getTemplateButtonStyles('secondary')}
+                          className="h-10 @sm:h-12"
+                        >
+                          {isSendingOTP ? 'Sending...' : 'Send Code'}
+                        </Button>
+                      </div>
+                      {emailError && (
+                        <p className="mt-2 text-sm text-red-600">{emailError}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {emailVerificationStep === 'verify' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-center" style={{ color: colors.text }}>
+                      Verification code sent to <strong>{email}</strong>
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
+                        Enter Verification Code
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={otpCode}
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setOtpCode(numericValue);
+                            setOtpError(null);
+                          }}
+                          placeholder="000000"
+                          maxLength={6}
+                          className="flex-1 px-4 py-2 border rounded-lg text-center text-xl tracking-widest font-mono"
+                          style={{
+                            borderColor: otpError ? 'red' : colors.border,
+                            borderRadius: `${layout.borderRadius}px`,
+                            outline: 'none'
+                          }}
+                        />
+                        <Button
+                          onClick={handleVerifyOTP}
+                          disabled={isVerifyingOTP || otpCode.length !== 6}
+                          {...getTemplateButtonStyles('secondary')}
+                          className="h-10 @sm:h-12"
+                        >
+                          {isVerifyingOTP ? 'Verifying...' : 'Verify'}
+                        </Button>
+                      </div>
+                      {otpError && (
+                        <p className="mt-2 text-sm text-red-600">{otpError}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmailVerificationStep('email');
+                          setOtpCode('');
+                          setOtpError(null);
+                        }}
+                        className="mt-2 text-sm"
+                        style={{ color: colors.primary }}
+                      >
+                        Change email address
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {emailVerificationStep === 'verified' && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                    <p className="text-green-800 font-medium">
+                      ✓ Email verified: {email}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Questionnaire Content - Container Query Wrapper */}
-            <div style={{ containerType: 'inline-size' }}>
-              {renderQuestionnaireStep()}
-            </div>
+            {!showEmailVerification && (
+              <div style={{ containerType: 'inline-size' }}>
+                {renderQuestionnaireStep()}
+              </div>
+            )}
           </div>
         </main>
 
@@ -1159,6 +1445,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
           isPublic={isPublic}
           publicTemplateData={publicTemplateData}
           initialValues={questionnaireFormData}
+          verifiedEmail={verifiedEmail || undefined}
         />
 
         {/* Validation Message */}

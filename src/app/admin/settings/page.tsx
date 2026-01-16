@@ -718,7 +718,7 @@ export default function AdminSettingsPage() {
       breadcrumbVariant="default"
       breadcrumbSize="md"
     >
-      <div style={dashboard.card}>
+      <div style={dashboard.card} className='!p-3 sm:!p-6'>
         {/* Tab Navigation - Modern Dark Design */}
         <div className="mb-8">
           <nav className="inline-flex modern-tab-nav rounded-xl p-1">
@@ -752,7 +752,7 @@ export default function AdminSettingsPage() {
 
         {/* Personal Info Tab */}
         {activeTab === 'personal' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
               <p className="text-sm text-gray-600">Update your personal details</p>
@@ -817,7 +817,7 @@ export default function AdminSettingsPage() {
 
         {/* Email Tab */}
         {activeTab === 'email' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Email</h3>
               <p className="text-sm text-gray-600">Update your email address</p>
@@ -895,7 +895,7 @@ export default function AdminSettingsPage() {
 
         {/* Password Tab */}
         {activeTab === 'password' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
               <p className="text-sm text-gray-600">Update your password securely</p>
@@ -939,7 +939,7 @@ export default function AdminSettingsPage() {
 
         {/* Avatar Tab */}
         {activeTab === 'avatar' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Profile Picture</h3>
               <p className="text-sm text-gray-600">Upload and manage your avatar</p>
@@ -998,7 +998,7 @@ export default function AdminSettingsPage() {
 
         {/* Company Profile Tab */}
         {activeTab === 'company' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Company Profile</h3>
               <p className="text-sm text-gray-600">Manage your company information that appears on all officer profiles</p>

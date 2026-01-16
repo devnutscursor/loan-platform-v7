@@ -439,6 +439,7 @@ export default function OfficersDashboardPage() {
               { label: 'Leads', icon: 'document', href: '/officers/leads', minWidth: 120 },
               { label: 'Profile', icon: 'profile', href: '/officers/profile', minWidth: 120 },
               { label: 'Customizer', icon: 'edit', href: '/officers/customizer', minWidth: 120 },
+              { label: "Today's Rates", icon: 'trendingUp', href: '/officers/todays-rates', minWidth: 140 },
               { label: 'Content Management', icon: 'book', href: '/officers/content-management', minWidth: 160 },
               { label: 'Settings', icon: 'settings', href: '/officers/settings', minWidth: 120 },
               { label: 'Activities', icon: 'activity', href: '/officers/activities', minWidth: 120 },

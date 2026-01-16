@@ -368,7 +368,7 @@ export default function OfficersSettingsPage() {
       breadcrumbVariant="default"
       breadcrumbSize="md"
     >
-      <div style={dashboard.card}>
+      <div style={dashboard.card} className='!p-3 !sm:p-6'>
         {/* Tab Navigation - Modern Dark Design */}
         <div className="mb-8">
           <nav className="inline-flex modern-tab-nav rounded-xl p-1">
@@ -401,7 +401,7 @@ export default function OfficersSettingsPage() {
 
         {/* Personal Info Tab */}
         {activeTab === 'personal' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
               <p className="text-sm text-gray-600">Update your personal details</p>
@@ -466,7 +466,7 @@ export default function OfficersSettingsPage() {
 
         {/* Email Tab */}
         {activeTab === 'email' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Email</h3>
               <p className="text-sm text-gray-600">Update your email address</p>
@@ -544,7 +544,7 @@ export default function OfficersSettingsPage() {
 
         {/* Password Tab */}
         {activeTab === 'password' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
               <p className="text-sm text-gray-600">Update your password securely</p>
@@ -588,7 +588,7 @@ export default function OfficersSettingsPage() {
 
         {/* Avatar Tab */}
         {activeTab === 'avatar' && (
-          <SpotlightCard variant="default" className="p-6">
+          <SpotlightCard variant="default" className="p-2 sm:p-6">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Profile Picture</h3>
               <p className="text-sm text-gray-600">Upload and manage your avatar</p>

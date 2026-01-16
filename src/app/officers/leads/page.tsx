@@ -503,7 +503,7 @@ export default function LeadsPage() {
       breadcrumbVariant="default"
       breadcrumbSize="md"
     >
-      <div style={{ padding: spacing[6] }}>
+      <div className='p-0 sm:p-6'>
 
         {/* Header with stats - Updated to use filtered data */}
         <div style={{
