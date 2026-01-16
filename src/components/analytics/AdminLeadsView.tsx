@@ -461,7 +461,7 @@ export default function AdminLeadsView({
   return (
     <div className="space-y-6">
       {/* Summary Cards - Exact same as loan officers page */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
         <div className="p-6 rounded-xl shadow-sm border" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)' }}>
           <div className="text-sm font-medium text-white">Total Leads</div>
           <div className="text-2xl font-bold text-white">{filteredLeads.length}</div>

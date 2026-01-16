@@ -49,15 +49,9 @@ const LoadingState: React.FC<LoadingStateProps> = ({
 export const DashboardLoadingState: React.FC<{ text?: string }> = ({ 
   text = '' 
 }) => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    minHeight: '400px',
-    flexDirection: 'column',
-    gap: '16px'
+  <div className='flex flex-col min-h-[400px] justify-center items-center gap-4 ' style={{ 
   }}>
-    <LoadingSpinner size="lg" text={text} showText={!!text} />
+    <LoadingSpinner className='mx-auto' size="lg" text={text} showText={!!text} />
   </div>
 );
 
@@ -69,6 +63,7 @@ export const PageLoadingState: React.FC<{ text?: string }> = ({
     text={text} 
     showText={!!text}
     fullScreen={true}
+    className='mx-auto'
   />
 );
 

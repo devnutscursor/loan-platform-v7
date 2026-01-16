@@ -188,9 +188,9 @@ export default function AdminActivitiesPage() {
   return (
     <RouteGuard allowedRoles={['company_admin']}>
       <DashboardLayout>
-        <div style={dashboard.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{
+        <div style={dashboard.card} className='!p-3 sm:!p-6'>
+          <div className='my-4 sm:my-0 px-4 sm:px-0' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h2 className='text-lg md:text-2xl' style={{
               fontSize: '24px',
               fontWeight: 'bold',
               color: '#005b7c',

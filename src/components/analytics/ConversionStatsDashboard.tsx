@@ -205,7 +205,7 @@ const ConversionStatsDashboard: React.FC<ConversionStatsDashboardProps> = ({
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
         <div className="p-6 rounded-lg shadow-sm border border-gray-200" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)' }}>
           <div className="flex items-center justify-between">
             <div>
@@ -264,7 +264,7 @@ const ConversionStatsDashboard: React.FC<ConversionStatsDashboardProps> = ({
       </div>
 
       {/* Conversion Rate Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="text-center">
             <p className="text-sm font-medium text-gray-600">Lead → Application</p>
