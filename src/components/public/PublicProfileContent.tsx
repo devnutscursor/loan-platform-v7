@@ -3,6 +3,7 @@
 import { useState, useRef, lazy, Suspense, useEffect } from 'react';
 import Icon, { icons } from '@/components/ui/Icon';
 import type { TabId } from '@/components/landingPage/LandingPageTabs';
+import SynclyFooter from '../ui/SynclyFooter';
 
 // Lazy load unified components
 const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
@@ -484,24 +485,8 @@ export default function PublicProfileContent({
               })()}
             </div>
 
-            {/* Footer - rounded bottom corners */}
-            <div 
-              className="overflow-hidden w-full"
-              style={{ 
-                borderBottomLeftRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                borderBottomRightRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-              }}
-            >
-              <footer className={`bg-gray-900 text-white py-6 w-full ${forceMobileViewport ? '' : '@[48rem]:py-8'}`}>
-                <div className="text-center px-4">
-                  <p className={`text-xs text-white opacity-90 ${forceMobileViewport ? '' : '@[48rem]:text-sm'}`}>
-                    © 2024 {companyName || profileData.company.name}™. All rights reserved. | NMLS Consumer Access
-                  </p>
-                  <p className={`text-xs text-white opacity-75 mt-2 ${forceMobileViewport ? '' : '@[48rem]:text-sm'}`}>
-                    {isPreview ? 'This is a template preview.' : 'This is an official public profile page.'}
-                  </p>
-                </div>
-              </footer>
+            <div className="relative z-10">
+              <SynclyFooter />
             </div>
           </div>
         </div>

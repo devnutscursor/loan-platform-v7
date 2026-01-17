@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { GridDistortionBackground } from '@/components/ui/GridDistortionBackground';
 import { LiquidChromeBackground } from '@/components/ui/LiquidChromeBackground';
 import { PrismaticBurstBackground } from '@/components/ui/PrismaticBurstBackground';
+import SynclyFooter from '@/components/ui/SynclyFooter';
 
 export default function HomePage() {
   return (
@@ -160,28 +161,9 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="py-20 relative z-10 bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="mb-8">
-                <span className="text-2xl md:text-3xl font-bold tracking-tight">
-                  <span className="bg-white bg-clip-text text-transparent">
-                    RateCaddy
-                  </span>
-                </span>
-            </div>
-            <p className="text-[#F7F1E9]/90 mb-16 text-xl max-w-3xl mx-auto font-light drop-shadow-md">
-              Building the future of loan officer marketing
-            </p>
-            <div className="border-t border-[#F7F1E9]/30 pt-12">
-              <p className="text-[#F7F1E9]/70 text-lg">
-                © 2024 Loan Officer Platform. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <div className="relative z-10">
+        <SynclyFooter />
+      </div>
     </div>
   );
 }
