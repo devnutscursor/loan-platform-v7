@@ -1,0 +1,32 @@
+.payment-calculator-left .title h2 {color:#fff}
+.calculate-view .btn-wrp .btn{color:#2b3642}
+.payment-tab-nav ul li a{color: #6c8971}
+.payment-tab-nav ul li.active a{color:#000}
+.payment-tab-nav ul li.active a::before{background-color:#5dc76f}
+.mortage-item-input label{color:rgba(255,255,255,0.8)!important;}
+.mortage-item-input label.active{color:#2b3642!important;}
+.calulate-form-item .mortage-item-input input, .calulate-form-item .mortage-item-input input[type=number], .calulate-form-item .mortage-item-input input[type=text]{color:rgba(255,255,255,0.8);}
+
+#veteran-affairs .btn-wrp .btn{color:#2b3642}
+.veteran-affairs-item-input label{color:rgba(255,255,255,0.8)!important;}
+.veteran-affairs-item-input label.active{color:#2b3642!important;}
+.calulate-form-item .veteran-affairs-item-input, .calulate-form-item .veteran-affairs-item-input input[type=number], .calulate-form-item .veteran-affairs-item-input input[type=text]{color:rgba(255,255,255,0.8);}
+
+#refinance-item .btn-wrp .btn{color:#2b3642} 
+#va-refinance .btn-wrp .btn{color:#2b3642} 
+#refinance-item label{color:rgba(255,255,255,0.8);}
+#refinance-item .mortage-item-input label{color:rgba(255,255,255,0.8)!important;}
+#refinance-item .mortage-item-input label.active{color:#2b3642!important;}
+#refinance-item .calulate-form-item input[type=number], #refinance-item .calulate-form-item input[type=text]{color:rgba(255,255,255,0.8);}
+#va-refinance .mortage-item-input label.active{color:#2b3642!important;}
+#va-refinance label{color:rgba(255,255,255,0.8);}
+#va-refinance .mortage-item-input label{color:rgba(255,255,255,0.8)!important;}
+#va-refinance .calulate-form-item input[type=number], #va-refinance .calulate-form-item input[type=text]{color:rgba(255,255,255,0.8);}
+.calculate-view .mortage-item-input h4, .original-mortgage h4{color:rgba(255,255,255,0.8);}
+.mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn input ~ .checkmark{border-color: #FFFFFF;}
+#va-refinance.calculate-view .mortage-item-input h4, .original-mortgage h4{color:rgba(255,255,255,0.8);}
+#va-refinance .mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn input ~ .checkmark{border-color: #FFFFFF;}
+.mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn input:checked ~ .checkmark{border-color: #2b3642;}
+.mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn .checkmark:after{background: #2b3642}
+#va-refinance .mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn input:checked ~ .checkmark{border-color: #2b3642;}
+#va-refinance .mortage-item-input.original-blank-space .btn-group-wrp .btn-group > .btn .checkmark:after{background: #2b3642}

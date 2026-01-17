@@ -1,0 +1,10 @@
+.syncly-mc-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+.syncly-mc-iframe {
+  width: 100%;
+  display: block;
+  border: 0;
+  /* height is managed by JS; initial height set inline from shortcode */
+}
