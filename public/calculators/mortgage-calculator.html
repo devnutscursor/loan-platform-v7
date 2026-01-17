@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Calculator</title>
+  <script>
+    // Build base URL dynamically from the current site
+    var baseUrl = window.location.origin + "/calculators/";
+    var version = new Date().toISOString().slice(0,10);
+
+    document.write(`
+      <link rel="stylesheet" href="${baseUrl}css/jquery-ui.css?ver=12" />
+      <link rel="stylesheet" href="${baseUrl}css/mortagage-calculator-chart.css?ver=${version}" />
+      <link rel="stylesheet" href="${baseUrl}css/mCustomScrollbar.css?ver=12" />
+      <link rel="stylesheet" href="${baseUrl}css/calculator-main.css?ver=${version}" />
+      <link rel="stylesheet" href="${baseUrl}css/custom-style.css?ver=${version}" />
+    `);
+  </script>
+</head>
+<body>
+  <div id="loan-calculator"></div>
+
+  <script>
+    var baseUrl = window.location.origin + "/calculators/";
+    var version = new Date().toISOString().slice(0,10);
+    
+    document.write(`
+      <script src="${baseUrl}js/loan-calculator.js?ver=${version}"><\/script>
+      <script src="${baseUrl}js/jquery.min.js?ver=112"><\/script>
+      <script src="${baseUrl}js/jquery-migrate.js?ver=112"><\/script>
+      <script src="${baseUrl}js/jquery-core.js?ver=112"><\/script>
+      <script src="${baseUrl}js/jquery-datepicker.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-chart.js?ver=${version}"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-waypoints.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-counterup.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-counto.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-oundedBarCharts.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-touch-punch.js"><\/script>
+      <script src="${baseUrl}js/jquery-mouse.js"><\/script>
+      <script src="${baseUrl}js/jquery-slider.js"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-draggable.js"><\/script>
+      <script src="${baseUrl}js/jquery-mCustomScrollbar.js"><\/script>
+      <script src="${baseUrl}js/custom-script.js?ver=${version}"><\/script>
+      <script src="${baseUrl}js/mortgage-calculator-main.js?ver=${version}"><\/script>
+    `);
+  </script>
+
+  <!-- Auto-height snippet for iframe communication -->
+  <script>
+    (function(){
+      function postHeight(){
+        try{
+          var h = Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight,
+            document.documentElement.offsetHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight
+          );
+          parent.postMessage({ type: 'SYNC_MCALC_HEIGHT', height: h }, '*');
+        }catch(e){}
+      }
+      window.addEventListener('load', function(){
+        postHeight();
+        setTimeout(postHeight, 200);
+        setTimeout(postHeight, 800);
+      });
+      window.addEventListener('resize', postHeight);
+      document.addEventListener('DOMContentLoaded', postHeight);
+      if ('ResizeObserver' in window) {
+        var ro = new ResizeObserver(postHeight);
+        ro.observe(document.body);
+        ro.observe(document.documentElement);
+      }
+    })();
+  </script>
+</body>
+</html>
+

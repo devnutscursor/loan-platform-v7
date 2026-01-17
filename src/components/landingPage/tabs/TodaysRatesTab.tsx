@@ -277,9 +277,9 @@ export default function TodaysRatesTab({
         }}
       >
         <p>
-          * Rates shown are for illustrative purposes and may not reflect your actual rate. 
-          Your rate will depend on your specific circumstances including credit score, loan amount, 
-          property type, and other factors. Contact us for a personalized rate quote.
+          Disclosures & Disclaimers:
+
+          Rates, APRs, and terms are estimates only and subject to change without notice. All quotes are based on the data you provided, and additional closing costs and fees may apply. This is not a commitment to lend. All loans are subject to final underwriting approval and verifications. This is not a "Loan Estimate" as defined by the CFPB.
         </p>
       </div>
     </div>

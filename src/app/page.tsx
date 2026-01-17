@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { GridDistortionBackground } from '@/components/ui/GridDistortionBackground';
 import { LiquidChromeBackground } from '@/components/ui/LiquidChromeBackground';
 import { PrismaticBurstBackground } from '@/components/ui/PrismaticBurstBackground';
+import SynclyFooter from '@/components/ui/SynclyFooter';
 
 export default function HomePage() {
   return (
@@ -16,13 +17,11 @@ export default function HomePage() {
           <div className="flex justify-between items-center py-8">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Image
-                  src="/images/logos/LoanOffD.png"
-                  alt="Loan Officer Platform"
-                  width={160}
-                  height={32}
-                  className="h-auto max-h-[32px] w-auto"
-                />
+                <span className="text-2xl md:text-3xl font-bold tracking-tight">
+                  <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
+                    RateCaddy
+                  </span>
+                </span>
               </div>
             </div>
             <nav className="hidden md:flex space-x-10">
@@ -54,7 +53,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="relative z-10 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-10 pt-20 md:pt-36">
           <div className="text-center">
             <h1 className="text-6xl md:text-8xl font-bold text-[#F7F1E9] mb-12 leading-tight drop-shadow-lg">
               Build Stunning Landing Pages
@@ -82,9 +81,9 @@ export default function HomePage() {
         </div>
 
         {/* Features Section */}
-        <section id="features" className="py-32 relative z-10">
+        <section id="features" className="py-8 md:py-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-24">
+            <div className="text-center mb-10 md:mb-16">
               <h2 className="text-5xl font-bold text-[#F7F1E9] mb-8 drop-shadow-lg">
                 Everything You Need to Succeed
               </h2>
@@ -140,7 +139,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-32 relative z-10">
+        <section className="py-8 md:py-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-20 text-center relative overflow-hidden shadow-3xl border border-[#F7F1E9]/40">
               <div className="absolute inset-0 bg-gradient-to-br from-[#01bcc6]/10 to-[#008eab]/10"></div>
@@ -162,30 +161,9 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="py-20 relative z-10 bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="mb-8">
-              <Image
-                src="/images/logos/LoanOffD.png"
-                alt="Loan Officer Platform"
-                width={200}
-                height={40}
-                className="h-auto max-h-[40px] w-auto mx-auto"
-              />
-            </div>
-            <p className="text-[#F7F1E9]/90 mb-16 text-xl max-w-3xl mx-auto font-light drop-shadow-md">
-              Building the future of loan officer marketing
-            </p>
-            <div className="border-t border-[#F7F1E9]/30 pt-12">
-              <p className="text-[#F7F1E9]/70 text-lg">
-                © 2024 Loan Officer Platform. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <div className="relative z-10">
+        <SynclyFooter />
+      </div>
     </div>
   );
 }

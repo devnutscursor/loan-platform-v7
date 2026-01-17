@@ -9,6 +9,7 @@ import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase/client';
+import SynclyFooter from '@/components/ui/SynclyFooter';
 
 /**
  * Mortgage Rate Comparison Component
@@ -215,11 +216,22 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   };
 
   const handleQuestionnaireBack = () => {
+    // If email verification is showing, hide it and return to questionnaire
+    if (showEmailVerification) {
+      setShowEmailVerification(false);
+      setEmailVerificationStep('email');
+      setEmail('');
+      setOtpCode('');
+      setEmailError(null);
+      setOtpError(null);
+      return;
+    }
+    
+    // Otherwise, go back in questionnaire step history
     if (stepHistory.length > 1) {
       const newHistory = stepHistory.slice(0, -1);
       setStepHistory(newHistory);
       setCurrentStep(newHistory[newHistory.length - 1]);
-      // Don't reset email verification when going back - keep it visible if it was shown
     }
   };
 
@@ -1199,16 +1211,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         </main>
 
         {/* Footer */}
-        {showFooter && (
-          <footer className="bg-white border-t mt-16">
-            <div className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
-              <div className="text-center text-sm" style={{ color: colors.text }}>
-                <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
-                <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
-              </div>
-            </div>
-          </footer>
-        )}
+        {showFooter && <SynclyFooter />}
       </div>
     );
   }
@@ -1250,7 +1253,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         <main className="max-w-4xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
           <div className="max-w-3xl sm:max-w-full mx-auto">
             {/* Back Button */}
-            {currentStep !== 'landing' && (
+            {(currentStep !== 'landing' || showEmailVerification) && (
               <div className="mb-6">
                 <Button 
                   onClick={handleQuestionnaireBack}
@@ -1285,7 +1288,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                       <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
                         Email Address <span style={{ color: 'red' }}>*</span>
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col @lg:flex-row gap-2">
                         <input
                           type="email"
                           value={email}
@@ -1305,7 +1308,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                           onClick={handleSendOTP}
                           disabled={isSendingOTP || !email.trim()}
                           {...getTemplateButtonStyles('secondary')}
-                          className="h-10 @sm:h-12"
+                          className="h-10 @sm:h-12 px-4 py-2"
                         >
                           {isSendingOTP ? 'Sending...' : 'Send Code'}
                         </Button>
@@ -1326,7 +1329,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                       <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
                         Enter Verification Code
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col @lg:flex-row gap-2">
                         <input
                           type="text"
                           inputMode="numeric"
@@ -1349,7 +1352,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                           onClick={handleVerifyOTP}
                           disabled={isVerifyingOTP || otpCode.length !== 6}
                           {...getTemplateButtonStyles('secondary')}
-                          className="h-10 @sm:h-12"
+                          className="h-10 @sm:h-12 px-4 py-2"
                         >
                           {isVerifyingOTP ? 'Verifying...' : 'Verify'}
                         </Button>
@@ -1393,16 +1396,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         </main>
 
         {/* Footer */}
-        {showFooter && (
-          <footer className="bg-white border-t mt-16">
-            <div className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
-              <div className="text-center text-sm" style={{ color: colors.text }}>
-                <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
-                <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
-              </div>
-            </div>
-          </footer>
-        )}
+        {showFooter && <SynclyFooter />}
       </div>
     );
   }
@@ -1501,17 +1495,25 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         />
       </main>
 
+      {/* Disclaimer */}
+      <div 
+        className="text-xs text-center p-4 rounded-lg mt-6"
+        style={{ 
+          backgroundColor: colors.background,
+          border: `1px solid ${colors.border}`,
+          borderRadius: `${layout.borderRadius}px`,
+          color: colors.textSecondary 
+        }}
+      >
+        <p>
+          Disclosures & Disclaimers:
+
+          Rates, APRs, and terms are estimates only and subject to change without notice. All quotes are based on the data you provided, and additional closing costs and fees may apply. This is not a commitment to lend. All loans are subject to final underwriting approval and verifications. This is not a "Loan Estimate" as defined by the CFPB.
+        </p>
+      </div>
+
       {/* Footer */}
-      {showFooter && (
-        <footer className="bg-white border-t mt-16">
-          <div className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
-            <div className="text-center text-sm" style={{ color: colors.text }}>
-              <p>&copy; 2024 Mortgage Rate Comparison. All rights reserved.</p>
-              <p className="mt-2">Rates are subject to change and may vary based on individual circumstances.</p>
-            </div>
-          </div>
-          </footer>
-        )}
+      {showFooter && <SynclyFooter />}
       </div>
   );
 });
