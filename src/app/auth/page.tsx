@@ -202,13 +202,11 @@ function AuthPageContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <Image
-                src="/images/logos/LoanOffD.png"
-                alt="Loan Officer Platform"
-                width={140}
-                height={28}
-                className="h-auto max-h-[28px] w-auto"
-              />
+              <span className="text-2xl md:text-3xl font-bold tracking-tight">
+                  <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
+                    RateCaddy
+                  </span>
+                </span>
             </div>
             <div className="flex items-center space-x-4">
               <button

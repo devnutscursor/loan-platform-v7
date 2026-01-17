@@ -139,17 +139,11 @@ const StaticHeader = memo(function StaticHeader() {
           <div style={dashboard.navInner}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexShrink: 0 }}>
-                <Image
-                  src="/images/logos/LoanOffW.png"
-                  alt="Loan Officer Platform"
-                  width={100}
-                  height={20}
-                  style={{
-                    height: 'auto',
-                    maxHeight: '20px',
-                    width: 'auto'
-                  }}
-                />
+                <span className="text-2xl md:text-3xl font-bold tracking-tight">
+                    <span className="bg-white bg-clip-text text-transparent">
+                      RateCaddy
+                    </span>
+                </span>
               </div>
             </div>
             <div style={dashboard.userInfo}>
@@ -243,17 +237,11 @@ const StaticHeader = memo(function StaticHeader() {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <Image
-                    src="/images/logos/LoanOffW.png"
-                    alt="Loan Officer Platform"
-                    width={100}
-                    height={20}
-                    style={{
-                      height: 'auto',
-                      maxHeight: '20px',
-                      width: 'auto'
-                    }}
-                  />
+                  <span className="text-2xl md:text-3xl font-bold tracking-tight">
+                    <span className="bg-white bg-clip-text text-transparent">
+                      RateCaddy
+                    </span>
+                  </span>
                 </button>
               </div>
               
