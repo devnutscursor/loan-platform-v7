@@ -1066,3 +1066,16 @@ button[class*="hover:"]:not([style*="border-radius"]) {
     border-color: rgba(255, 255, 255, 0.3);
   }
 }
+
+/* Quick Actions mobile responsiveness */
+@media (max-width: 640px) {
+  .quick-action-btn {
+    padding: 7px 13px !important;
+    font-size: 14px !important;
+    min-width: auto !important;
+  }
+  .quick-action-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}

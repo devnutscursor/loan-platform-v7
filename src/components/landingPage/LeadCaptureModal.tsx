@@ -309,14 +309,14 @@ button: {
           style={{ fontFamily: typography.fontFamily }}
         >
           <div 
-            className={`${classes.card.container} max-w-lg w-full max-h-[90vh] overflow-y-auto`}
+            className={`${classes.card.container} max-w-lg w-full max-h-[90vh] flex flex-col`}
             style={{ 
               backgroundColor: colors.background,
               borderRadius: `${layout.borderRadius}px`
             }}
           >
             {/* Header */}
-            <div className={`${classes.card.header}`} style={{ borderBottomColor: colors.border }}>
+            <div className={`${classes.card.header} flex-shrink-0`} style={{ borderBottomColor: colors.border }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className={`${classes.heading.h2}`} style={{ color: colors.text }}>
@@ -343,7 +343,7 @@ button: {
 
             {/* Loan Product Summary */}
             <div 
-              className="p-4 border-b"
+              className="p-4 border-b flex-shrink-0"
               style={{ 
                 backgroundColor: `${colors.primary}10`,
                 borderBottomColor: colors.border,
@@ -354,39 +354,42 @@ button: {
                 Selected Loan Product
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                <div className={`${classes.body.small}`}>
+                <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
                   <span style={{ color: colors.textSecondary }}>Lender:</span>
-                  <span className="ml-1 font-medium" style={{ color: colors.text }}>
+                  <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
                     {loanProduct.lenderName}
                   </span>
                 </div>
-                <div className={`${classes.body.small}`}>
+                <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
                   <span style={{ color: colors.textSecondary }}>Program:</span>
-                  <span className="ml-1 font-medium" style={{ color: colors.text }}>
+                  <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
                     {loanProduct.loanProgram}
                   </span>
                 </div>
-                <div className={`${classes.body.small}`}>
+                <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
                   <span style={{ color: colors.textSecondary }}>Rate:</span>
-                  <span className="ml-1 font-medium" style={{ color: colors.text }}>
+                  <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
                     {loanProduct.interestRate.toFixed(3)}%
                   </span>
                 </div>
-                <div className={`${classes.body.small}`}>
+                <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
                   <span style={{ color: colors.textSecondary }}>Monthly Payment:</span>
-                  <span className="ml-1 font-medium" style={{ color: colors.text }}>
+                  <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
                     ${loanProduct.monthlyPayment.toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Form */}
+            {/* Form - Scrollable content */}
             <form 
               onSubmit={handleSubmit} 
-              className={`${classes.card.body}`}
-              style={{ padding: `${layout.padding.large}px` }}
+              className="flex flex-col flex-1 min-h-0"
             >
+              <div 
+                className={`${classes.card.body} flex-1 overflow-y-auto`}
+                style={{ padding: `${layout.padding.large}px` }}
+              >
               <div className="mb-6">
                 <h3 className={`${classes.heading.h5} mb-4`} style={{ color: colors.text }}>
                   Your Information
@@ -519,9 +522,16 @@ button: {
                   </p>
                 </div>
               )}
+              </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-end gap-3">
+              {/* Submit Button - Sticky at bottom */}
+              <div 
+                className="flex justify-end gap-3 p-4 border-t flex-shrink-0 sticky bottom-0"
+                style={{
+                  backgroundColor: colors.background,
+                  borderTopColor: colors.border
+                }}
+              >
                 <button
                   type="button"
                   onClick={handleClose}
@@ -544,7 +554,7 @@ button: {
                     }
                   }}
                 >
-                  {content.ctaSecondary}
+                  Cancel
                 </button>
                 <button
                   type="submit"

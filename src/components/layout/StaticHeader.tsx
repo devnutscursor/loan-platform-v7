@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { dashboard } from '@/theme/theme';
 import { icons } from '@/components/ui/Icon';
 import { supabase } from '@/lib/supabase/client';
+import { QuickActions } from '@/components/dashboard/QuickActions';
 
 // No props interface needed - component gets data from useAuth
 
@@ -113,6 +114,41 @@ const StaticHeader = memo(function StaticHeader() {
         return '/officers/dashboard';
       default:
         return '/officers/dashboard';
+    }
+  }, [stableUserData.role]);
+
+  // Get quick actions based on user role
+  const quickActions = useMemo(() => {
+    switch (stableUserData.role) {
+      case 'super_admin':
+        return [
+          { label: 'Companies', icon: 'building' as keyof typeof icons, href: '/super-admin/companies' },
+          { label: 'Loan Officers', icon: 'profile' as keyof typeof icons, href: '/super-admin/officers' },
+          { label: 'Leads Insights', icon: 'trendingUp' as keyof typeof icons, href: '/super-admin/insights' },
+          { label: 'Conversion Stats', icon: 'calculator' as keyof typeof icons, href: '/super-admin/stats' },
+          { label: 'Settings', icon: 'settings' as keyof typeof icons, href: '/super-admin/settings' },
+          { label: 'Activities', icon: 'activity' as keyof typeof icons, href: '/super-admin/activities' },
+        ];
+      case 'company_admin':
+        return [
+          { label: 'Loan Officers', icon: 'profile' as keyof typeof icons, href: '/admin/loanofficers' },
+          { label: 'Leads Insights', icon: 'trendingUp' as keyof typeof icons, href: '/admin/insights' },
+          { label: 'Conversion Stats', icon: 'calculator' as keyof typeof icons, href: '/admin/stats' },
+          { label: 'Settings', icon: 'settings' as keyof typeof icons, href: '/admin/settings' },
+          { label: 'Activities', icon: 'activity' as keyof typeof icons, href: '/admin/activities' },
+        ];
+      case 'employee':
+        return [
+          { label: 'Leads', icon: 'document' as keyof typeof icons, href: '/officers/leads', minWidth: 120 },
+          { label: 'Profile', icon: 'profile' as keyof typeof icons, href: '/officers/profile', minWidth: 120 },
+          { label: 'Customizer', icon: 'edit' as keyof typeof icons, href: '/officers/customizer', minWidth: 120 },
+          { label: "Today's Rates", icon: 'trendingUp' as keyof typeof icons, href: '/officers/todays-rates', minWidth: 140 },
+          { label: 'Content Management', icon: 'book' as keyof typeof icons, href: '/officers/content-management', minWidth: 160 },
+          { label: 'Settings', icon: 'settings' as keyof typeof icons, href: '/officers/settings', minWidth: 120 },
+          { label: 'Activities', icon: 'activity' as keyof typeof icons, href: '/officers/activities', minWidth: 120 },
+        ];
+      default:
+        return [];
     }
   }, [stableUserData.role]);
 
@@ -357,8 +393,9 @@ const StaticHeader = memo(function StaticHeader() {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 z-50"
+          className="md:hidden fixed inset-0"
           style={{
+            zIndex: 9999,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             animation: 'fadeIn 0.2s ease-in-out'
           }}
@@ -475,6 +512,27 @@ const StaticHeader = memo(function StaticHeader() {
                   style: { color: '#9ca3af' } 
                 })}
               </button>
+
+              {/* Quick Actions */}
+              {quickActions.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <QuickActions
+                    title="Quick Actions"
+                    actions={quickActions}
+                    wrapper="card"
+                    gap={12}
+                    vertical={true}
+                    onActionClick={() => setIsMobileMenuOpen(false)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      boxShadow: 'none',
+                    }}
+                    className="mobile-quick-actions"
+                  />
+                </div>
+              )}
 
               {/* Sign Out Button */}
               <button

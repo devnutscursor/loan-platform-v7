@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import { Phone, Mail, Check, Facebook, Instagram, Linkedin, Twitter, Calendar, ChevronRight, MessageCircle } from 'lucide-react';
+import ContactModal from '@/components/landingPage/ContactModal';
 
 interface UnifiedHeroSectionProps {
   officerName?: string;
@@ -99,6 +100,7 @@ export default function UnifiedHeroSection({
   onGetRates
 }: UnifiedHeroSectionProps) {
   const { user, loading: authLoading } = useAuth();
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   // Helper functions to get customized values
   const getOfficerName = () => {
@@ -483,8 +485,8 @@ export default function UnifiedHeroSection({
                     <ChevronRight size={16} />
                     <span>{getApplyNowText()}</span>
                   </button>
-                  <a
-                    href="#contact"
+                  <button
+                    onClick={() => setIsContactModalOpen(true)}
                     className="hero-btn hero-btn-ghost px-4 py-2 text-sm"
                     style={{
                       color: colors.heroTextColor || '#ffffff',
@@ -493,7 +495,7 @@ export default function UnifiedHeroSection({
                   >
                     <Mail size={16} />
                     <span>Contact</span>
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -778,8 +780,8 @@ export default function UnifiedHeroSection({
               >
                 {getApplyNowText()}
               </button>
-              <a
-                href="#contact"
+              <button
+                onClick={() => setIsContactModalOpen(true)}
                 className="hero-btn hero-btn-ghost flex-1 py-2 px-4 text-sm font-semibold text-center"
                 style={{
                   color: colors.heroTextColor || '#ffffff',
@@ -787,11 +789,22 @@ export default function UnifiedHeroSection({
                 }}
               >
                 Contact
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        officerEmail={getEmail()}
+        officerName={getOfficerName()}
+        template={template}
+        isPublic={isPublic}
+        publicTemplateData={publicTemplateData}
+      />
     </section>
   );
 }

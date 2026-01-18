@@ -240,17 +240,18 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     setQuestionnaireAnswers(allAnswers);
     
     // For public profile pages, require email verification before proceeding
-    // This applies to both authenticated and unauthenticated users for testing purposes
+    // Skip email verification for authenticated loan officers (they use mortech_api_calls tracking)
     // isPublic means it's a public profile page
     // !verifiedEmail means email hasn't been verified yet
+    // !user means user is not authenticated (email verification only needed for unauthenticated users)
     console.log('🔍 Email verification check:', {
       isPublic,
       user: !!user,
       verifiedEmail,
-      shouldShow: isPublic && !verifiedEmail
+      shouldShow: isPublic && !verifiedEmail && !user
     });
     
-    if (isPublic && !verifiedEmail) {
+    if (isPublic && !verifiedEmail && !user) {
       console.log('✅ Showing email verification step');
       setShowEmailVerification(true);
       return;
