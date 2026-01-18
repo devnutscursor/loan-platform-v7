@@ -30,13 +30,13 @@ export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
 
   return (
     <footer 
-      className={`bg-[#101628] text-white py-8 px-4 sm:px-6 lg:px-8 ${className}`}
+      className={`bg-[#101628] text-white py-8 px-4 @sm:px-6 @lg:px-8 ${className}`}
       style={{ backgroundColor: '#1e3a5f' }}
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+      <div className="max-w-7xl mx-auto" style={{ containerType: 'inline-size' }}>
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-4 gap-8 mb-8">
           {/* Company Branding */}
-          <div className="lg:col-span-1">
+          <div className="@lg:col-span-1">
             <h2 className="text-2xl font-bold text-[#70a3f3] mb-4">RateCaddy</h2>
             
             {/* Follow Us Section */}
