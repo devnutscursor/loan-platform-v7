@@ -663,23 +663,23 @@ export default function TodaysRatesPage() {
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                               <p className="text-xs text-gray-500">Loan Program</p>
-                              <p className="text-sm font-medium">{rate.loanProgram}</p>
+                              <p className="text-sm font-medium dark:text-gray-900">{rate.loanProgram}</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500">Interest Rate</p>
-                              <p className="text-sm font-medium">{rate.interestRate.toFixed(3)}%</p>
+                              <p className="text-sm font-medium dark:text-gray-900">{rate.interestRate.toFixed(3)}%</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500">APR</p>
-                              <p className="text-sm font-medium">{rate.apr.toFixed(3)}%</p>
+                              <p className="text-sm font-medium dark:text-gray-900">{rate.apr.toFixed(3)}%</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500">Monthly Payment</p>
-                              <p className="text-sm font-medium">${rate.monthlyPayment.toLocaleString()}</p>
+                              <p className="text-sm font-medium dark:text-gray-900">${rate.monthlyPayment.toLocaleString()}</p>
                             </div>
                           </div>
                           <Button
-                            variant={isRateSelected(rate) ? "secondary" : "primary"}
+                            variant={"primary"}
                             onClick={() => handleSelectRateClick(rate)}
                             disabled={isRateSelected(rate)}
                             className="w-full md:w-auto"
@@ -758,19 +758,19 @@ export default function TodaysRatesPage() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                               <div>
                                 <p className="text-xs text-gray-500">Loan Program</p>
-                                <p className="text-sm font-medium">{rate.loanProgram}</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.loanProgram}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500">Interest Rate</p>
-                                <p className="text-sm font-medium">{rate.interestRate.toFixed(3)}%</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.interestRate.toFixed(3)}%</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500">APR</p>
-                                <p className="text-sm font-medium">{rate.apr.toFixed(3)}%</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.apr.toFixed(3)}%</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500">Monthly Payment</p>
-                                <p className="text-sm font-medium">${rate.monthlyPayment.toLocaleString()}</p>
+                                <p className="text-sm font-medium dark:text-gray-900">${rate.monthlyPayment.toLocaleString()}</p>
                               </div>
                             </div>
                             {/* Search Parameters */}

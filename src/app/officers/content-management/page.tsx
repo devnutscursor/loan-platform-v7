@@ -789,7 +789,7 @@ export default function ContentManagementPage() {
   return (
     <DashboardLayout>
       <div className="p-0 sm:p-6">
-        <h1 className="text-3xl font-bold mb-6">Content Management</h1>
+        <h1 className="text-3xl font-bold mb-6 dark:text-gray-900">Content Management</h1>
 
         {/* Tabs */}
         <div className="mb-6">
@@ -821,7 +821,7 @@ export default function ContentManagementPage() {
           <div className="space-y-6">
             <SpotlightCard variant="default" className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Add FAQs</h2>
+                <h2 className="text-xl font-bold dark:text-gray-900">Add FAQs</h2>
                 <button
                   type="button"
                   onClick={addFaqToForm}
@@ -839,7 +839,7 @@ export default function ContentManagementPage() {
                   {faqForm.map((faq, index) => (
                     <div key={index} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-4">
-                        <h3 className="font-semibold">FAQ {index + 1}</h3>
+                        <h3 className="font-semibold dark:text-gray-900">FAQ {index + 1}</h3>
                         <button
                           type="button"
                           onClick={() => removeFaqFromForm(index)}
@@ -900,7 +900,7 @@ export default function ContentManagementPage() {
 
             {/* Existing FAQs */}
             <SpotlightCard variant="default" className="p-6">
-              <h2 className="text-xl font-bold mb-4">Existing FAQs ({faqs.length})</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Existing FAQs ({faqs.length})</h2>
               {faqs.length === 0 ? (
                 <p className="text-gray-500">No FAQs yet. Add your first FAQ above.</p>
               ) : (
@@ -954,7 +954,7 @@ export default function ContentManagementPage() {
                         <>
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <h3 className="font-semibold">{faq.question}</h3>
+                              <h3 className="font-semibold dark:text-gray-900">{faq.question}</h3>
                               <p className="text-gray-600 mt-1">{faq.answer}</p>
                               <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                                 {categories.find(c => c.id === faq.category)?.name || faq.category}
@@ -991,7 +991,7 @@ export default function ContentManagementPage() {
         {activeTab === 'videos' && (
           <div className="space-y-6">
             <SpotlightCard variant="default" className="p-6">
-              <h2 className="text-xl font-bold mb-4">Add Video</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Add Video</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Video File * (Max 100MB)</label>
@@ -1081,7 +1081,7 @@ export default function ContentManagementPage() {
 
             {/* Existing Videos */}
             <SpotlightCard variant="default" className="p-6">
-              <h2 className="text-xl font-bold mb-4">Existing Videos ({videos.length})</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Existing Videos ({videos.length})</h2>
               {videos.length === 0 ? (
                 <p className="text-gray-500">No videos yet. Upload your first video above.</p>
               ) : (
@@ -1179,7 +1179,7 @@ export default function ContentManagementPage() {
         {activeTab === 'guides' && (
           <div className="space-y-6">
             <SpotlightCard variant="default" className="p-6">
-              <h2 className="text-xl font-bold mb-4">Add Guide</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Add Guide</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">File * (PDF, DOC, DOCX, TXT, RTF - Max 5MB)</label>
@@ -1246,7 +1246,7 @@ export default function ContentManagementPage() {
 
             {/* Existing Guides */}
             <SpotlightCard variant="default" className="p-6">
-              <h2 className="text-xl font-bold mb-4">Existing Guides ({guides.length})</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Existing Guides ({guides.length})</h2>
               {guides.length === 0 ? (
                 <p className="text-gray-500">No guides yet. Upload your first guide above.</p>
               ) : (
@@ -1304,7 +1304,7 @@ export default function ContentManagementPage() {
                       ) : (
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold">{guide.name}</h3>
+                            <h3 className="font-semibold dark:text-gray-900">{guide.name}</h3>
                             <p className="text-sm text-gray-600 mt-1">{guide.file_name}</p>
                             <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                               {categories.find(c => c.id === guide.category)?.name || guide.category}
@@ -1348,7 +1348,7 @@ export default function ContentManagementPage() {
         {deletingFaq && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold mb-4">Delete FAQ</h3>
+              <h3 className="text-lg font-bold mb-4 dark:text-gray-900">Delete FAQ</h3>
               <p className="mb-6">Are you sure you want to delete this FAQ? This action cannot be undone.</p>
               <div className="flex gap-2 justify-end">
                 <button
@@ -1376,7 +1376,7 @@ export default function ContentManagementPage() {
         {deletingVideo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold mb-4">Delete Video</h3>
+              <h3 className="text-lg font-bold mb-4 dark:text-gray-900">Delete Video</h3>
               <p className="mb-6">Are you sure you want to delete this video? This action cannot be undone.</p>
               <div className="flex gap-2 justify-end">
                 <button
@@ -1404,7 +1404,7 @@ export default function ContentManagementPage() {
         {deletingGuide && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold mb-4">Delete Guide</h3>
+              <h3 className="text-lg font-bold mb-4 dark:text-gray-900">Delete Guide</h3>
               <p className="mb-6">Are you sure you want to delete this guide? This action cannot be undone.</p>
               <div className="flex gap-2 justify-end">
                 <button

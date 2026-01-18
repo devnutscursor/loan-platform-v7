@@ -23,6 +23,9 @@ interface QuickActionsProps {
   className?: string;
   style?: React.CSSProperties;
   gap?: number;
+  onActionClick?: () => void;
+  noWrap?: boolean;
+  vertical?: boolean;
 }
 
 export function QuickActions({
@@ -32,6 +35,9 @@ export function QuickActions({
   className,
   style,
   gap = wrapper === 'card' ? 16 : 12,
+  onActionClick,
+  noWrap = false,
+  vertical = false,
 }: QuickActionsProps) {
   const router = useRouter();
   const defaultMinWidth = 100;
@@ -48,18 +54,23 @@ export function QuickActions({
       >
         {title}
       </h3>
-      <div className='py-2' style={{ display: 'flex', gap: `${gap}px`, overflowX: 'auto', overflowY: 'hidden' }}>
+      <div className='py-2' style={{ display: 'flex', flexDirection: vertical ? 'column' : 'row', gap: `${gap}px`, flexWrap: noWrap ? 'nowrap' : 'wrap', overflowX: noWrap && !vertical ? 'auto' : 'visible' }}>
         {actions.map(({ label, icon, href, minWidth }) => (
           <Button
             key={href}
             variant="secondary"
             size="md"
-            onClick={() => router.push(href)}
+            onClick={() => {
+              onActionClick?.();
+              router.push(href);
+            }}
+            className="quick-action-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              minWidth: `${minWidth ?? defaultMinWidth}px`,
+              gap: '6px',
+              minWidth: vertical ? '100%' : `${minWidth ?? defaultMinWidth}px`,
+              width: vertical ? '100%' : 'auto',
               flexShrink: 0,
               padding: '8px 16px',
               backgroundColor: 'white',
@@ -69,6 +80,7 @@ export function QuickActions({
               borderRadius: '16px',
               transition: 'all 0.2s ease-in-out',
               cursor: 'pointer',
+              justifyContent: vertical ? 'flex-start' : 'center',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(1, 188, 198, 0.05)';
