@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message: 'Validation failed',
-          errors: validationResult.error.errors.map(err => ({
+          errors: validationResult.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message: 'Invalid request data',
-          errors: error.errors.map(err => ({
+          errors: error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
           })),
