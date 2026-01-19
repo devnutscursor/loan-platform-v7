@@ -141,8 +141,30 @@ export default function ApplyNowTab({
   const [applicationType, setApplicationType] = useState<'new' | 'existing'>('new');
   const [showIframe, setShowIframe] = useState(false);
 
+  // Extract applyNowLink from headerModifications
+  const applyNowLink = templateData?.template?.headerModifications?.applyNowLink;
+
   const handleStartApplication = () => {
-    setShowIframe(true);
+    // If applyNowLink is provided, open it in a new tab
+    if (applyNowLink && applyNowLink.trim()) {
+      try {
+        // Basic URL validation - ensure it starts with http:// or https://
+        const url = applyNowLink.trim();
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+          // If no protocol, prepend https://
+          window.open(`https://${url}`, '_blank', 'noopener,noreferrer');
+        }
+      } catch (error) {
+        console.error('Error opening apply now link:', error);
+        // Fallback to iframe if URL opening fails
+        setShowIframe(true);
+      }
+    } else {
+      // No link provided - maintain current behavior (show iframe)
+      setShowIframe(true);
+    }
   };
 
   const handleExternalRedirect = () => {
