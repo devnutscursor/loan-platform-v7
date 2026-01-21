@@ -6,7 +6,6 @@ import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
 import { supabase } from '@/lib/supabase/client';
-import MortgageCalculatorModal from '@/components/calculators/MortgageCalculatorModal';
 
 interface Video {
   id: string;
@@ -171,7 +170,6 @@ button: {
   const [videoDataMap, setVideoDataMap] = useState<Map<string, any>>(new Map()); // Store full video data with URLs
   const [loadingContent, setLoadingContent] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Mock data as fallback
   const mockVideos: Video[] = [
@@ -459,33 +457,13 @@ button: {
     <div className={`w-full ${className}`}>
       {/* Header */}
       <div className={`${classes.card.header}`}>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-          <div>
-            <h2 className={`${classes.heading.h2}`}>
-              Learning Center
-            </h2>
-            <p className={`${classes.body.base}`}>
-              Educational resources to help you navigate the home buying process
-            </p>
-          </div>
-          <button
-            onClick={() => setIsCalculatorOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 font-medium transition-all duration-200 shadow-sm hover:shadow-md w-full md:w-auto"
-            style={{
-              backgroundColor: colors.primary,
-              color: colors.background,
-              borderRadius: `${layout.borderRadius}px`
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = colors.secondary;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = colors.primary;
-            }}
-          >
-            <Icon name="calculator" size={20} color={colors.background} />
-            <span>Mortgage Calculator</span>
-          </button>
+        <div>
+          <h2 className={`${classes.heading.h2}`}>
+            Learning Center
+          </h2>
+          <p className={`${classes.body.base}`}>
+            Educational resources to help you navigate the home buying process
+          </p>
         </div>
       </div>
 
@@ -901,12 +879,6 @@ button: {
           </div>
         </div>
       )}
-
-      {/* Mortgage Calculator Modal */}
-      <MortgageCalculatorModal
-        isOpen={isCalculatorOpen}
-        onClose={() => setIsCalculatorOpen(false)}
-      />
     </div>
   );
 }
