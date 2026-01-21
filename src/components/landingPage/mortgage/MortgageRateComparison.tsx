@@ -148,10 +148,15 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   });
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [emailVerificationStep, setEmailVerificationStep] = useState<'email' | 'verify' | 'verified'>('email');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+  const [isCreatingLead, setIsCreatingLead] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   
@@ -220,8 +225,12 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     if (showEmailVerification) {
       setShowEmailVerification(false);
       setEmailVerificationStep('email');
+      setName('');
+      setPhone('');
       setEmail('');
       setOtpCode('');
+      setNameError(null);
+      setPhoneError(null);
       setEmailError(null);
       setOtpError(null);
       return;
@@ -267,10 +276,96 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     setShowLanding(false);
   };
   
+  // Create lead function
+  const createLead = async () => {
+    // Get userId and companyId
+    let leadUserId: string | undefined;
+    let leadCompanyId: string | undefined;
+
+    if (isPublic && publicTemplateData?.profileData) {
+      leadUserId = publicTemplateData.profileData.user.id;
+      leadCompanyId = publicTemplateData.profileData.company.id;
+    } else if (userId && companyId) {
+      leadUserId = userId;
+      leadCompanyId = companyId;
+    }
+
+    if (!leadUserId || !leadCompanyId) {
+      console.warn('Missing user or company information for lead creation');
+      return;
+    }
+
+    // Split name into firstName and lastName
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || 'User';
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: email.trim(),
+          phone: phone.trim(),
+          userId: leadUserId,
+          companyId: leadCompanyId,
+          source: 'email_verification',
+          loanDetails: {
+            productId: '',
+            lenderName: '',
+            loanProgram: '',
+            loanType: '',
+            loanTerm: 0,
+            interestRate: 0,
+            apr: 0,
+            monthlyPayment: 0,
+            fees: 0,
+            points: 0,
+            credits: 0,
+            lockPeriod: 0,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to create lead:', errorText);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Lead created successfully');
+      }
+    } catch (error) {
+      console.error('Error creating lead:', error);
+    }
+  };
+
   // Email verification handlers
   const handleSendOTP = async () => {
+    setNameError(null);
+    setPhoneError(null);
     setEmailError(null);
     
+    // Validate name
+    if (!name.trim()) {
+      setNameError('Name is required');
+      return;
+    }
+
+    // Validate phone
+    if (!phone.trim()) {
+      setPhoneError('Phone number is required');
+      return;
+    }
+    
+    // Validate email
     if (!email.trim()) {
       setEmailError('Email is required');
       return;
@@ -329,6 +424,12 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('mortech_verified_email', email.trim());
         }
+        
+        // Create lead after successful verification
+        setIsCreatingLead(true);
+        await createLead();
+        setIsCreatingLead(false);
+        
         // Proceed with questionnaire completion
         setShowEmailVerification(false);
         const allAnswers = { ...questionnaireAnswers };
@@ -1276,20 +1377,68 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
             {/* Email Verification Step (for unauthenticated users) */}
             {showEmailVerification && (
               <div className="p-0 @sm:p-6 bg-white mb-6" style={{ borderRadius: `${layout.borderRadius}px` }}>
-                <h3 className="text-md @sm:text-xl font-semibold text-black mb-2 text-center">
-                  Verify Your Email
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Verify your information:
                 </h3>
-                <p className="mb-6 text-center text-sm @sm:text-base" style={{ color: colors.text }}>
-                  To search for mortgage rates, please verify your email address. We'll send you a 6-digit verification code.
-                </p>
                 
                 {emailVerificationStep === 'email' && (
                   <div className="space-y-4">
+                    {/* Name Field */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
+                        Name <span style={{ color: 'red' }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          setNameError(null);
+                        }}
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-2 border rounded-lg"
+                        style={{
+                          borderColor: nameError ? 'red' : colors.border,
+                          borderRadius: `${layout.borderRadius}px`,
+                          outline: 'none'
+                        }}
+                      />
+                      {nameError && (
+                        <p className="mt-1 text-sm text-red-600">{nameError}</p>
+                      )}
+                    </div>
+
+                    {/* Phone Field */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
+                        Phone Number <span style={{ color: 'red' }}>*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          setPhoneError(null);
+                        }}
+                        placeholder="Enter your phone number"
+                        className="w-full px-4 py-2 border rounded-lg"
+                        style={{
+                          borderColor: phoneError ? 'red' : colors.border,
+                          borderRadius: `${layout.borderRadius}px`,
+                          outline: 'none'
+                        }}
+                      />
+                      {phoneError && (
+                        <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+                      )}
+                    </div>
+
+                    {/* Email Field with Send Code Button */}
                     <div>
                       <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
                         Email Address <span style={{ color: 'red' }}>*</span>
                       </label>
-                      <div className="flex flex-col @lg:flex-row gap-2">
+                      <div className="flex gap-2">
                         <input
                           type="email"
                           value={email}
@@ -1307,16 +1456,23 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                         />
                         <Button
                           onClick={handleSendOTP}
-                          disabled={isSendingOTP || !email.trim()}
+                          disabled={isSendingOTP || !name.trim() || !phone.trim() || !email.trim()}
                           {...getTemplateButtonStyles('secondary')}
-                          className="h-10 @sm:h-12 px-4 py-2"
+                          className="h-10 @sm:h-12 px-4 py-2 whitespace-nowrap"
                         >
                           {isSendingOTP ? 'Sending...' : 'Send Code'}
                         </Button>
                       </div>
                       {emailError && (
-                        <p className="mt-2 text-sm text-red-600">{emailError}</p>
+                        <p className="mt-1 text-sm text-red-600">{emailError}</p>
                       )}
+                    </div>
+                    
+                    {/* Disclaimer */}
+                    <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        Request your email code to instantly receive your custom mortgage quotes
+                      </p>
                     </div>
                   </div>
                 )}
