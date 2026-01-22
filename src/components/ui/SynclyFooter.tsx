@@ -10,9 +10,11 @@ interface SynclyFooterProps {
 export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
   // Social media URLs - can be customized via props if needed
   const socialLinks = {
-    instagram: 'https://instagram.com/syncly360',
-    twitter: 'https://twitter.com/syncly360',
-    tiktok: 'https://tiktok.com/@syncly360',
+    instagram: 'https://www.instagram.com/syncly360?igsh=MXZvbXE2dTZtOTJ5bQ',
+    twitter: 'https://x.com/syncly360',
+    tiktok: 'https://www.tiktok.com/@syncly360?_t=ZP-90E6r4YzcAZ&_r=1',
+    youtube: 'http://www.youtube.com/@Syncly_360',
+    facebook: 'https://www.facebook.com/profile.php?id=61578692132756&mibextid=wwXIfr&mibextid=wwXIfr',
   };
 
   // Customer care links - can be customized
@@ -37,7 +39,8 @@ export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
         <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-4 gap-8 mb-8">
           {/* Company Branding */}
           <div className="@lg:col-span-1">
-            <h2 className="text-2xl font-bold text-[#70a3f3] mb-4">RateCaddy</h2>
+            <h2 className="text-2xl font-bold text-[#70a3f3] mb-0">RateCaddy</h2>
+            <p className="text-sm text-white/90">By Syncly360 CRM</p>
             
             {/* Follow Us Section */}
             <div className="mt-6">
@@ -65,6 +68,39 @@ export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
                   <Icon name="twitter" size={20} color="#ffffff" />
                 </a>
                 
+                {/* YouTube */}
+                <a
+                  href={socialLinks.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 flex items-center justify-center hover:opacity-80 transition-opacity"
+                  aria-label="YouTube"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-white"
+                  >
+                    <path
+                      d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </a>
+                
+                {/* Facebook */}
+                <a
+                  href={socialLinks.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 flex items-center justify-center hover:opacity-80 transition-opacity"
+                  aria-label="Facebook"
+                >
+                  <Icon name="facebook" size={20} color="#ffffff" />
+                </a>
                 
                 {/* TikTok */}
                 <a
@@ -156,7 +192,7 @@ export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
         {/* Copyright */}
         <div className="border-t border-white/20 pt-6 mt-6">
           <p className="text-sm text-center text-white/90">
-            © RateCaddy 2026, All Rights Reserved
+            © RateCaddy, Powered by Syncly360 2026, All Rights Reserved
           </p>
         </div>
       </div>

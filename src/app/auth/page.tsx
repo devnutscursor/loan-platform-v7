@@ -206,6 +206,7 @@ function AuthPageContent() {
                   <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
                     RateCaddy
                   </span>
+                  <p className="text-sm text-gray-500">By Syncly360 CRM</p>
                 </span>
             </div>
             <div className="flex items-center space-x-4">

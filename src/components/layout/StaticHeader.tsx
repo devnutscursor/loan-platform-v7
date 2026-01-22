@@ -179,6 +179,7 @@ const StaticHeader = memo(function StaticHeader() {
                     <span className="bg-white bg-clip-text text-transparent">
                       RateCaddy
                     </span>
+                    <p className="text-sm text-gray-200">By Syncly360 CRM</p>
                 </span>
               </div>
             </div>
@@ -277,6 +278,7 @@ const StaticHeader = memo(function StaticHeader() {
                     <span className="bg-white bg-clip-text text-transparent">
                       RateCaddy
                     </span>
+                    <p className="text-sm text-gray-200 mr-2 md:mr-9">By Syncly360 CRM</p>
                   </span>
                 </button>
               </div>
