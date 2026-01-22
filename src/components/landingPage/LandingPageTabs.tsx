@@ -16,7 +16,8 @@ import {
   MyHomeValueTab,
   FindMyHomeTab,
   LearningCenterTab,
-  NeighborhoodReportsTab
+  NeighborhoodReportsTab,
+  CalculatorsTab
 } from './tabs';
 
 export type TabId = 
@@ -27,7 +28,8 @@ export type TabId =
   | 'my-home-value'
   | 'find-my-home'
   | 'learning-center'
-  | 'neighborhood-reports';
+  | 'neighborhood-reports'
+  | 'calculators';
 
 // Loading component for heavy tabs
 const TabLoadingSkeleton = React.memo(({ selectedTemplate }: { selectedTemplate: 'template1' | 'template2' }) => {
@@ -122,6 +124,12 @@ const tabs: Tab[] = [
     label: 'Neighborhood Reports',
     icon: 'location',
     description: 'Neighborhood insights and market trends'
+  },
+  {
+    id: 'calculators',
+    label: 'Calculators',
+    icon: 'calculator',
+    description: 'Mortgage and loan calculators'
   }
 ];
 
@@ -305,6 +313,13 @@ export default function LandingPageTabs({
       
       case 'neighborhood-reports':
         return <NeighborhoodReportsTab 
+          selectedTemplate={selectedTemplate} 
+          isPublic={isPublic}
+          publicTemplateData={publicTemplateData}
+        />;
+      
+      case 'calculators':
+        return <CalculatorsTab 
           selectedTemplate={selectedTemplate} 
           isPublic={isPublic}
           publicTemplateData={publicTemplateData}

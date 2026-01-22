@@ -121,7 +121,7 @@ export default function PublicProfileContent({
 
   const templateActiveTab = bodyMods?.activeTab || bodyMods?.active_tab;
   // Handle both camelCase and snake_case for enabledTabs
-  const enabledTabs = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports'];
+  const enabledTabs = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
   
   // Use template's activeTab if available and enabled, otherwise use initialActiveTab
   const initialTab = (templateActiveTab && enabledTabs.includes(templateActiveTab)) 
@@ -147,7 +147,7 @@ export default function PublicProfileContent({
 
     const templateActiveTab = bodyMods?.activeTab || bodyMods?.active_tab;
     // Handle both camelCase and snake_case for enabledTabs
-    const enabledTabsFromEffect = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports'];
+    const enabledTabsFromEffect = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
     
     // Debug logging
     console.log('🔍 PublicProfileContent: Enabled tabs check:', {

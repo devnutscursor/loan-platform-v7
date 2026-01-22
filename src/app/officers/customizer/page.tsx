@@ -389,7 +389,7 @@ export default function CustomizerPage() {
   // Update previewActiveTab when template's activeTab changes
   React.useEffect(() => {
     const templateActiveTab = mergedTemplate?.bodyModifications?.activeTab;
-    const enabledTabs = mergedTemplate?.bodyModifications?.enabledTabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports'];
+    const enabledTabs = mergedTemplate?.bodyModifications?.enabledTabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
     
     if (templateActiveTab && enabledTabs.includes(templateActiveTab)) {
       // On initial load, always set it. After that, only update if it changed
@@ -1955,7 +1955,8 @@ function BodyModifications({ template, onChange }: SettingsProps) {
     { id: 'my-home-value', label: 'My Home Value' },
     { id: 'find-my-home', label: 'Find My Home' },
     { id: 'learning-center', label: 'Learning Center' },
-    { id: 'neighborhood-reports', label: 'Neighborhood Reports' }
+    { id: 'neighborhood-reports', label: 'Neighborhood Reports' },
+    { id: 'calculators', label: 'Calculators' }
   ];
 
   const enabledTabs = bodyMods.enabledTabs || availableTabs.map(tab => tab.id);

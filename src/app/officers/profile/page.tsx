@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Icon, { icons } from '@/components/ui/Icon';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Lazy load unified components
 const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
@@ -382,10 +383,17 @@ export default function OfficersProfilePage() {
     }
   };
 
+  const getPublicUrl = () => {
+    if (!publicLink) return '';
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return `${baseUrl}/public/profile/${publicLink.publicSlug}`;
+  };
+
   const copyPublicLink = () => {
     if (publicLink) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const publicUrl = `${baseUrl}/public/profile/${publicLink.publicSlug}`;
+      const publicUrl = getPublicUrl();
       navigator.clipboard.writeText(publicUrl);
       console.log('Copied public URL:', publicUrl);
     }
@@ -686,21 +694,46 @@ export default function OfficersProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
-                  <div className="min-w-0">
-                    <span className="font-medium text-gray-700">Public URL:</span>
-                    <p className="text-gray-600 break-all overflow-wrap-anywhere">
-                      {typeof window !== 'undefined' ? window.location.origin : 'localhost:3000'}/public/profile/{publicLink.publicSlug}
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {/* Left Column - Link Info */}
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="grid grid-cols-1 gap-3 md:gap-4 text-xs md:text-sm">
+                      <div className="min-w-0">
+                        <span className="font-medium text-gray-700">Public URL:</span>
+                        <p className="text-gray-600 break-all overflow-wrap-anywhere mt-1">
+                          {getPublicUrl()}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="font-medium text-gray-700">Views:</span>
+                          <p className="text-gray-600">{publicLink.currentUses}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Created:</span>
+                          <p className="text-gray-600">
+                            {new Date(publicLink.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Views:</span>
-                    <p className="text-gray-600">{publicLink.currentUses}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Created:</span>
-                    <p className="text-gray-600">
-                      {new Date(publicLink.createdAt).toLocaleDateString()}
+
+                  {/* Right Column - QR Code */}
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-3">
+                      Scan to visit profile
+                    </h4>
+                    <div className="bg-white p-3 rounded-lg border border-gray-300">
+                      <QRCodeSVG
+                        value={getPublicUrl()}
+                        size={160}
+                        level="M"
+                        includeMargin={true}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-3 text-center">
+                      Share this QR code for easy access
                     </p>
                   </div>
                 </div>

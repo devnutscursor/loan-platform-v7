@@ -21,6 +21,7 @@ export default function HomePage() {
                   <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
                     RateCaddy
                   </span>
+                  <p className="text-sm text-gray-500">By Syncly360 CRM</p>
                 </span>
               </div>
             </div>
@@ -28,10 +29,10 @@ export default function HomePage() {
               <Link href="#features" className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-300">
                 Features
               </Link>
-              <Link href="#pricing" className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-300">
+              <Link href="https://syncly360.com/pricing-536596" target="_blank" className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-300">
                 Pricing
               </Link>
-              <Link href="#contact" className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-300">
+              <Link href="https://syncly360.com/contact-us" target="_blank" className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-300">
                 Contact
               </Link>
             </nav>
@@ -58,7 +59,7 @@ export default function HomePage() {
             <h1 className="text-6xl md:text-8xl font-bold text-[#F7F1E9] mb-12 leading-tight drop-shadow-lg">
               Build Stunning Landing Pages
               <span className="block bg-gradient-to-r from-[#F7F1E9] via-[#01bcc6] to-[#F7F1E9] bg-clip-text text-transparent animate-pulse drop-shadow-lg">
-                for Loan Officers
+                for Loan Officers and Realtors
               </span>
             </h1>
             <p className="text-2xl text-[#F7F1E9]/90 mb-16 max-w-3xl mx-auto leading-relaxed font-light drop-shadow-md">
@@ -71,7 +72,7 @@ export default function HomePage() {
                   Start Building Now
                 </Button>
               </Link>
-              <Link href="/auth">
+              <Link href="https://syncly360.com/request-a-demo" target="_blank">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto px-12 py-6 text-xl font-bold border-3 border-[#F7F1E9] text-[#F7F1E9] hover:bg-white hover:text-[#005b7c] transition-all duration-500 transform hover:scale-105 bg-transparent backdrop-blur-sm">
                   View Demo
                 </Button>
