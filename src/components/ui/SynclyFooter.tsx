@@ -14,7 +14,7 @@ interface SynclyFooterProps {
 
 export default function SynclyFooter({ 
   className = '',
-  backgroundColor = '#1e3a5f',
+  backgroundColor = '#005b7c',
   textColor = '#ffffff',
   companyName = 'RateCaddy',
   tagline = 'By Syncly360 CRM',
