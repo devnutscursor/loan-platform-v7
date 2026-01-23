@@ -52,6 +52,12 @@ interface Template {
     linkedin?: string;
     instagram?: string;
   };
+  footerModifications?: {
+    textColor?: string;
+    companyName?: string;
+    tagline?: string;
+    copyrightText?: string;
+  };
 }
 import { 
   Palette, 
@@ -332,7 +338,8 @@ export default function CustomizerPage() {
         console.log('🔄 Customizer: User settings modification fields:', {
           headerModifications: (userSettings as any)?.headerModifications,
           bodyModifications: (userSettings as any)?.bodyModifications,
-          rightSidebarModifications: (userSettings as any)?.rightSidebarModifications
+          rightSidebarModifications: (userSettings as any)?.rightSidebarModifications,
+          footerModifications: (userSettings as any)?.footerModifications
         });
         
         setCustomizerState(prev => ({
@@ -346,7 +353,8 @@ export default function CustomizerPage() {
             classes: userSettings.classes || {},
             headerModifications: (userSettings as any).headerModifications || {},
             bodyModifications: (userSettings as any).bodyModifications || {},
-            rightSidebarModifications: (userSettings as any).rightSidebarModifications || {}
+            rightSidebarModifications: (userSettings as any).rightSidebarModifications || {},
+            footerModifications: (userSettings as any).footerModifications || {}
           }
         }));
       } else {
@@ -1471,7 +1479,8 @@ function GeneralSettings({ template, onChange }: SettingsProps) {
 
   const sections = [
     { id: 'colors', label: 'Colors', icon: Palette, component: ColorsSettings },
-    { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings }
+    { id: 'layout', label: 'Layout', icon: Layout, component: LayoutSettings },
+    { id: 'footerModifications', label: 'Footer', icon: Settings, component: FooterSettings }
   ];
 
   return (
@@ -2477,6 +2486,47 @@ function LayoutSettings({ template, onChange }: SettingsProps) {
           className="w-full"
         />
         <div className="text-sm text-gray-500 mt-1">{layout.borderRadius}px</div>
+      </div>
+    </div>
+  );
+}
+
+function FooterSettings({ template, onChange }: SettingsProps) {
+  if (!template) return null;
+
+  const footerMods = template.footerModifications || {};
+
+  return (
+    <div className="space-y-4">
+
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+        <div className="flex items-center space-x-3">
+          <input
+            type="color"
+            value={footerMods.textColor || '#ffffff'}
+            onChange={(e) => onChange('textColor', e.target.value)}
+            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+          />
+          <input
+            type="text"
+            value={footerMods.textColor || '#ffffff'}
+            onChange={(e) => onChange('textColor', e.target.value)}
+            placeholder="#ffffff"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          Color for footer text, links, and icons
+        </p>
+      </div>
+
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Note:</strong> The footer background color is automatically set to your template's primary color. 
+          Adjust the primary color above to change the footer background.
+        </p>
       </div>
     </div>
   );

@@ -151,6 +151,7 @@ export const templates = pgTable('templates', {
   headerModifications: jsonb('header_modifications').default('{}'), // { officerName, avatar, phone, email, applyNowLink, personalInfo }
   bodyModifications: jsonb('body_modifications').default('{}'), // { activeTab, enabledTabs, tabOrder, tabSettings }
   rightSidebarModifications: jsonb('right_sidebar_modifications').default('{}'), // { socialMedia, companyName, logo, contactInfo, reviews }
+  footerModifications: jsonb('footer_modifications').default('{}'), // { textColor, accentColor }
   
   // Layout configuration for different template layouts
   layoutConfig: jsonb('layout_config').default('{}'), // { headerLayout, mainContentLayout }

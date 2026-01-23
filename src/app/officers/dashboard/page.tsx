@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
-import { useTemplateSelection, useTemplate } from '@/contexts/UnifiedTemplateContext';
 import { DashboardLoadingState } from '@/components/ui/LoadingState';
 import { supabase } from '@/lib/supabase/client';
 import { dashboard } from '@/theme/theme';
 import { icons } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import SpotlightCard from '@/components/ui/SpotlightCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 
@@ -60,8 +58,6 @@ interface PublicLink {
 
 export default function OfficersDashboardPage() {
   const { user, userRole, companyId, loading: authLoading } = useAuth();
-  const { selectedTemplate, setSelectedTemplate } = useTemplateSelection();
-  const { templateData } = useTemplate(selectedTemplate);
   const router = useRouter();
 
   // State for dashboard data
@@ -88,166 +84,128 @@ export default function OfficersDashboardPage() {
     const fetchDashboardData = async () => {
       // Wait for auth to complete and ensure we have required data
       if (authLoading || !user?.id || !companyId) {
-        if (authLoading) {
-          console.log('🔄 Dashboard: Waiting for auth to complete...');
-        } else if (!user?.id) {
-          console.log('🔄 Dashboard: Waiting for user data...');
-        } else if (!companyId) {
-          console.log('🔄 Dashboard: Waiting for company data...');
-        }
         return;
       }
-
-      console.log('🚀 Dashboard: Starting data fetch for user:', user.id, 'company:', companyId);
-      console.log('🔍 Dashboard: User object:', { id: user.id, email: user.email });
-      console.log('🔍 Dashboard: Company ID type:', typeof companyId, 'value:', companyId);
 
       try {
         setLoading(true);
         setError(null);
 
-        // Test the query step by step
-        console.log('🔍 Dashboard: Testing leads query...');
-        
-        // First, let's test if we can access the leads table at all
-        console.log('🔍 Dashboard: Testing basic leads access...');
-        const { data: testData, error: testError } = await supabase
-          .from('leads')
-          .select('id')
-          .limit(1);
-        
-        if (testError) {
-          console.error('❌ Dashboard: Basic leads access failed:', testError);
-          throw testError;
-        }
-        
-        console.log('✅ Dashboard: Basic leads access successful, found:', testData?.length || 0, 'records');
-        
-        // Now try the full query
-        console.log('🔍 Dashboard: Testing full leads query with filters...');
-        const { data: leadsData, error: leadsError } = await supabase
-          .from('leads')
-          .select('*')
-          .eq('officer_id', user.id)
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (leadsError) {
-          console.error('❌ Dashboard: Leads fetch error:', {
-            message: leadsError.message,
-            details: leadsError.details,
-            hint: leadsError.hint,
-            code: leadsError.code,
-            fullError: leadsError
-          });
-          throw leadsError;
-        }
-
-        console.log('✅ Dashboard: Fetched leads:', leadsData?.length || 0);
-        setLeads(leadsData || []);
-
-        // Calculate lead statistics
+        // Prepare date calculations for stats
         const now = new Date();
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-        const stats: LeadStats = {
-          total: leadsData?.length || 0,
-          new: leadsData?.filter(lead => lead.status === 'new').length || 0,
-          contacted: leadsData?.filter(lead => lead.status === 'contacted').length || 0,
-          qualified: leadsData?.filter(lead => lead.status === 'qualified').length || 0,
-          converted: leadsData?.filter(lead => lead.status === 'converted').length || 0,
-          lost: leadsData?.filter(lead => lead.status === 'lost').length || 0,
-          highPriority: leadsData?.filter(lead => lead.priority === 'high').length || 0,
-          urgentPriority: leadsData?.filter(lead => lead.priority === 'urgent').length || 0,
-          thisWeek: leadsData?.filter(lead => new Date(lead.created_at) >= oneWeekAgo).length || 0,
-          thisMonth: leadsData?.filter(lead => new Date(lead.created_at) >= oneMonthAgo).length || 0
-        };
+        // Parallelize all API calls
+        const [leadsResult, publicLinkResult, templateResult] = await Promise.all([
+          // Fetch leads
+          supabase
+            .from('leads')
+            .select('*')
+            .eq('officer_id', user.id)
+            .eq('company_id', companyId)
+            .order('created_at', { ascending: false })
+            .limit(50),
+          
+          // Fetch public link
+          supabase
+            .from('loan_officer_public_links')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .single(),
+          
+          // Fetch public profile template
+          (async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.access_token) {
+                const response = await fetch('/api/templates/get-public-profile-template', {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
 
-        console.log('📊 Dashboard: Calculated stats:', stats);
-        
-        // Debug priority counts
-        const highPriorityLeads = leadsData?.filter(lead => lead.priority === 'high') || [];
-        const urgentPriorityLeads = leadsData?.filter(lead => lead.priority === 'urgent') || [];
-        console.log('🔍 Dashboard: High priority leads:', highPriorityLeads.length, highPriorityLeads.map(l => ({ name: `${l.first_name} ${l.last_name}`, priority: l.priority })));
-        console.log('🔍 Dashboard: Urgent priority leads:', urgentPriorityLeads.length, urgentPriorityLeads.map(l => ({ name: `${l.first_name} ${l.last_name}`, priority: l.priority })));
-        console.log('🔍 Dashboard: Total high+urgent:', highPriorityLeads.length + urgentPriorityLeads.length);
-        
-        setLeadStats(stats);
-
-        // Fetch public link data
-        const { data: publicLinkData, error: publicLinkError } = await supabase
-          .from('loan_officer_public_links')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .single();
-
-        if (publicLinkError && publicLinkError.code !== 'PGRST116') {
-          console.warn('⚠️ Dashboard: Public link fetch error:', publicLinkError);
-        } else if (publicLinkData) {
-          console.log('✅ Dashboard: Found public link:', publicLinkData.public_slug);
-          setPublicLink(publicLinkData);
-        } else {
-          console.log('ℹ️ Dashboard: No public link found');
-        }
-
-        // Fetch public profile template from database
-        console.log('🔍 Dashboard: Fetching public profile template...');
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.access_token) {
-            const response = await fetch('/api/templates/get-public-profile-template', {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              if (result.success && result.templateSlug) {
-                console.log('✅ Dashboard: Found public profile template:', result.templateSlug);
-                setPublicProfileTemplate(result.templateSlug);
-              } else {
-                console.log('ℹ️ Dashboard: No public profile template found in database, using localStorage fallback');
-                const savedTemplate = localStorage.getItem('publicProfileTemplate');
-                if (savedTemplate) {
-                  setPublicProfileTemplate(savedTemplate);
+                if (response.ok) {
+                  const result = await response.json();
+                  if (result.success && result.templateSlug) {
+                    return result.templateSlug;
+                  }
                 }
               }
-            } else {
-              console.log('ℹ️ Dashboard: Failed to fetch public profile template from database, using localStorage fallback');
-              const savedTemplate = localStorage.getItem('publicProfileTemplate');
-              if (savedTemplate) {
-                setPublicProfileTemplate(savedTemplate);
+              // Fallback to localStorage
+              if (typeof window !== 'undefined') {
+                return localStorage.getItem('publicProfileTemplate') || 'template1';
               }
+              return 'template1';
+            } catch (error) {
+              console.error('❌ Dashboard: Error fetching public profile template:', error);
+              // Fallback to localStorage
+              if (typeof window !== 'undefined') {
+                return localStorage.getItem('publicProfileTemplate') || 'template1';
+              }
+              return 'template1';
             }
-          } else {
-            console.log('ℹ️ Dashboard: No session token, using localStorage fallback');
-            const savedTemplate = localStorage.getItem('publicProfileTemplate');
-            if (savedTemplate) {
-              setPublicProfileTemplate(savedTemplate);
-            }
-          }
-        } catch (error) {
-          console.error('❌ Dashboard: Error fetching public profile template:', error);
-          // Fallback to localStorage
-          const savedTemplate = localStorage.getItem('publicProfileTemplate');
-          if (savedTemplate) {
-            setPublicProfileTemplate(savedTemplate);
-          }
+          })()
+        ]);
+
+        // Handle leads result
+        if (leadsResult.error) {
+          console.error('❌ Dashboard: Leads fetch error:', leadsResult.error);
+          throw leadsResult.error;
         }
 
-      } catch (err) {
-        console.error('❌ Dashboard data fetch error:', {
-          message: err instanceof Error ? err.message : 'Unknown error',
-          name: err instanceof Error ? err.name : 'Unknown',
-          stack: err instanceof Error ? err.stack : undefined,
-          fullError: err
+        const leadsData = leadsResult.data || [];
+        setLeads(leadsData);
+
+        // Calculate statistics in a single pass
+        const stats: LeadStats = {
+          total: leadsData.length,
+          new: 0,
+          contacted: 0,
+          qualified: 0,
+          converted: 0,
+          lost: 0,
+          highPriority: 0,
+          urgentPriority: 0,
+          thisWeek: 0,
+          thisMonth: 0
+        };
+
+        leadsData.forEach(lead => {
+          // Count by status
+          if (lead.status === 'new') stats.new++;
+          else if (lead.status === 'contacted') stats.contacted++;
+          else if (lead.status === 'qualified') stats.qualified++;
+          else if (lead.status === 'converted') stats.converted++;
+          else if (lead.status === 'lost') stats.lost++;
+
+          // Count by priority
+          if (lead.priority === 'high') stats.highPriority++;
+          else if (lead.priority === 'urgent') stats.urgentPriority++;
+
+          // Count by date
+          const leadDate = new Date(lead.created_at);
+          if (leadDate >= oneWeekAgo) stats.thisWeek++;
+          if (leadDate >= oneMonthAgo) stats.thisMonth++;
         });
+
+        setLeadStats(stats);
+
+        // Handle public link result
+        if (publicLinkResult.error && publicLinkResult.error.code !== 'PGRST116') {
+          console.warn('⚠️ Dashboard: Public link fetch error:', publicLinkResult.error);
+        } else if (publicLinkResult.data) {
+          setPublicLink(publicLinkResult.data);
+        }
+
+        // Handle template result
+        setPublicProfileTemplate(templateResult);
+
+      } catch (err) {
+        console.error('❌ Dashboard data fetch error:', err instanceof Error ? err.message : 'Unknown error');
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
         setLoading(false);
@@ -257,11 +215,14 @@ export default function OfficersDashboardPage() {
     fetchDashboardData();
   }, [user?.id, companyId, authLoading]);
 
-  // Get recent leads (last 3)
-  const recentLeads = leads.slice(0, 3);
+  // Get recent leads (last 3) - memoized
+  const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);
 
-  // Get priority leads (last 3)
-  const priorityLeads = leads.filter(lead => lead.priority === 'high' || lead.priority === 'urgent').slice(0, 3);
+  // Get priority leads (last 3) - memoized
+  const priorityLeads = useMemo(() => 
+    leads.filter(lead => lead.priority === 'high' || lead.priority === 'urgent').slice(0, 3),
+    [leads]
+  );
 
   // Get public profile template name
   const getPublicProfileTemplateName = (templateSlug: string) => {
@@ -464,7 +425,7 @@ export default function OfficersDashboardPage() {
               </div>
               <div className="flex flex-col gap-2">
                 {recentLeads.length > 0 ? (
-                  recentLeads.map((lead) => (
+                  recentLeads.map((lead: Lead) => (
                     <div
                       key={lead.id}
                       className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20 cursor-pointer hover:border-[#01bcc6]/40 transition-colors"
@@ -512,7 +473,7 @@ export default function OfficersDashboardPage() {
               </div>
               <div className="flex flex-col gap-2">
                 {priorityLeads.length > 0 ? (
-                  priorityLeads.map((lead) => (
+                  priorityLeads.map((lead: Lead) => (
                     <div
                       key={lead.id}
                       className="flex items-center p-3 sm:p-4 bg-white rounded-2xl border border-[#01bcc6]/20 cursor-pointer hover:border-[#01bcc6]/40 transition-colors"

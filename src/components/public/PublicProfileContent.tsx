@@ -486,7 +486,13 @@ export default function PublicProfileContent({
             </div>
 
             <div className="relative z-10">
-              <SynclyFooter />
+              <SynclyFooter 
+                backgroundColor={templateData?.template?.colors?.primary || '#1e3a5f'}
+                textColor={templateData?.template?.footerModifications?.textColor || '#ffffff'}
+                companyName={templateData?.template?.footerModifications?.companyName || 'RateCaddy'}
+                tagline={templateData?.template?.footerModifications?.tagline || 'By Syncly360 CRM'}
+                copyrightText={templateData?.template?.footerModifications?.copyrightText || '© RateCaddy, Powered by Syncly360 2026, All Rights Reserved'}
+              />
             </div>
           </div>
         </div>
