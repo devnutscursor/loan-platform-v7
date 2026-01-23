@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { templates } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
+
+// Cache configuration - revalidate every 60 seconds
+export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
@@ -23,28 +26,24 @@ export async function GET(
 
     let selectedTemplate = [];
 
-    // If a specific template is requested (preview mode), fetch that template
+    // If a specific template is requested (preview mode), fetch both user and default in parallel
     if (requestedTemplateSlug) {
       console.log('🎨 Preview mode: Fetching specific template', requestedTemplateSlug);
       
-      // First try to get the user's custom template with this slug
-      const userTemplate = await db
-        .select()
-        .from(templates)
-        .where(
-          and(
-            eq(templates.userId, userId),
-            eq(templates.slug, requestedTemplateSlug),
-            eq(templates.isActive, true)
+      // Fetch user template and default template in parallel
+      const [userTemplate, defaultTemplate] = await Promise.all([
+        db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.userId, userId),
+              eq(templates.slug, requestedTemplateSlug),
+              eq(templates.isActive, true)
+            )
           )
-        )
-        .limit(1);
-      
-      if (userTemplate.length > 0) {
-        selectedTemplate = userTemplate;
-      } else {
-        // If user doesn't have this template, get the default template with this slug
-        const defaultTemplate = await db
+          .limit(1),
+        db
           .select()
           .from(templates)
           .where(
@@ -54,28 +53,28 @@ export async function GET(
               eq(templates.isActive, true)
             )
           )
-          .limit(1);
-        selectedTemplate = defaultTemplate;
-      }
+          .limit(1),
+      ]);
+      
+      // Prefer user template over default
+      selectedTemplate = userTemplate.length > 0 ? userTemplate : defaultTemplate;
     } else {
-      // Normal mode: First, try to get the user's selected template (isSelected = true)
-      const selectedUserTemplate = await db
-        .select()
-        .from(templates)
-        .where(
-          and(
-            eq(templates.userId, userId),
-            eq(templates.isSelected, true),
-            eq(templates.isActive, true)
+      // Normal mode: Fetch all candidate templates in parallel (reduces from 4 sequential to 1-2 queries)
+      const [selectedUserTemplate, template1User, defaultTemplate1, anyDefaultTemplate] = await Promise.all([
+        // Priority 1: User's selected template
+        db
+          .select()
+          .from(templates)
+          .where(
+            and(
+              eq(templates.userId, userId),
+              eq(templates.isSelected, true),
+              eq(templates.isActive, true)
+            )
           )
-        )
-        .limit(1);
-
-      selectedTemplate = selectedUserTemplate;
-
-      // If no selected template, try to get template1 for this user
-      if (selectedTemplate.length === 0) {
-        const template1User = await db
+          .limit(1),
+        // Priority 2: User's template1
+        db
           .select()
           .from(templates)
           .where(
@@ -86,13 +85,9 @@ export async function GET(
               eq(templates.isActive, true)
             )
           )
-          .limit(1);
-        selectedTemplate = template1User;
-      }
-
-      // If still no template, get default template1
-      if (selectedTemplate.length === 0) {
-        const defaultTemplate1 = await db
+          .limit(1),
+        // Priority 3: Default template1
+        db
           .select()
           .from(templates)
           .where(
@@ -102,13 +97,9 @@ export async function GET(
               eq(templates.isActive, true)
             )
           )
-          .limit(1);
-        selectedTemplate = defaultTemplate1;
-      }
-
-      // If still no template, get any default template
-      if (selectedTemplate.length === 0) {
-        const anyDefaultTemplate = await db
+          .limit(1),
+        // Priority 4: Any default template
+        db
           .select()
           .from(templates)
           .where(
@@ -117,9 +108,17 @@ export async function GET(
               eq(templates.isActive, true)
             )
           )
-          .limit(1);
-        selectedTemplate = anyDefaultTemplate;
-      }
+          .limit(1),
+      ]);
+
+      // Select template based on priority (first non-empty result)
+      selectedTemplate = selectedUserTemplate.length > 0 
+        ? selectedUserTemplate 
+        : template1User.length > 0 
+        ? template1User 
+        : defaultTemplate1.length > 0 
+        ? defaultTemplate1 
+        : anyDefaultTemplate;
     }
 
     if (selectedTemplate.length === 0) {
@@ -136,7 +135,7 @@ export async function GET(
       ? { ...template, slug: requestedTemplateSlug }
       : template;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         template: finalTemplate,
@@ -148,6 +147,11 @@ export async function GET(
         }
       },
     });
+
+    // Add cache headers
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+
+    return response;
   } catch (error) {
     console.error('Error fetching public template:', error);
     return NextResponse.json(

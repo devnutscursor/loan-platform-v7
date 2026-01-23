@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
-import { Phone, Mail, Check, Facebook, Instagram, Linkedin, Twitter, Calendar, ChevronRight, MessageCircle } from 'lucide-react';
+import { Phone, Mail, Check, Facebook, Instagram, Linkedin, Calendar, ChevronRight, MessageCircle } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import ContactModal from '@/components/landingPage/ContactModal';
 
 interface UnifiedHeroSectionProps {
@@ -598,9 +599,9 @@ export default function UnifiedHeroSection({
                         rel="noopener noreferrer"
                         className="hero-social-link w-11 h-11"
                         style={{ color: colors.heroTextColor || '#ffffff' }}
-                        aria-label="X (Twitter)"
+                        aria-label="X"
                       >
-                        <Twitter size={18} />
+                        <Icon name="twitter" size={18} color={colors.heroTextColor || '#ffffff'} />
                       </a>
                     )}
                   </div>
@@ -759,9 +760,9 @@ export default function UnifiedHeroSection({
                     rel="noopener noreferrer"
                     className="hero-social-link w-9 h-9 @[400px]:w-10 @[400px]:h-10"
                     style={{ color: colors.heroTextColor || '#ffffff' }}
-                    aria-label="X (Twitter)"
+                    aria-label="X"
                   >
-                    <Twitter size={16} />
+                    <Icon name="twitter" size={16} color={colors.heroTextColor || '#ffffff'} />
                   </a>
                 )}
               </div>
