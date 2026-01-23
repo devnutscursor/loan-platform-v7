@@ -258,6 +258,7 @@ export async function POST(request: NextRequest) {
       header_modifications: customSettings.headerModifications || {},
       body_modifications: customSettings.bodyModifications || {},
       right_sidebar_modifications: customSettings.rightSidebarModifications || {},
+      footer_modifications: customSettings.footerModifications || {},
       layout_config: customSettings.layoutConfig || baseTemplate.layout_config || {}
     };
 
