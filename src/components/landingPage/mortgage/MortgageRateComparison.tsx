@@ -1377,9 +1377,20 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
             {/* Email Verification Step (for unauthenticated users) */}
             {showEmailVerification && (
               <div className="p-0 @sm:p-6 bg-white mb-6" style={{ borderRadius: `${layout.borderRadius}px` }}>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Verify your information:
-                </h3>
+                {emailVerificationStep === 'email' && (
+                  <>
+                    {/* Header Section */}
+                    <div className="mb-8 text-center px-2">
+                      <h2 className="text-xl @sm:text-2xl @md:text-3xl font-bold mb-4" style={{ color: colors.text }}>
+                        View Your Personalized Mortgage Rates in Seconds!
+                      </h2>
+                      <p className="text-sm @sm:text-base leading-relaxed max-w-2xl mx-auto" style={{ color: colors.textSecondary }}>
+                        Enter your details to see real-time rates tailored specifically for your credit and location. No credit pull required. Takes less than 30 seconds.
+                      </p>
+                    </div>
+                    
+                  </>
+                )}
                 
                 {emailVerificationStep === 'email' && (
                   <div className="space-y-4">
@@ -1467,11 +1478,15 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                         <p className="mt-1 text-sm text-red-600">{emailError}</p>
                       )}
                     </div>
+
                     
-                    {/* Disclaimer */}
-                    <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Request your email code to instantly receive your custom mortgage quotes
+                    {/* Additional Information */}
+                    <div className="mt-5 p-4 rounded-lg" style={{ 
+                      backgroundColor: `${colors.primary}08`,
+                      border: `1px solid ${colors.primary}20`
+                    }}>
+                      <p className="text-sm leading-relaxed" style={{ color: colors.text }}>
+                        To protect your data and ensure accuracy, we'll send a secure verification code to your inbox. Verify your email on the next screen to instantly access your custom rates!
                       </p>
                     </div>
                   </div>

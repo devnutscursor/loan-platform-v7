@@ -10,6 +10,9 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
+// Cache configuration - revalidate every 60 seconds
+export const revalidate = 60;
+
 // GET: Fetch public profile data by slug
 export async function GET(
   request: NextRequest,
@@ -80,39 +83,46 @@ export async function GET(
       );
     }
 
-    // Record usage analytics
+    // Record usage analytics - make non-blocking (fire and forget)
     const userAgent = request.headers.get('user-agent') || null;
     const referrer = request.headers.get('referer') || null;
     const ipAddress = request.headers.get('x-forwarded-for') || 
                      request.headers.get('x-real-ip') || 
                      'unknown';
 
-    try {
-      await db.insert(publicLinkUsage).values({
-        linkId: link.id,
-        ipAddress,
-        userAgent,
-        referrer,
-      });
+    // Non-blocking analytics: execute in background without awaiting
+    // This doesn't block the response, improving page load time
+    (async () => {
+      try {
+        await db.insert(publicLinkUsage).values({
+          linkId: link.id,
+          ipAddress,
+          userAgent,
+          referrer,
+        });
 
-      // Increment usage count
-      await db
-        .update(loanOfficerPublicLinks)
-        .set({
-          currentUses: link.currentUses + 1,
-          updatedAt: new Date(),
-        })
-        .where(eq(loanOfficerPublicLinks.id, link.id));
-    } catch (analyticsError) {
-      console.warn('Failed to record usage analytics:', analyticsError);
-      // Don't fail the request if analytics fail
-    }
+        // Increment usage count
+        await db
+          .update(loanOfficerPublicLinks)
+          .set({
+            currentUses: link.currentUses + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(loanOfficerPublicLinks.id, link.id));
+      } catch (analyticsError) {
+        console.warn('Failed to record usage analytics:', analyticsError);
+        // Don't fail the request if analytics fail
+      }
+    })().catch(err => {
+      // Silently handle any uncaught errors in the background task
+      console.warn('Background analytics task error:', err);
+    });
 
-    // Fetch user and company data
+    // Fetch all data in parallel: user, company, pageSettings, and template
     console.log('👤 Fetching user data for userId:', link.userId);
     console.log('🏢 Fetching company data for companyId:', link.companyId);
     
-    const [userData, companyData] = await Promise.all([
+    const [userData, companyData, pageSettingsData] = await Promise.all([
       db
         .select({
           id: users.id,
@@ -145,6 +155,23 @@ export async function GET(
         .from(companies)
         .where(eq(companies.id, link.companyId))
         .limit(1),
+      
+      // Fetch page settings in parallel
+      db
+        .select({
+          template: pageSettings.template,
+          settings: pageSettings.settings,
+          templateId: pageSettings.templateId,
+        })
+        .from(pageSettings)
+        .where(
+          and(
+            eq(pageSettings.officerId, link.userId),
+            eq(pageSettings.isPublished, true)
+          )
+        )
+        .orderBy(desc(pageSettings.updatedAt))
+        .limit(1),
     ]);
 
     console.log('👤 User data result:', userData);
@@ -166,30 +193,13 @@ export async function GET(
       );
     }
 
-    // Fetch page settings and template for this officer
-    const pageSettingsData = await db
-      .select({
-        template: pageSettings.template,
-        settings: pageSettings.settings,
-        templateId: pageSettings.templateId,
-      })
-      .from(pageSettings)
-      .where(
-        and(
-          eq(pageSettings.officerId, link.userId),
-          eq(pageSettings.isPublished, true)
-        )
-      )
-      .orderBy(desc(pageSettings.updatedAt))
-      .limit(1);
-
+    // Fetch template if pageSettings exist (only one additional query instead of sequential)
     let templateData = null;
-    if (pageSettingsData.length > 0) {
-      const templateId = pageSettingsData[0].templateId;
+    if (pageSettingsData.length > 0 && pageSettingsData[0].templateId) {
       const templateResult = await db
         .select()
         .from(templates)
-        .where(eq(templates.id, templateId))
+        .where(eq(templates.id, pageSettingsData[0].templateId))
         .limit(1);
       
       if (templateResult.length > 0) {
@@ -197,7 +207,7 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         user: userData[0],
@@ -214,6 +224,11 @@ export async function GET(
         template: templateData,
       },
     });
+
+    // Add cache headers for public caching
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+
+    return response;
 
   } catch (error) {
     console.error('❌ Error fetching public profile:', error);

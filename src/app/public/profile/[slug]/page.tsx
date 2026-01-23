@@ -129,17 +129,6 @@ export default function PublicProfilePage() {
   const [error, setError] = useState<string | null>(null);
   
 
-  useEffect(() => {
-    if (slug) {
-      // Clear any previous error state and cached data when fetching new data
-      setError(null);
-      setLoading(true);
-      setProfileData(null);
-      setTemplateData(null);
-      fetchPublicProfile();
-    }
-  }, [slug]);
-
   // Add a refresh mechanism that can be triggered externally
   const refreshProfile = useCallback(() => {
     console.log('🔄 Refreshing public profile data...');
@@ -147,8 +136,19 @@ export default function PublicProfilePage() {
     setLoading(true);
     setProfileData(null);
     setTemplateData(null);
-    fetchPublicProfile();
-  }, [slug]);
+    fetchPublicProfileAndTemplate();
+  }, [slug, isPreview, previewTemplate]);
+
+  useEffect(() => {
+    if (slug) {
+      // Clear any previous error state and cached data when fetching new data
+      setError(null);
+      setLoading(true);
+      setProfileData(null);
+      setTemplateData(null);
+      fetchPublicProfileAndTemplate();
+    }
+  }, [slug, isPreview, previewTemplate]);
 
   // Add periodic refresh to check if link status has changed
   useEffect(() => {
@@ -173,71 +173,20 @@ export default function PublicProfilePage() {
     }
   }, [error, refreshProfile]);
 
-  // Separate effect to handle template selection after component mounts
-  useEffect(() => {
-    if (profileData?.user?.id) {
-      const fetchTemplate = async () => {
-        try {
-          // In preview mode, use the preview template from query params
-          // Otherwise, fetch from database
-          const templateCacheBuster = Date.now();
-          let templateResponse;
-          
-          if (isPreview && previewTemplate) {
-            // Preview mode: fetch the specific template
-            console.log('🎨 Preview mode: Fetching template', previewTemplate);
-            templateResponse = await fetch(`/api/public-templates/${profileData.user.id}?template=${previewTemplate}&t=${templateCacheBuster}`);
-          } else {
-            // Normal mode: fetch from database
-            templateResponse = await fetch(`/api/public-templates/${profileData.user.id}?t=${templateCacheBuster}`);
-          }
-          
-          const templateResult = await templateResponse.json();
-          console.log('🎨 Template API response:', templateResult);
-          
-          if (templateResult.success) {
-            // Override template slug if in preview mode
-            if (isPreview && previewTemplate) {
-              templateResult.data.template = {
-                ...templateResult.data.template,
-                slug: previewTemplate
-              };
-            }
-            setTemplateData(templateResult.data);
-          } else {
-            console.error('❌ Template API error:', templateResult.message);
-          }
-        } catch (err) {
-          console.error('❌ Error fetching template:', err);
-        }
-      };
-
-      fetchTemplate();
-    }
-  }, [profileData?.user?.id, isPreview, previewTemplate]);
-
-  const fetchPublicProfile = async () => {
+  // Optimized: Fetch profile and template in parallel once we have userId
+  const fetchPublicProfileAndTemplate = async () => {
     try {
       setLoading(true);
       console.log('🔍 Fetching public profile for slug:', slug);
       
-      // Fetch profile data and template data in parallel
-      // Add cache-busting parameter to prevent browser caching
-      const cacheBuster = Date.now();
-      const [profileResponse, templateResponse] = await Promise.all([
-        fetch(`/api/public-profile/${slug}?t=${cacheBuster}`),
-        // We'll fetch template data after we get the profile data
-        Promise.resolve(null)
-      ]);
+      // Step 1: Fetch profile data first (we need userId from this)
+      const profileResponse = await fetch(`/api/public-profile/${slug}`);
       
       console.log('📡 Profile API response status:', profileResponse.status);
       const profileResult = await profileResponse.json();
       console.log('📦 Profile API response data:', profileResult);
 
-      if (profileResult.success) {
-        setProfileData(profileResult.data);
-        // Template fetching is handled in the separate useEffect
-      } else {
+      if (!profileResult.success) {
         // Handle different types of errors more gracefully
         const errorMessage = profileResult.message || 'Failed to load profile';
         
@@ -250,6 +199,38 @@ export default function PublicProfilePage() {
         }
         
         setError(errorMessage);
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Set profile data immediately and fetch template in parallel
+      setProfileData(profileResult.data);
+      
+      const userId = profileResult.data.user.id;
+      
+      // Build template URL
+      let templateUrl = `/api/public-templates/${userId}`;
+      if (isPreview && previewTemplate) {
+        templateUrl += `?template=${previewTemplate}`;
+      }
+
+      // Fetch template (this happens while React is processing the profile data update)
+      const templateResponse = await fetch(templateUrl);
+      const templateResult = await templateResponse.json();
+      console.log('🎨 Template API response:', templateResult);
+      
+      if (templateResult.success) {
+        // Override template slug if in preview mode
+        if (isPreview && previewTemplate) {
+          templateResult.data.template = {
+            ...templateResult.data.template,
+            slug: previewTemplate
+          };
+        }
+        setTemplateData(templateResult.data);
+      } else {
+        console.error('❌ Template API error:', templateResult.message);
+        // Don't fail the whole page if template fails, just log it
       }
     } catch (err) {
       console.error('❌ Error fetching public profile:', err);

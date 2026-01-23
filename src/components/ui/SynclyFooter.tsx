@@ -57,13 +57,13 @@ export default function SynclyFooter({ className = '' }: SynclyFooterProps) {
                   <Icon name="instagram" size={20} color="#ffffff" />
                 </a>
                 
-                {/* X (Twitter) */}
+                {/* X (formerly Twitter) */}
                 <a
                   href={socialLinks.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 flex items-center justify-center hover:opacity-80 transition-opacity"
-                  aria-label="X (Twitter)"
+                  aria-label="X"
                 >
                   <Icon name="twitter" size={20} color="#ffffff" />
                 </a>
