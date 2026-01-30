@@ -99,8 +99,8 @@ export default function TodaysRatesPage() {
   // Get template data for colors and layout
   const templateData = getTemplateSync(selectedTemplate || 'template1');
   const templateColors = templateData?.template?.colors || {
-    primary: '#01bcc6',
-    secondary: '#01bcc6',
+    primary: '#111827',
+    secondary: '#111827',
     background: '#ffffff',
     text: '#111827',
     textSecondary: '#6b7280',
