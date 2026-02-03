@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotification } from '@/components/ui/Notification';
@@ -78,9 +78,27 @@ const videoCategories = [
 ];
 
 type TabType = 'faqs' | 'videos' | 'guides';
+type ContentType = 'faqs' | 'videos' | 'guides' | 'all';
+
+const CONTENT_CACHE_TTL_MS = 10000;
+const TOKEN_CACHE_TTL_MS = 30000;
+
+const contentCache = {
+  faqs: null as FAQ[] | null,
+  videos: null as Video[] | null,
+  guides: null as Guide[] | null,
+  fetchedAt: {
+    faqs: 0,
+    videos: 0,
+    guides: 0,
+    all: 0
+  } as Record<ContentType, number>
+};
+
+const contentFetchPromises: Partial<Record<ContentType, Promise<void>>> = {};
 
 export default function ContentManagementPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, accessToken, loading: authLoading } = useAuth();
   const { showNotification } = useNotification();
   
   const [activeTab, setActiveTab] = useState<TabType>('faqs');
@@ -132,53 +150,115 @@ export default function ContentManagementPage() {
   // Refs to prevent unnecessary refetches
   const hasLoadedRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
+  const tokenCacheRef = useRef<{ token: string | null; fetchedAt: number }>({ token: null, fetchedAt: 0 });
+  const loadedContentRef = useRef<{ faqs: boolean; videos: boolean; guides: boolean }>({
+    faqs: false,
+    videos: false,
+    guides: false
+  });
 
   // Get auth token
-  const getAuthToken = async (): Promise<string | null> => {
+  const getAuthToken = useCallback(async (): Promise<string | null> => {
+    if (accessToken) {
+      tokenCacheRef.current = { token: accessToken, fetchedAt: Date.now() };
+      return accessToken;
+    }
+
+    if (tokenCacheRef.current.token && Date.now() - tokenCacheRef.current.fetchedAt < TOKEN_CACHE_TTL_MS) {
+      return tokenCacheRef.current.token;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
+      const token = session?.access_token || null;
+      tokenCacheRef.current = { token, fetchedAt: Date.now() };
+      return token;
     } catch (error) {
       console.error('Error getting auth token:', error);
       return null;
     }
-  };
+  }, [accessToken]);
 
-  // Fetch all content
-  const fetchContent = async () => {
+  const applyContentData = useCallback((type: ContentType, data: { faqs?: FAQ[]; videos?: Video[]; guides?: Guide[] }) => {
+    if (type === 'all' || type === 'faqs') {
+      if (data.faqs) {
+        setFaqs(data.faqs);
+        contentCache.faqs = data.faqs;
+        contentCache.fetchedAt.faqs = Date.now();
+        loadedContentRef.current.faqs = true;
+      }
+    }
+    if (type === 'all' || type === 'videos') {
+      if (data.videos) {
+        setVideos(data.videos);
+        contentCache.videos = data.videos;
+        contentCache.fetchedAt.videos = Date.now();
+        loadedContentRef.current.videos = true;
+      }
+    }
+    if (type === 'all' || type === 'guides') {
+      if (data.guides) {
+        setGuides(data.guides);
+        contentCache.guides = data.guides;
+        contentCache.fetchedAt.guides = Date.now();
+        loadedContentRef.current.guides = true;
+      }
+    }
+    if (type === 'all') {
+      contentCache.fetchedAt.all = Date.now();
+    }
+  }, []);
+
+  const fetchContentType = useCallback(async (type: ContentType, showLoading = true) => {
     if (!user) return;
-    
-    try {
+
+    const now = Date.now();
+    const cacheValid = contentCache.fetchedAt[type] > 0 && (now - contentCache.fetchedAt[type]) < CONTENT_CACHE_TTL_MS;
+    if (cacheValid) {
+      if (type === 'faqs' && contentCache.faqs) setFaqs(contentCache.faqs);
+      if (type === 'videos' && contentCache.videos) setVideos(contentCache.videos);
+      if (type === 'guides' && contentCache.guides) setGuides(contentCache.guides);
+      if (type === 'all') {
+        if (contentCache.faqs) setFaqs(contentCache.faqs);
+        if (contentCache.videos) setVideos(contentCache.videos);
+        if (contentCache.guides) setGuides(contentCache.guides);
+      }
+      return;
+    }
+
+    if (contentFetchPromises[type]) {
+      await contentFetchPromises[type];
+      return;
+    }
+
+    if (showLoading) {
       setLoading(true);
+    }
+
+    contentFetchPromises[type] = (async () => {
       const token = await getAuthToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const [faqsRes, videosRes, guidesRes] = await Promise.all([
-        fetch('/api/officers/content/faqs', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/officers/content/videos', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/officers/content/guides', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      const response = await fetch(`/api/officers/content-management?type=${type}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      if (faqsRes.ok) {
-        const faqsData = await faqsRes.json();
-        setFaqs(faqsData.data || []);
+      if (!response.ok) {
+        throw new Error('Failed to fetch content');
       }
-      if (videosRes.ok) {
-        const videosData = await videosRes.json();
-        setVideos(videosData.data || []);
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch content');
       }
-      if (guidesRes.ok) {
-        const guidesData = await guidesRes.json();
-        setGuides(guidesData.data || []);
-      }
+
+      applyContentData(type, result.data || {});
+    })();
+
+    try {
+      await contentFetchPromises[type];
     } catch (error) {
       console.error('Error fetching content:', error);
       showNotification({
@@ -187,24 +267,45 @@ export default function ContentManagementPage() {
         message: 'Failed to load content'
       });
     } finally {
-      setLoading(false);
+      contentFetchPromises[type] = undefined;
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  };
+  }, [applyContentData, getAuthToken, showNotification, user]);
+
+  // Fetch all content (used after mutations)
+  const refreshAllContent = useCallback(async () => {
+    if (!user) return;
+    loadedContentRef.current = { faqs: false, videos: false, guides: false };
+    await fetchContentType('all', true);
+  }, [fetchContentType, user]);
 
   useEffect(() => {
     if (user && !authLoading) {
       const userId = user.id;
-      
+
       // Only fetch if:
       // 1. We haven't loaded yet, OR
       // 2. The user ID actually changed
       if (!hasLoadedRef.current || lastUserIdRef.current !== userId) {
         hasLoadedRef.current = true;
         lastUserIdRef.current = userId;
-        fetchContent();
+        loadedContentRef.current = { faqs: false, videos: false, guides: false };
+        fetchContentType('faqs', true);
       }
     }
-  }, [user?.id, authLoading]);
+  }, [user?.id, authLoading, fetchContentType]);
+
+  useEffect(() => {
+    if (!user || authLoading) return;
+    if (activeTab === 'videos' && !loadedContentRef.current.videos) {
+      fetchContentType('videos', true);
+    }
+    if (activeTab === 'guides' && !loadedContentRef.current.guides) {
+      fetchContentType('guides', true);
+    }
+  }, [activeTab, authLoading, fetchContentType, user]);
 
   // FAQ handlers
   const addFaqToForm = () => {
@@ -270,7 +371,7 @@ export default function ContentManagementPage() {
           message: `Successfully created ${faqForm.length} FAQ(s)`
         });
         setFaqForm([]);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to save FAQs');
       }
@@ -328,7 +429,7 @@ export default function ContentManagementPage() {
           message: 'FAQ updated successfully'
         });
         setEditingFaq(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to update FAQ');
       }
@@ -363,7 +464,7 @@ export default function ContentManagementPage() {
           message: 'FAQ deleted successfully'
         });
         setDeletingFaq(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to delete FAQ');
       }
@@ -467,7 +568,7 @@ export default function ContentManagementPage() {
         setVideoForm({ title: '', description: '', category: '', videoFile: null, thumbnailFile: null });
         setVideoPreview(null);
         setVideoUploadProgress(0);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(saveData.error || 'Failed to save video');
       }
@@ -526,7 +627,7 @@ export default function ContentManagementPage() {
           message: 'Video updated successfully'
         });
         setEditingVideo(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to update video');
       }
@@ -561,7 +662,7 @@ export default function ContentManagementPage() {
           message: 'Video deleted successfully'
         });
         setDeletingVideo(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to delete video');
       }
@@ -649,7 +750,7 @@ export default function ContentManagementPage() {
         });
         setGuideForm({ name: '', category: '', file: null, funnelUrl: '' });
         setGuideUploadProgress(0);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(saveData.error || 'Failed to save guide');
       }
@@ -707,7 +808,7 @@ export default function ContentManagementPage() {
           message: 'Guide updated successfully'
         });
         setEditingGuide(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to update guide');
       }
@@ -742,7 +843,7 @@ export default function ContentManagementPage() {
           message: 'Guide deleted successfully'
         });
         setDeletingGuide(null);
-        fetchContent();
+        refreshAllContent();
       } else {
         throw new Error(data.error || 'Failed to delete guide');
       }

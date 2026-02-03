@@ -99,6 +99,7 @@ export class MortechAPI {
         thirdPartyName: this.thirdPartyName,
         licenseKey: this.licenseKey,
         emailAddress: this.emailAddress,
+        targetprice: '-999',
         propertyZip: request.propertyZip,
         appraisedvalue: request.appraisedvalue.toString(),
         loan_amount: request.loan_amount.toString(),

@@ -261,7 +261,6 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.rates size={20} color={colors.background} />
                 <span>Below 580</span>
               </button>
               <button 
@@ -280,7 +279,6 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.calculators size={20} color={colors.background} />
                 <span>580-619</span>
               </button>
               <button 
@@ -299,7 +297,6 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.trendingUp size={20} color={colors.background} />
                 <span>620-639</span>
               </button>
               <button 
@@ -318,7 +315,6 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.star size={20} color={colors.background} />
                 <span>640 or higher</span>
               </button>
             </div>
@@ -518,7 +514,7 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.star size={20} color={colors.background} />
+                <icons.check size={20} color={colors.background} />
                 <span>Yes</span>
               </button>
               <button 
@@ -771,7 +767,7 @@ function Questionnaire({
                   e.currentTarget.style.backgroundColor = colors.primary;
                 }}
               >
-                <icons.star size={20} color={colors.background} />
+                <icons.check size={20} color={colors.background} />
                 <span>Yes</span>
               </button>
               <button 

@@ -547,7 +547,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     
     // Create form data from questionnaire - map to form fields
     const formDataPartial: Partial<SearchFormData> = {
-      zipCode: '75024',
+      zipCode: '95825',
       salesPrice: loanPurpose === 'Purchase' ? defaultSalesPrice.toString() : undefined,
       downPayment: downPayment || (loanPurpose === 'Purchase' ? '75000' : undefined),
       downPaymentPercent: downPaymentPercent || (loanPurpose === 'Purchase' ? '33.33' : undefined),
@@ -591,7 +591,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
     // Create full form data for search
     const formData: SearchFormData = {
-      zipCode: formDataPartial.zipCode || '75024',
+      zipCode: formDataPartial.zipCode || '95825',
       salesPrice: formDataPartial.salesPrice || '225000',
       downPayment: formDataPartial.downPayment || '75000',
       downPaymentPercent: formDataPartial.downPaymentPercent || '33.33',
@@ -691,7 +691,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
       // Build Mortech API request
       const request: any = {
-        propertyZip: formData.zipCode || '75024',
+        propertyZip: formData.zipCode || '95825',
         appraisedvalue: propertyValue,
         loan_amount: calculatedLoanAmount,
         fico: mapCreditScore(formData.creditScore),
@@ -903,60 +903,42 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.rates, { size: 20, color: colors.background })}
-                  <span>Below 580</span>
-                </div>
+                <span>Below 580</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-down-payment-low', { creditScore: '580-619' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.calculators, { size: 20, color: colors.background })}
-                  <span>580-619</span>
-                </div>
+                <span>580-619</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-down-payment-mid', { creditScore: '620-639' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.trendingUp, { size: 20, color: colors.background })}
-                  <span>620-639</span>
-                </div>
+                <span>620-639</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '640-679' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.star, { size: 20, color: colors.background })}
-                  <span>640 to 679</span>
-                </div>
+                <span>640 to 679</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '680-719' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.trendingUp, { size: 20, color: colors.background })}
-                  <span>680 to 719</span>
-                </div>
+                <span>680 to 719</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-military', { creditScore: '720+' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.star, { size: 20, color: colors.background })}
-                  <span>720 or higher</span>
-                </div>
+                <span>720 or higher</span>
               </Button>
             </div>
           </div>
@@ -973,20 +955,16 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.star, { size: 20, color: colors.background })}
-                  <span>Yes</span>
-                </div>
+                {React.createElement(icons.check, { size: 20 })}
+                <span>Yes</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('purchase-rural', { loanType: 'Conventional' })}
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                <div className="flex items-center space-x-3">
-                  {React.createElement(icons.cancel, { size: 20, color: colors.background })}
-                  <span>No</span>
-                </div>
+                {React.createElement(icons.cancel, { size: 20 })}
+                <span>No</span>
               </Button>
             </div>
           </div>
@@ -1099,8 +1077,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 {...getTemplateButtonStyles('secondary')}
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
-                {React.createElement(icons.star, { size: 20 })}
-                Yes
+                {React.createElement(icons.check, { size: 20 })}
+                <span>Yes</span>
               </Button>
               <Button 
                 onClick={() => handleQuestionnaireStepChange('refinance-non-veteran-purpose', { loanType: 'Conventional' })}
@@ -1108,7 +1086,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 className="h-10 @sm:h-14 text-sm @sm:text-base"
               >
                 {React.createElement(icons.cancel, { size: 20 })}
-                No
+                <span>No</span>
               </Button>
             </div>
           </div>

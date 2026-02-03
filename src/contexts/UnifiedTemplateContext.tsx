@@ -159,6 +159,7 @@ export function UnifiedTemplateProvider({ children }: { children: ReactNode }) {
   
   // Global initialization lock to prevent multiple initializations
   const initializationLock = useRef<boolean>(false);
+  const selectionLoadedRef = useRef<string | null>(null);
   
   // Request counter for debugging
   const requestCounter = useRef<number>(0);
@@ -167,6 +168,8 @@ export function UnifiedTemplateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadSelectedTemplate = async () => {
       if (!user) return;
+      if (selectionLoadedRef.current === user.id) return;
+      selectionLoadedRef.current = user.id;
       try {
         const res = await fetch(`/api/templates/selection?userId=${encodeURIComponent(user.id)}`);
         const json = await res.json();
@@ -569,19 +572,41 @@ export function UnifiedTemplateProvider({ children }: { children: ReactNode }) {
     }
     
     prewarmDoneRef.current = user.id;
+    const slugsToRefresh = [selectedTemplate]
+      .filter((slug): slug is string => !!slug)
+      .filter(slug => !templates[slug]);
+    if (!slugsToRefresh.length) return;
     const t1 = setTimeout(() => {
-      refreshTemplate('template1').catch(() => {});
-      refreshTemplate('template2').catch(() => {});
-    }, 250);
-    const t2 = setTimeout(() => {
-      refreshTemplate('template1').catch(() => {});
-      refreshTemplate('template2').catch(() => {});
-    }, 2000);
+      (async () => {
+        const results = await Promise.all(slugsToRefresh.map(async (slug) => {
+          try {
+            const templateData = await fetchTemplate(slug);
+            return { slug, templateData };
+          } catch (error) {
+            console.error('❌ UnifiedTemplate: Prewarm failed for:', slug, error);
+            return { slug, templateData: null };
+          }
+        }));
+
+        const nextTemplates: Record<string, TemplateData> = {};
+        results.forEach(({ slug, templateData }) => {
+          if (templateData) {
+            nextTemplates[slug] = templateData;
+          }
+        });
+
+        if (Object.keys(nextTemplates).length) {
+          setTemplates(prev => ({
+            ...prev,
+            ...nextTemplates
+          }));
+        }
+      })().catch(() => {});
+    }, 500);
     return () => {
       clearTimeout(t1);
-      clearTimeout(t2);
     };
-  }, [user?.id, refreshTemplate, userRole]);
+  }, [user?.id, fetchTemplate, userRole, templates, selectedTemplate]);
 
   // Save template settings
   const saveTemplate = useCallback(async (slug: string, customSettings: any, isPublished = false) => {

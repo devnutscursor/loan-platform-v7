@@ -159,9 +159,29 @@ function MortgageSearchForm({
     { value: 'No', label: 'No' },
     { value: 'Yes', label: 'Yes' }
   ], []);
+
+  // Format currency for display in inputs (e.g. "550000" -> "$550,000")
+  const formatCurrencyForInput = useCallback((value: string): string => {
+    const digits = value.replace(/\D/g, '');
+    if (digits === '') return '';
+    const num = parseFloat(digits);
+    if (Number.isNaN(num)) return '';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  }, []);
+
+  // Parse currency input to raw digits string for storage (e.g. "$550,000" or "550000" -> "550000")
+  const parseCurrencyFromInput = useCallback((value: string): string => {
+    const digits = value.replace(/\D/g, '');
+    return digits;
+  }, []);
   
   const defaultFormData: SearchFormData = {
-    zipCode: '75024',
+    zipCode: '95825',
     salesPrice: '225000',
     downPayment: '75000',
     downPaymentPercent: '33.33',
@@ -185,8 +205,8 @@ function MortgageSearchForm({
     monthsReserves: 24,
     selfEmployed: true,
     waiveEscrows: false,
-    county: 'Collin',
-    state: 'TX',
+    county: 'Sacramento',
+    state: 'CA',
     numberOfStories: 1,
     numberOfUnits: 'OneUnit',
     lienType: 'First',
@@ -246,7 +266,7 @@ function MortgageSearchForm({
     if (field === 'salesPrice' || field === 'downPayment') {
       const price = field === 'salesPrice' ? parseFloat(value as string) : parseFloat(formData.salesPrice);
       const down = field === 'downPayment' ? parseFloat(value as string) : parseFloat(formData.downPayment);
-      if (price > 0) {
+      if (Number.isFinite(price) && Number.isFinite(down) && price > 0) {
         const percent = ((down / price) * 100).toFixed(1);
         setFormData(prev => ({
           ...prev,
@@ -543,7 +563,7 @@ function MortgageSearchForm({
                 color: templateColors.text,
                 backgroundColor: templateColors.background
               }}
-              placeholder="75024"
+              placeholder="95825"
             />
           </div>
           {activeTab === 'purchase' && (
@@ -558,9 +578,10 @@ function MortgageSearchForm({
                 Purchase Price
               </label>
               <input
-                type="number"
-                value={formData.salesPrice}
-                onChange={(e) => handleInputChange('salesPrice', e.target.value)}
+                type="text"
+                inputMode="numeric"
+                value={formatCurrencyForInput(formData.salesPrice)}
+                onChange={(e) => handleInputChange('salesPrice', parseCurrencyFromInput(e.target.value))}
                 style={{
                   width: '100%',
                   height: '40px',
@@ -574,7 +595,7 @@ function MortgageSearchForm({
                   color: templateColors.text,
                   backgroundColor: templateColors.background
                 }}
-                placeholder="225000"
+                placeholder="$225,000"
               />
             </div>
           )}
@@ -594,9 +615,10 @@ function MortgageSearchForm({
                 </label>
                 <div className="down-payment-input-group" style={{ display: 'flex', height: '40px' }}>
                   <input
-                    type="number"
-                    value={formData.downPayment}
-                    onChange={(e) => handleInputChange('downPayment', e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatCurrencyForInput(formData.downPayment)}
+                    onChange={(e) => handleInputChange('downPayment', parseCurrencyFromInput(e.target.value))}
                     style={{ 
                       flex: 1,
                       padding: `${spacing[2]} ${spacing[3]}`,
@@ -611,7 +633,7 @@ function MortgageSearchForm({
                       height: '100%',
                       boxSizing: 'border-box'
                     }}
-                    placeholder="75000"
+                    placeholder="$75,000"
                   />
                   <div style={{ 
                     display: 'flex',

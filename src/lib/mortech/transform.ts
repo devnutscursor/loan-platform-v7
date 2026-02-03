@@ -72,7 +72,7 @@ export function transformOBRequestToMortech(obRequest: any): any {
     propertyValue: obRequest.salesPrice || obRequest.propertyInformation?.appraisedValue || 225000,
     creditScore: parseCreditScore(obRequest.representativeFICO || obRequest.loanInformation?.representativeFICO) || 750,
     propertyState: obRequest.state || obRequest.propertyInformation?.state || 'TX',
-    propertyZip: obRequest.zipCode || obRequest.propertyInformation?.zipCode || '75024',
+    propertyZip: obRequest.zipCode || obRequest.propertyInformation?.zipCode || '95825',
     loanPurpose: (obRequest.loanPurpose === 'Purchase' ? 'Purchase' : 'Refinance') as 'Purchase' | 'Refinance',
     propertyType: mapPropertyType(obRequest.propertyType || obRequest.propertyInformation?.propertyType),
     occupancy: mapOccupancy(obRequest.occupancy || obRequest.propertyInformation?.occupancy),

@@ -2,7 +2,40 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
+
+type RoleFetchResult = {
+  userRole: UserRole | null;
+  companyId: string | null;
+  clearUser?: boolean;
+};
+
+const ROLE_CACHE_TTL_MS = 10000;
+let roleFetchPromise: Promise<RoleFetchResult> | null = null;
+let roleFetchUserId: string | null = null;
+let roleFetchCache: { userId: string; result: RoleFetchResult; fetchedAt: number } | null = null;
+
+let sessionPromise: Promise<Session | null> | null = null;
+
+const clearRoleCache = () => {
+  roleFetchPromise = null;
+  roleFetchUserId = null;
+  roleFetchCache = null;
+};
+
+const getSharedSession = async () => {
+  if (sessionPromise) return sessionPromise;
+  sessionPromise = supabase.auth.getSession()
+    .then(({ data }) => data.session || null)
+    .catch((error) => {
+      console.error('🔐 useAuth: getSession error:', error);
+      return null;
+    })
+    .finally(() => {
+      sessionPromise = null;
+    });
+  return sessionPromise;
+};
 
 // interface Company {
 //   id: string;
@@ -39,6 +72,7 @@ export function useAuth() {
     if (!newUser) {
       // User signed out
       clearProfileCache();
+      clearRoleCache();
     } else if (!oldUser) {
       // First time user is set (initial load) - don't clear cache
       console.log('🔐 useAuth: Initial user load, keeping existing cache');
@@ -46,6 +80,7 @@ export function useAuth() {
       // User actually changed
       console.log('🔐 useAuth: User changed, clearing cache');
       clearProfileCache();
+      clearRoleCache();
     } else {
       // Same user, same session - keep cache
       console.log('🔐 useAuth: Same user, keeping cache');
@@ -60,8 +95,7 @@ export function useAuth() {
     (async () => {
       let session = null;
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        session = currentSession;
+        session = await getSharedSession();
         if (!isMounted) return;
         if (session?.user) {
           console.log('🔐 useAuth: Initial session detected for:', session.user.email);
@@ -128,6 +162,7 @@ export function useAuth() {
           setAccessToken(null);
           setCompanyId(null);
           setRoleLoading(false);
+          clearRoleCache();
           // No need for profile prewarming - using user data directly
           // Clear cache on sign out
           clearProfileCache();
@@ -154,64 +189,114 @@ export function useAuth() {
     };
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      console.log('🔍 useAuth: Fetching user role for:', userId);
-      const startTime = Date.now();
-      
-      // First check if user exists and is not deactivated
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role, deactivated, is_active')
-        .eq('id', userId)
-        .single();
+  const applyRoleResult = useCallback((result: RoleFetchResult) => {
+    if (result.clearUser) {
+      setUser(null);
+      setUserRole(null);
+      setCompanyId(null);
+      setAccessToken(null);
+    } else {
+      setUserRole(result.userRole);
+      setCompanyId(result.companyId);
+    }
+    setRoleLoading(false);
+  }, []);
 
-      if (!userData) {
-        console.log('🔍 useAuth: User not found');
-        setUser(null);
-        setUserRole(null);
-        setCompanyId(null);
-        return;
-      }
+  const fetchUserRole = useCallback(async (userId: string) => {
+    const now = Date.now();
+    if (roleFetchCache && roleFetchCache.userId === userId && (now - roleFetchCache.fetchedAt) < ROLE_CACHE_TTL_MS) {
+      applyRoleResult(roleFetchCache.result);
+      return roleFetchCache.result;
+    }
 
-      // Check if user is deactivated
-      if (userData.deactivated) {
-        console.log('🔍 useAuth: User is deactivated, signing out');
-        await supabase.auth.signOut();
-        setUser(null);
-        setUserRole(null);
-        setCompanyId(null);
-        return;
-      }
+    if (roleFetchPromise && roleFetchUserId === userId) {
+      const result = await roleFetchPromise;
+      applyRoleResult(result);
+      return result;
+    }
 
-      // Check if user is active (not in invite flow)
-      if (userData.is_active === false) {
-        console.log('🔍 useAuth: User is not active (in invite flow), skipping role fetch');
-        setUserRole({ role: userData.role, isActive: false });
-        return;
-      }
-
-      // Check if user is super admin
-      if (userData.role === 'super_admin') {
-        console.log('🔍 useAuth: User is super admin');
-        setUserRole({ role: 'super_admin', isActive: true });
-        setRoleLoading(false);
-        return;
-      }
-
-      // Check if user is company admin
-      if (userData.role === 'company_admin') {
-        console.log('🔍 useAuth: User is company admin');
-        // Get company ID for company admin
-        const { data: userCompany } = await supabase
-          .from('user_companies')
-          .select('company_id')
-          .eq('user_id', userId)
-          .eq('role', 'admin')
+    roleFetchUserId = userId;
+    roleFetchPromise = (async (): Promise<RoleFetchResult> => {
+      try {
+        console.log('🔍 useAuth: Fetching user role for:', userId);
+        const startTime = Date.now();
+        
+        // First check if user exists and is not deactivated
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, deactivated, is_active')
+          .eq('id', userId)
           .single();
 
-        if (userCompany) {
-          console.log('🔍 useAuth: Found company ID:', userCompany.company_id);
+        if (!userData) {
+          console.log('🔍 useAuth: User not found');
+          return { userRole: null, companyId: null, clearUser: true };
+        }
+
+        // Check if user is deactivated
+        if (userData.deactivated) {
+          console.log('🔍 useAuth: User is deactivated, signing out');
+          await supabase.auth.signOut();
+          return { userRole: null, companyId: null, clearUser: true };
+        }
+
+        // Check if user is active (not in invite flow)
+        if (userData.is_active === false) {
+          console.log('🔍 useAuth: User is not active (in invite flow), skipping role fetch');
+          return { userRole: { role: userData.role, isActive: false }, companyId: null };
+        }
+
+        // Check if user is super admin
+        if (userData.role === 'super_admin') {
+          console.log('🔍 useAuth: User is super admin');
+          return { userRole: { role: 'super_admin', isActive: true }, companyId: null };
+        }
+
+        // Check if user is company admin
+        if (userData.role === 'company_admin') {
+          console.log('🔍 useAuth: User is company admin');
+          // Get company ID for company admin
+          const { data: userCompany } = await supabase
+            .from('user_companies')
+            .select('company_id')
+            .eq('user_id', userId)
+            .eq('role', 'admin')
+            .single();
+
+          if (userCompany) {
+            console.log('🔍 useAuth: Found company ID:', userCompany.company_id);
+            
+            // Check if the company is deactivated
+            const { data: companyData } = await supabase
+              .from('companies')
+              .select('deactivated')
+              .eq('id', userCompany.company_id)
+              .single();
+
+            if (companyData && companyData.deactivated) {
+              console.log('🔍 useAuth: Company is deactivated, signing out company admin');
+              await supabase.auth.signOut();
+              return { userRole: null, companyId: null, clearUser: true };
+            }
+
+            return { userRole: { role: 'company_admin', companyId: userCompany.company_id, isActive: true }, companyId: userCompany.company_id };
+          }
+
+          console.log('🔍 useAuth: No company found for company admin');
+          return { userRole: { role: 'company_admin', isActive: true }, companyId: null };
+        }
+
+        // Check user-company relationship for employees
+        const { data: userCompanies } = await supabase
+          .from('user_companies')
+          .select('company_id, role')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+
+        if (userCompanies && userCompanies.length > 0) {
+          // Use the first active company relationship
+          const userCompany = userCompanies[0];
+          console.log('🔍 useAuth: User is employee with company:', userCompany.company_id);
           
           // Check if the company is deactivated
           const { data: companyData } = await supabase
@@ -221,69 +306,32 @@ export function useAuth() {
             .single();
 
           if (companyData && companyData.deactivated) {
-            console.log('🔍 useAuth: Company is deactivated, signing out company admin');
+            console.log('🔍 useAuth: Company is deactivated, signing out employee');
             await supabase.auth.signOut();
-            setUser(null);
-            setUserRole(null);
-            setCompanyId(null);
-            return;
+            return { userRole: null, companyId: null, clearUser: true };
           }
 
-          setUserRole({ role: 'company_admin', companyId: userCompany.company_id, isActive: true });
-          setCompanyId(userCompany.company_id);
-        } else {
-          console.log('🔍 useAuth: No company found for company admin');
-          setUserRole({ role: 'company_admin', isActive: true });
-        }
-        setRoleLoading(false);
-        return;
-      }
-
-      // Check user-company relationship for employees
-      const { data: userCompanies } = await supabase
-        .from('user_companies')
-        .select('company_id, role')
-        .eq('user_id', userId)
-        .eq('is_active', true);
-
-      if (userCompanies && userCompanies.length > 0) {
-        // Use the first active company relationship
-        const userCompany = userCompanies[0];
-        console.log('🔍 useAuth: User is employee with company:', userCompany.company_id);
-        
-        // Check if the company is deactivated
-        const { data: companyData } = await supabase
-          .from('companies')
-          .select('deactivated')
-          .eq('id', userCompany.company_id)
-          .single();
-
-        if (companyData && companyData.deactivated) {
-          console.log('🔍 useAuth: Company is deactivated, signing out employee');
-          await supabase.auth.signOut();
-          setUser(null);
-          setUserRole(null);
-          setCompanyId(null);
-          return;
+          return { userRole: { role: 'employee', companyId: userCompany.company_id, isActive: true }, companyId: userCompany.company_id };
         }
 
-        setUserRole({ role: 'employee', companyId: userCompany.company_id, isActive: true });
-        setCompanyId(userCompany.company_id);
-      } else {
         console.log('🔍 useAuth: User has no company relationship');
-        setUserRole({ role: 'employee', isActive: true });
+        const endTime = Date.now();
+        console.log('🔍 useAuth: User role fetch completed in:', endTime - startTime, 'ms');
+        return { userRole: { role: 'employee', isActive: true }, companyId: null };
+      } catch (error) {
+        console.error('🔍 useAuth: Error fetching user role:', error);
+        // Set a default role to prevent infinite loading
+        return { userRole: { role: 'employee', isActive: true }, companyId: null };
       }
-      setRoleLoading(false);
-      
-      const endTime = Date.now();
-      console.log('🔍 useAuth: User role fetch completed in:', endTime - startTime, 'ms');
-    } catch (error) {
-      console.error('🔍 useAuth: Error fetching user role:', error);
-      // Set a default role to prevent infinite loading
-      setUserRole({ role: 'employee', isActive: true });
-      setRoleLoading(false);
-    }
-  };
+    })();
+
+    const result = await roleFetchPromise;
+    roleFetchPromise = null;
+    roleFetchUserId = null;
+    roleFetchCache = { userId, result, fetchedAt: Date.now() };
+    applyRoleResult(result);
+    return result;
+  }, [applyRoleResult]);
 
   const signOut = async () => {
     try {
@@ -293,6 +341,7 @@ export function useAuth() {
       setCompanyId(null);
       setAccessToken(null);
       setRoleLoading(false);
+      clearRoleCache();
       
       // Clear cache on manual sign out
       clearProfileCache();
@@ -309,6 +358,7 @@ export function useAuth() {
       setCompanyId(null);
       setAccessToken(null);
       setRoleLoading(false);
+      clearRoleCache();
       clearProfileCache();
     }
   };

@@ -269,7 +269,7 @@ export default function TodaysRatesPage() {
       });
 
       const request: any = {
-        propertyZip: formData.zipCode || '75024',
+        propertyZip: formData.zipCode || '95825',
         appraisedvalue: propertyValue,
         loan_amount: calculatedLoanAmount,
         fico: mapCreditScore(formData.creditScore),

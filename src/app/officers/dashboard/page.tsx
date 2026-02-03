@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { DashboardLoadingState } from '@/components/ui/LoadingState';
-import { supabase } from '@/lib/supabase/client';
 import { dashboard } from '@/theme/theme';
 import { icons } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -56,8 +55,19 @@ interface PublicLink {
   updated_at: string;
 }
 
+type DashboardFetchResult = {
+  leads: Lead[];
+  publicLink: PublicLink | null;
+  publicProfileTemplate: string;
+};
+
+const DASHBOARD_FETCH_TTL_MS = 10000;
+let dashboardFetchCache: { key: string; result: DashboardFetchResult; fetchedAt: number } | null = null;
+let dashboardFetchPromise: Promise<DashboardFetchResult> | null = null;
+let dashboardFetchKey: string | null = null;
+
 export default function OfficersDashboardPage() {
-  const { user, userRole, companyId, loading: authLoading } = useAuth();
+  const { user, userRole, companyId, accessToken, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // State for dashboard data
@@ -79,6 +89,45 @@ export default function OfficersDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const calculateLeadStats = useCallback((leadsData: Lead[]): LeadStats => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const stats: LeadStats = {
+      total: leadsData.length,
+      new: 0,
+      contacted: 0,
+      qualified: 0,
+      converted: 0,
+      lost: 0,
+      highPriority: 0,
+      urgentPriority: 0,
+      thisWeek: 0,
+      thisMonth: 0
+    };
+
+    leadsData.forEach(lead => {
+      // Count by status
+      if (lead.status === 'new') stats.new++;
+      else if (lead.status === 'contacted') stats.contacted++;
+      else if (lead.status === 'qualified') stats.qualified++;
+      else if (lead.status === 'converted') stats.converted++;
+      else if (lead.status === 'lost') stats.lost++;
+
+      // Count by priority
+      if (lead.priority === 'high') stats.highPriority++;
+      else if (lead.priority === 'urgent') stats.urgentPriority++;
+
+      // Count by date
+      const leadDate = new Date(lead.created_at);
+      if (leadDate >= oneWeekAgo) stats.thisWeek++;
+      if (leadDate >= oneMonthAgo) stats.thisMonth++;
+    });
+
+    return stats;
+  }, []);
+
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -90,130 +139,79 @@ export default function OfficersDashboardPage() {
       try {
         setLoading(true);
         setError(null);
+        const fetchKey = `${user.id}:${companyId}`;
+        const now = Date.now();
 
-        // Prepare date calculations for stats
-        const now = new Date();
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (dashboardFetchCache && dashboardFetchCache.key === fetchKey &&
+          (now - dashboardFetchCache.fetchedAt) < DASHBOARD_FETCH_TTL_MS) {
+          setLeads(dashboardFetchCache.result.leads);
+          setLeadStats(calculateLeadStats(dashboardFetchCache.result.leads));
+          setPublicLink(dashboardFetchCache.result.publicLink);
+          setPublicProfileTemplate(dashboardFetchCache.result.publicProfileTemplate);
+          return;
+        }
 
-        // Parallelize all API calls
-        const [leadsResult, publicLinkResult, templateResult] = await Promise.all([
-          // Fetch leads
-          supabase
-            .from('leads')
-            .select('*')
-            .eq('officer_id', user.id)
-            .eq('company_id', companyId)
-            .order('created_at', { ascending: false })
-            .limit(50),
-          
-          // Fetch public link
-          supabase
-            .from('loan_officer_public_links')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .single(),
-          
-          // Fetch public profile template
-          (async () => {
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.access_token) {
-                const response = await fetch('/api/templates/get-public-profile-template', {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'Content-Type': 'application/json',
-                  },
-                });
+        if (dashboardFetchPromise && dashboardFetchKey === fetchKey) {
+          const result = await dashboardFetchPromise;
+          setLeads(result.leads);
+          setLeadStats(calculateLeadStats(result.leads));
+          setPublicLink(result.publicLink);
+          setPublicProfileTemplate(result.publicProfileTemplate);
+          return;
+        }
 
-                if (response.ok) {
-                  const result = await response.json();
-                  if (result.success && result.templateSlug) {
-                    return result.templateSlug;
-                  }
-                }
-              }
-              // Fallback to localStorage
-              if (typeof window !== 'undefined') {
-                return localStorage.getItem('publicProfileTemplate') || 'template1';
-              }
-              return 'template1';
-            } catch (error) {
-              console.error('❌ Dashboard: Error fetching public profile template:', error);
-              // Fallback to localStorage
-              if (typeof window !== 'undefined') {
-                return localStorage.getItem('publicProfileTemplate') || 'template1';
-              }
-              return 'template1';
+        // Load dashboard data from a single server endpoint
+        dashboardFetchKey = fetchKey;
+        dashboardFetchPromise = (async () => {
+          const response = await fetch(`/api/officers/dashboard?companyId=${encodeURIComponent(companyId)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
             }
-          })()
-        ]);
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch dashboard data');
+          }
+
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Dashboard data fetch failed');
+          }
+
+          return {
+            leads: result.leads || [],
+            publicLink: result.publicLink || null,
+            publicProfileTemplate: result.publicProfileTemplate || 'template1'
+          };
+        })();
+
+        const result = await dashboardFetchPromise;
+        dashboardFetchCache = { key: fetchKey, result, fetchedAt: Date.now() };
 
         // Handle leads result
-        if (leadsResult.error) {
-          console.error('❌ Dashboard: Leads fetch error:', leadsResult.error);
-          throw leadsResult.error;
-        }
-
-        const leadsData = leadsResult.data || [];
-        setLeads(leadsData);
-
-        // Calculate statistics in a single pass
-        const stats: LeadStats = {
-          total: leadsData.length,
-          new: 0,
-          contacted: 0,
-          qualified: 0,
-          converted: 0,
-          lost: 0,
-          highPriority: 0,
-          urgentPriority: 0,
-          thisWeek: 0,
-          thisMonth: 0
-        };
-
-        leadsData.forEach(lead => {
-          // Count by status
-          if (lead.status === 'new') stats.new++;
-          else if (lead.status === 'contacted') stats.contacted++;
-          else if (lead.status === 'qualified') stats.qualified++;
-          else if (lead.status === 'converted') stats.converted++;
-          else if (lead.status === 'lost') stats.lost++;
-
-          // Count by priority
-          if (lead.priority === 'high') stats.highPriority++;
-          else if (lead.priority === 'urgent') stats.urgentPriority++;
-
-          // Count by date
-          const leadDate = new Date(lead.created_at);
-          if (leadDate >= oneWeekAgo) stats.thisWeek++;
-          if (leadDate >= oneMonthAgo) stats.thisMonth++;
-        });
-
-        setLeadStats(stats);
+        setLeads(result.leads);
+        setLeadStats(calculateLeadStats(result.leads));
 
         // Handle public link result
-        if (publicLinkResult.error && publicLinkResult.error.code !== 'PGRST116') {
-          console.warn('⚠️ Dashboard: Public link fetch error:', publicLinkResult.error);
-        } else if (publicLinkResult.data) {
-          setPublicLink(publicLinkResult.data);
-        }
+        setPublicLink(result.publicLink);
 
         // Handle template result
-        setPublicProfileTemplate(templateResult);
+        setPublicProfileTemplate(result.publicProfileTemplate);
 
       } catch (err) {
         console.error('❌ Dashboard data fetch error:', err instanceof Error ? err.message : 'Unknown error');
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
+        dashboardFetchPromise = null;
+        dashboardFetchKey = null;
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, [user?.id, companyId, authLoading]);
+  }, [user?.id, companyId, authLoading, accessToken]);
 
   // Get recent leads (last 3) - memoized
   const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);

@@ -10,6 +10,48 @@ import { supabase } from '@/lib/supabase/client';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 
 // No props interface needed - component gets data from useAuth
+type ProfileData = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  initial: string;
+  role: string;
+  avatar: string | null;
+};
+
+const PROFILE_CACHE_TTL_MS = 60000;
+let profileCache: { userId: string; data: ProfileData; fetchedAt: number } | null = null;
+let profileFetchPromise: Promise<ProfileData> | null = null;
+
+const buildProfileData = ({
+  userEmail,
+  userRole,
+  firstName = '',
+  lastName = '',
+  avatar = null
+}: {
+  userEmail: string;
+  userRole?: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string | null;
+}): ProfileData => {
+  const fullName = `${firstName} ${lastName}`.trim() || userEmail || '';
+  const initial = firstName ? firstName.charAt(0).toUpperCase() :
+    lastName ? lastName.charAt(0).toUpperCase() :
+    userEmail?.charAt(0).toUpperCase() || 'U';
+
+  return {
+    email: userEmail || '',
+    firstName,
+    lastName,
+    fullName,
+    initial,
+    role: userRole || 'employee',
+    avatar
+  };
+};
 
 const StaticHeader = memo(function StaticHeader() {
   const { user, signOut, userRole, loading: authLoading, roleLoading } = useAuth();
@@ -34,52 +76,62 @@ const StaticHeader = memo(function StaticHeader() {
     const fetchUserProfile = async () => {
       if (!user?.id) return;
       
+      const cacheHit = profileCache?.userId === user.id &&
+        (Date.now() - profileCache.fetchedAt) < PROFILE_CACHE_TTL_MS;
+      if (cacheHit) {
+        setStableUserData({ ...profileCache.data, role: userRole?.role || profileCache.data.role });
+        return;
+      }
+
+      if (profileFetchPromise) {
+        setProfileLoading(true);
+        try {
+          const data = await profileFetchPromise;
+          setStableUserData({ ...data, role: userRole?.role || data.role });
+        } finally {
+          setProfileLoading(false);
+        }
+        return;
+      }
+
       setProfileLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('first_name, last_name, avatar')
-          .eq('id', user.id)
-          .single();
+        profileFetchPromise = (async () => {
+          const { data, error } = await supabase
+            .from('users')
+            .select('first_name, last_name, avatar')
+            .eq('id', user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          // Fallback to email-based data
-          setStableUserData(prev => ({
-            ...prev,
-            email: user.email || '',
-            initial: user.email?.charAt(0).toUpperCase() || 'U',
-            role: userRole?.role || 'employee'
-          }));
-          return;
-        }
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            return buildProfileData({
+              userEmail: user.email || '',
+              userRole: userRole?.role
+            });
+          }
 
-        const firstName = data.first_name || '';
-        const lastName = data.last_name || '';
-        const fullName = `${firstName} ${lastName}`.trim() || user.email || '';
-        const initial = firstName ? firstName.charAt(0).toUpperCase() : 
-                       lastName ? lastName.charAt(0).toUpperCase() : 
-                       user.email?.charAt(0).toUpperCase() || 'U';
+          return buildProfileData({
+            userEmail: user.email || '',
+            userRole: userRole?.role,
+            firstName: data.first_name || '',
+            lastName: data.last_name || '',
+            avatar: data.avatar
+          });
+        })();
 
-        setStableUserData({
-          email: user.email || '',
-          firstName,
-          lastName,
-          fullName,
-          initial,
-          role: userRole?.role || 'employee',
-          avatar: data.avatar
-        });
+        const profileData = await profileFetchPromise;
+        profileCache = { userId: user.id, data: profileData, fetchedAt: Date.now() };
+        setStableUserData(profileData);
       } catch (error) {
         console.error('Error fetching user profile:', error);
         // Fallback to email-based data
-        setStableUserData(prev => ({
-          ...prev,
-          email: user.email || '',
-          initial: user.email?.charAt(0).toUpperCase() || 'U',
-          role: userRole?.role || 'employee'
+        setStableUserData(buildProfileData({
+          userEmail: user.email || '',
+          userRole: userRole?.role
         }));
       } finally {
+        profileFetchPromise = null;
         setProfileLoading(false);
       }
     };
