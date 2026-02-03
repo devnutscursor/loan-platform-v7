@@ -62,6 +62,9 @@ type DashboardFetchResult = {
 };
 
 const DASHBOARD_FETCH_TTL_MS = 10000;
+const DASHBOARD_STORAGE_TTL_MS = 5 * 60 * 1000;
+const getDashboardStorageKey = (userId: string, companyId: string) =>
+  `dashboard_cache:${userId}:${companyId}`;
 let dashboardFetchCache: { key: string; result: DashboardFetchResult; fetchedAt: number } | null = null;
 let dashboardFetchPromise: Promise<DashboardFetchResult> | null = null;
 let dashboardFetchKey: string | null = null;
@@ -137,10 +140,34 @@ export default function OfficersDashboardPage() {
       }
 
       try {
-        setLoading(true);
         setError(null);
         const fetchKey = `${user.id}:${companyId}`;
         const now = Date.now();
+        const storageKey = getDashboardStorageKey(user.id, companyId);
+        let hasStoredData = false;
+
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const parsed = JSON.parse(raw) as {
+              fetchedAt?: number;
+              data?: { leads: any[]; publicLink: any | null; publicProfileTemplate: string };
+            };
+            if (parsed?.data && parsed?.fetchedAt && (now - parsed.fetchedAt) < DASHBOARD_STORAGE_TTL_MS) {
+              setLeads(parsed.data.leads || []);
+              setLeadStats(calculateLeadStats(parsed.data.leads || []));
+              setPublicLink(parsed.data.publicLink || null);
+              setPublicProfileTemplate(parsed.data.publicProfileTemplate || 'template1');
+              hasStoredData = true;
+            }
+          }
+        } catch (error) {
+          console.error('Error reading cached dashboard data:', error);
+        }
+
+        if (hasStoredData) {
+          setLoading(false);
+        }
 
         if (dashboardFetchCache && dashboardFetchCache.key === fetchKey &&
           (now - dashboardFetchCache.fetchedAt) < DASHBOARD_FETCH_TTL_MS) {
@@ -158,6 +185,10 @@ export default function OfficersDashboardPage() {
           setPublicLink(result.publicLink);
           setPublicProfileTemplate(result.publicProfileTemplate);
           return;
+        }
+
+        if (!hasStoredData) {
+          setLoading(true);
         }
 
         // Load dashboard data from a single server endpoint
@@ -189,6 +220,14 @@ export default function OfficersDashboardPage() {
 
         const result = await dashboardFetchPromise;
         dashboardFetchCache = { key: fetchKey, result, fetchedAt: Date.now() };
+        try {
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({ data: result, fetchedAt: Date.now() })
+          );
+        } catch (error) {
+          console.error('Error writing cached dashboard data:', error);
+        }
 
         // Handle leads result
         setLeads(result.leads);
