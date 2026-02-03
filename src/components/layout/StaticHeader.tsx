@@ -76,11 +76,13 @@ const StaticHeader = memo(function StaticHeader() {
     const fetchUserProfile = async () => {
       if (!user?.id) return;
       
-      const cacheHit = profileCache &&
+      if (
+        profileCache &&
         profileCache.userId === user.id &&
-        (Date.now() - profileCache.fetchedAt) < PROFILE_CACHE_TTL_MS;
-      if (cacheHit) {
-        setStableUserData({ ...profileCache.data, role: userRole?.role || profileCache.data.role });
+        (Date.now() - profileCache.fetchedAt) < PROFILE_CACHE_TTL_MS
+      ) {
+        const cached = profileCache;
+        setStableUserData({ ...cached.data, role: userRole?.role || cached.data.role });
         return;
       }
 
