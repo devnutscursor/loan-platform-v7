@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotification } from '@/components/ui/Notification';
@@ -223,6 +224,9 @@ export default function ContentManagementPage() {
         if (contentCache.videos) setVideos(contentCache.videos);
         if (contentCache.guides) setGuides(contentCache.guides);
       }
+      if (showLoading) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -306,6 +310,13 @@ export default function ContentManagementPage() {
       fetchContentType('guides', true);
     }
   }, [activeTab, authLoading, fetchContentType, user]);
+
+  // When auth is resolved and there's no user, stop showing loading (e.g. incognito / direct link)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [authLoading, user]);
 
   // FAQ handlers
   const addFaqToForm = () => {
@@ -888,9 +899,10 @@ export default function ContentManagementPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="p-0 sm:p-6">
-        <h1 className="text-3xl font-bold mb-6 dark:text-gray-900">Content Management</h1>
+    <RouteGuard allowedRoles={['employee']}>
+      <DashboardLayout>
+        <div className="p-0 sm:p-6">
+          <h1 className="text-3xl font-bold mb-6 dark:text-gray-900">Content Management</h1>
 
         {/* Tabs */}
         <div className="mb-6">
@@ -1529,8 +1541,9 @@ export default function ContentManagementPage() {
             </div>
           </div>
         )}
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </RouteGuard>
   );
 }
 
