@@ -76,7 +76,8 @@ const StaticHeader = memo(function StaticHeader() {
     const fetchUserProfile = async () => {
       if (!user?.id) return;
       
-      const cacheHit = profileCache?.userId === user.id &&
+      const cacheHit = profileCache &&
+        profileCache.userId === user.id &&
         (Date.now() - profileCache.fetchedAt) < PROFILE_CACHE_TTL_MS;
       if (cacheHit) {
         setStableUserData({ ...profileCache.data, role: userRole?.role || profileCache.data.role });
