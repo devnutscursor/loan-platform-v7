@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase/server';
 import { createClient } from '@/lib/supabase/client';
-import { db } from '@/lib/db';
-import { templates } from '@/lib/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const serviceSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
+const DASHBOARD_CACHE_TTL_MS = 30000;
+const dashboardCache = new Map<
+  string,
+  {
+    data: { leads: any[]; publicLink: any | null; publicProfileTemplate: string };
+    fetchedAt: number;
+  }
+>();
+const dashboardFetchPromises = new Map<
+  string,
+  Promise<{ leads: any[]; publicLink: any | null; publicProfileTemplate: string }>
+>();
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,49 +55,83 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createRouteClient();
-    const [leadsResult, publicLinkResult, selectedTemplate] = await Promise.all([
-      supabase
-        .from('leads')
-        .select('id, first_name, last_name, status, priority, created_at')
-        .eq('officer_id', user.id)
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(50),
-      supabase
-        .from('loan_officer_public_links')
-        .select('public_slug, is_active')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single(),
-      db
-        .select({ slug: templates.slug })
-        .from(templates)
-        .where(
-          and(
-            eq(templates.userId, user.id),
-            eq(templates.isSelected, true),
-            eq(templates.isActive, true)
-          )
-        )
-        .limit(1)
-    ]);
-
-    if (leadsResult.error) {
+    const cacheKey = `${user.id}:${companyId}`;
+    const cached = dashboardCache.get(cacheKey);
+    if (cached && (Date.now() - cached.fetchedAt) < DASHBOARD_CACHE_TTL_MS) {
       return NextResponse.json(
-        { success: false, error: leadsResult.error.message },
-        { status: 500 }
+        { success: true, ...cached.data },
+        { headers: { 'X-Cache': 'HIT', 'Cache-Control': 'private, max-age=30' } }
       );
     }
 
-    const templateSlug = selectedTemplate?.[0]?.slug || 'template1';
+    const inFlight = dashboardFetchPromises.get(cacheKey);
+    if (inFlight) {
+      const data = await inFlight;
+      return NextResponse.json(
+        { success: true, ...data },
+        { headers: { 'X-Cache': 'HIT', 'Cache-Control': 'private, max-age=30' } }
+      );
+    }
 
-    return NextResponse.json({
-      success: true,
-      leads: leadsResult.data || [],
-      publicLink: publicLinkResult.data || null,
-      publicProfileTemplate: templateSlug
-    });
+    const fetchPromise = (async () => {
+      const supabase = await createRouteClient();
+      const [leadsResult, publicLinkResult, selectedTemplate] = await Promise.all([
+        supabase
+          .from('leads')
+          .select('id, first_name, last_name, status, priority, created_at')
+          .eq('officer_id', user.id)
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('loan_officer_public_links')
+          .select('public_slug, is_active')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single(),
+        serviceSupabase
+          .from('templates')
+          .select('slug')
+          .eq('user_id', user.id)
+          .eq('is_selected', true)
+          .eq('is_active', true)
+          .limit(1)
+      ]);
+
+      if (leadsResult.error) {
+        throw new Error(leadsResult.error.message);
+      }
+      if (publicLinkResult.error && publicLinkResult.status !== 406) {
+        throw new Error(publicLinkResult.error.message);
+      }
+      if (selectedTemplate.error) {
+        throw new Error(selectedTemplate.error.message);
+      }
+
+      const templateSlug = selectedTemplate.data?.[0]?.slug || 'template1';
+      return {
+        leads: leadsResult.data || [],
+        publicLink: publicLinkResult.data || null,
+        publicProfileTemplate: templateSlug
+      };
+    })();
+
+    dashboardFetchPromises.set(cacheKey, fetchPromise);
+    try {
+      const data = await fetchPromise;
+      dashboardCache.set(cacheKey, { data, fetchedAt: Date.now() });
+      return NextResponse.json(
+        { success: true, ...data },
+        { headers: { 'X-Cache': 'MISS', 'Cache-Control': 'private, max-age=30' } }
+      );
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+        { status: 500 }
+      );
+    } finally {
+      dashboardFetchPromises.delete(cacheKey);
+    }
   } catch (error) {
     console.error('❌ Officers dashboard API error:', error);
     return NextResponse.json(

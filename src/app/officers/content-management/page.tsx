@@ -83,6 +83,7 @@ type ContentType = 'faqs' | 'videos' | 'guides' | 'all';
 
 const CONTENT_CACHE_TTL_MS = 10000;
 const TOKEN_CACHE_TTL_MS = 30000;
+const CONTENT_STORAGE_TTL_MS = 5 * 60 * 1000;
 
 const contentCache = {
   faqs: null as FAQ[] | null,
@@ -98,6 +99,9 @@ const contentCache = {
 
 const contentFetchPromises: Partial<Record<ContentType, Promise<void>>> = {};
 
+const getContentStorageKey = (userId: string, type: ContentType) =>
+  `content_cache:${userId}:${type}`;
+
 export default function ContentManagementPage() {
   const { user, accessToken, loading: authLoading } = useAuth();
   const { showNotification } = useNotification();
@@ -109,6 +113,33 @@ export default function ContentManagementPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [guides, setGuides] = useState<Guide[]>([]);
+
+  const readStoredContent = useCallback((type: ContentType) => {
+    if (!user?.id || type === 'all') return null;
+    try {
+      const raw = localStorage.getItem(getContentStorageKey(user.id, type));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { data?: FAQ[] | Video[] | Guide[]; fetchedAt?: number };
+      if (!parsed?.data || !parsed?.fetchedAt) return null;
+      if ((Date.now() - parsed.fetchedAt) > CONTENT_STORAGE_TTL_MS) return null;
+      return parsed.data;
+    } catch (error) {
+      console.error('Error reading cached content:', error);
+      return null;
+    }
+  }, [user?.id]);
+
+  const writeStoredContent = useCallback((type: ContentType, data: FAQ[] | Video[] | Guide[]) => {
+    if (!user?.id || type === 'all') return;
+    try {
+      localStorage.setItem(
+        getContentStorageKey(user.id, type),
+        JSON.stringify({ data, fetchedAt: Date.now() })
+      );
+    } catch (error) {
+      console.error('Error writing cached content:', error);
+    }
+  }, [user?.id]);
   
   // FAQ states
   const [faqForm, setFaqForm] = useState<FAQ[]>([]);
@@ -184,6 +215,7 @@ export default function ContentManagementPage() {
     if (type === 'all' || type === 'faqs') {
       if (data.faqs) {
         setFaqs(data.faqs);
+        writeStoredContent('faqs', data.faqs);
         contentCache.faqs = data.faqs;
         contentCache.fetchedAt.faqs = Date.now();
         loadedContentRef.current.faqs = true;
@@ -192,6 +224,7 @@ export default function ContentManagementPage() {
     if (type === 'all' || type === 'videos') {
       if (data.videos) {
         setVideos(data.videos);
+        writeStoredContent('videos', data.videos);
         contentCache.videos = data.videos;
         contentCache.fetchedAt.videos = Date.now();
         loadedContentRef.current.videos = true;
@@ -200,6 +233,7 @@ export default function ContentManagementPage() {
     if (type === 'all' || type === 'guides') {
       if (data.guides) {
         setGuides(data.guides);
+        writeStoredContent('guides', data.guides);
         contentCache.guides = data.guides;
         contentCache.fetchedAt.guides = Date.now();
         loadedContentRef.current.guides = true;
@@ -208,7 +242,7 @@ export default function ContentManagementPage() {
     if (type === 'all') {
       contentCache.fetchedAt.all = Date.now();
     }
-  }, []);
+  }, [writeStoredContent]);
 
   const fetchContentType = useCallback(async (type: ContentType, showLoading = true) => {
     if (!user) return;
@@ -235,7 +269,13 @@ export default function ContentManagementPage() {
       return;
     }
 
-    if (showLoading) {
+    const hasExistingData =
+      (type === 'faqs' && faqs.length > 0) ||
+      (type === 'videos' && videos.length > 0) ||
+      (type === 'guides' && guides.length > 0) ||
+      (type === 'all' && (faqs.length > 0 || videos.length > 0 || guides.length > 0));
+
+    if (showLoading && !hasExistingData) {
       setLoading(true);
     }
 
@@ -276,7 +316,7 @@ export default function ContentManagementPage() {
         setLoading(false);
       }
     }
-  }, [applyContentData, getAuthToken, showNotification, user]);
+  }, [applyContentData, faqs.length, getAuthToken, guides.length, showNotification, user, videos.length]);
 
   // Fetch all content (used after mutations)
   const refreshAllContent = useCallback(async () => {
@@ -284,6 +324,23 @@ export default function ContentManagementPage() {
     loadedContentRef.current = { faqs: false, videos: false, guides: false };
     await fetchContentType('all', true);
   }, [fetchContentType, user]);
+
+  useEffect(() => {
+    if (!user || authLoading) return;
+    const cachedFaqs = readStoredContent('faqs') as FAQ[] | null;
+    if (cachedFaqs && cachedFaqs.length > 0) {
+      setFaqs(cachedFaqs);
+      setLoading(false);
+    }
+    const cachedVideos = readStoredContent('videos') as Video[] | null;
+    if (cachedVideos && cachedVideos.length > 0) {
+      setVideos(cachedVideos);
+    }
+    const cachedGuides = readStoredContent('guides') as Guide[] | null;
+    if (cachedGuides && cachedGuides.length > 0) {
+      setGuides(cachedGuides);
+    }
+  }, [user?.id, authLoading, readStoredContent]);
 
   useEffect(() => {
     if (user && !authLoading) {
