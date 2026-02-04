@@ -39,10 +39,39 @@ export default function SuperAdminActivitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSignedOut, setIsSignedOut] = useState(false);
 
-  const fetchActivities = useCallback(async (retryCount = 0) => {
+  const ACTIVITIES_STORAGE_PREFIX = 'lo:activities:';
+  const ACTIVITIES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const getStoredActivities = () => {
+    if (typeof window === 'undefined' || !user?.id) return null;
+    try {
+      const key = `${ACTIVITIES_STORAGE_PREFIX}${userRole ?? 'unknown'}:${companyId ?? 'none'}:${user.id}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const { activities: stored, fetchedAt } = JSON.parse(raw);
+      if (!Array.isArray(stored) || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > ACTIVITIES_CACHE_TTL_MS) return null;
+      return stored as ActivityItem[];
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredActivities = (list: ActivityItem[]) => {
+    if (typeof window === 'undefined' || !user?.id) return;
+    try {
+      const key = `${ACTIVITIES_STORAGE_PREFIX}${userRole ?? 'unknown'}:${companyId ?? 'none'}:${user.id}`;
+      localStorage.setItem(key, JSON.stringify({ activities: list, fetchedAt: Date.now() }));
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchActivities = useCallback(async (retryCount = 0, silent = false) => {
     if (!user || isSignedOut) return;
 
     try {
+      if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         setIsSignedOut(true);
@@ -72,32 +101,46 @@ export default function SuperAdminActivitiesPage() {
           return;
         }
         
-        throw new Error(`Failed to fetch activities: ${response.status}`);
+        if (!silent) {
+          throw new Error(`Failed to fetch activities: ${response.status}`);
+        }
+        return;
       }
 
       const data = await response.json();
-      setActivities(data.data?.activities || []);
+      const list = data.data?.activities || [];
+      setActivities(list);
+      setStoredActivities(list);
       setError(null);
     } catch (error) {
       console.error('Error fetching activities:', error);
-      setError('Failed to load activities. Please try again.');
+      if (!silent) {
+        setError('Failed to load activities. Please try again.');
+      }
       
       // Retry logic for network errors
-      if (retryCount < 2) {
+      if (!silent && retryCount < 2) {
         setTimeout(() => {
-          fetchActivities(retryCount + 1);
+          fetchActivities(retryCount + 1, silent);
         }, 1000 * (retryCount + 1));
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [user, isSignedOut]);
 
   useEffect(() => {
     if (user && userRole && !authLoading) {
-      fetchActivities();
+      const stored = getStoredActivities();
+      if (stored) {
+        setActivities(stored);
+        setLoading(false);
+        fetchActivities(0, true);
+      } else {
+        fetchActivities();
+      }
     }
-  }, [user, userRole, authLoading, fetchActivities]);
+  }, [user, userRole, companyId, authLoading, fetchActivities]);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
