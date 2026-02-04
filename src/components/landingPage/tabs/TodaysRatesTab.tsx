@@ -60,19 +60,55 @@ export default function TodaysRatesTab({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch selected rates on mount
+  const PUBLIC_SELECTED_RATES_PREFIX = 'lo:selected-rates:public:';
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const getStoredSelectedRates = (uid: string): SelectedRate[] | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(`${PUBLIC_SELECTED_RATES_PREFIX}${uid}`);
+      if (!raw) return null;
+      const { rates: stored, fetchedAt } = JSON.parse(raw);
+      if (!Array.isArray(stored) || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > CACHE_TTL_MS) return null;
+      return stored as SelectedRate[];
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredSelectedRates = (uid: string, list: SelectedRate[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        `${PUBLIC_SELECTED_RATES_PREFIX}${uid}`,
+        JSON.stringify({ rates: list, fetchedAt: Date.now() })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  // Fetch selected rates on mount; hydrate from cache first (stale-while-revalidate)
   useEffect(() => {
-    const fetchSelectedRates = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
 
+    const stored = getStoredSelectedRates(userId);
+    if (stored && stored.length >= 0) {
+      setSelectedRates(stored);
+      setIsLoading(false);
+    }
+
+    const fetchSelectedRates = async (silent: boolean) => {
       try {
-        setIsLoading(true);
-        setError(null);
+        if (!silent) {
+          setIsLoading(true);
+          setError(null);
+        }
 
-        // For public profiles, we need to fetch selected rates for the officer
         const response = await fetch(`/api/officers/selected-rates?officerId=${userId}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -81,25 +117,30 @@ export default function TodaysRatesTab({
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
-            setSelectedRates(result.rates || []);
+            const list = result.rates || [];
+            setSelectedRates(list);
+            setStoredSelectedRates(userId, list);
           } else {
-            setError(result.error || 'Failed to fetch rates');
+            if (!silent) setError(result.error || 'Failed to fetch rates');
           }
         } else {
-          // Read the error response
-          const errorResult = await response.json().catch(() => ({ error: 'Unknown error' }));
-          setError(errorResult.error || `Failed to load rates (${response.status})`);
-          setSelectedRates([]);
+          if (!silent) {
+            const errorResult = await response.json().catch(() => ({ error: 'Unknown error' }));
+            setError(errorResult.error || `Failed to load rates (${response.status})`);
+            setSelectedRates([]);
+          }
         }
       } catch (err) {
-        setError('Failed to load rates');
-        setSelectedRates([]);
+        if (!silent) {
+          setError('Failed to load rates');
+          setSelectedRates([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!silent) setIsLoading(false);
       }
     };
 
-    fetchSelectedRates();
+    fetchSelectedRates(!!stored);
   }, [userId]);
 
   // Transform selected rates to RateResults format

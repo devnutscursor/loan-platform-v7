@@ -1,12 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, leads, companies, users } from '@/lib/db';
-import { eq, desc } from 'drizzle-orm';
+import { db, leads } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const LEADS_CACHE_TTL_MS = 30000;
+const leadsCache = new Map<
+  string,
+  { data: { success: true; leads: any[] }; fetchedAt: number }
+>();
+const leadsFetchPromises = new Map<string, Promise<{ success: true; leads: any[] }>>();
+
+function mapLeadRow(row: any) {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    officerId: row.officer_id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    email: row.email,
+    phone: row.phone,
+    source: row.source,
+    status: row.status,
+    priority: row.priority,
+    loanDetails: row.loan_details,
+    propertyDetails: row.property_details,
+    creditScore: row.credit_score,
+    loanAmount: row.loan_amount,
+    downPayment: row.down_payment,
+    notes: row.notes,
+    tags: row.tags,
+    customFields: row.custom_fields,
+    conversionStage: row.conversion_stage,
+    conversionDate: row.conversion_date,
+    applicationDate: row.application_date,
+    approvalDate: row.approval_date,
+    closingDate: row.closing_date,
+    loanAmountClosed: row.loan_amount_closed,
+    commissionEarned: row.commission_earned,
+    responseTimeHours: row.response_time_hours,
+    lastContactDate: row.last_contact_date,
+    contactCount: row.contact_count ?? 0,
+    leadQualityScore: row.lead_quality_score,
+    geographicLocation: row.geographic_location,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🚀 GET /api/leads - Starting request');
-    
-    // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -15,77 +60,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Extract the token
     const token = authHeader.replace('Bearer ', '');
-    
-    // Verify the token and get user info
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
-      console.error('❌ Leads API: Auth error:', authError);
       return NextResponse.json(
         { error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
 
-    console.log('✅ Authenticated user:', user.id);
-    
-    // Fetch leads only for the authenticated user
-    const userLeads = await db
-      .select()
-      .from(leads)
-      .where(eq(leads.officerId, user.id))
-      .orderBy(desc(leads.createdAt));
+    const cacheKey = `leads:${user.id}`;
+    const cached = leadsCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < LEADS_CACHE_TTL_MS) {
+      const res = NextResponse.json(cached.data);
+      res.headers.set('X-Cache', 'HIT');
+      res.headers.set('Cache-Control', 'private, max-age=30');
+      return res;
+    }
 
-    console.log('✅ Found leads for user:', userLeads.length);
+    let promise = leadsFetchPromises.get(cacheKey);
+    if (!promise) {
+      promise = (async () => {
+        const { data: rows, error } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('officer_id', user.id)
+          .order('created_at', { ascending: false });
 
-    // Transform snake_case to camelCase for frontend compatibility
-    const transformedLeads = userLeads.map(lead => ({
-      id: lead.id,
-      companyId: lead.companyId,
-      officerId: lead.officerId,
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      email: lead.email,
-      phone: lead.phone,
-      source: lead.source,
-      status: lead.status,
-      priority: lead.priority,
-      loanDetails: lead.loanDetails,
-      propertyDetails: lead.propertyDetails,
-      creditScore: lead.creditScore,
-      loanAmount: lead.loanAmount,
-      downPayment: lead.downPayment,
-      notes: lead.notes,
-      tags: lead.tags,
-      customFields: lead.customFields,
-      conversionStage: lead.conversionStage,
-      conversionDate: lead.conversionDate,
-      applicationDate: lead.applicationDate,
-      approvalDate: lead.approvalDate,
-      closingDate: lead.closingDate,
-      loanAmountClosed: lead.loanAmountClosed,
-      commissionEarned: lead.commissionEarned,
-      responseTimeHours: lead.responseTimeHours,
-      lastContactDate: lead.lastContactDate,
-      contactCount: lead.contactCount,
-      leadQualityScore: lead.leadQualityScore,
-      geographicLocation: lead.geographicLocation,
-      createdAt: lead.createdAt,
-      updatedAt: lead.updatedAt
-    }));
+        if (error) throw error;
+        const payload = { success: true as const, leads: (rows ?? []).map(mapLeadRow) };
+        leadsCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
+        leadsFetchPromises.delete(cacheKey);
+        return payload;
+      })();
+      leadsFetchPromises.set(cacheKey, promise);
+    }
 
-    return NextResponse.json({
-      success: true,
-      leads: transformedLeads
-    });
-
+    const payload = await promise;
+    const res = NextResponse.json(payload);
+    res.headers.set('X-Cache', cached ? 'HIT' : 'MISS');
+    res.headers.set('Cache-Control', 'private, max-age=30');
+    return res;
   } catch (error) {
     console.error('Error fetching leads:', error);
     return NextResponse.json(
