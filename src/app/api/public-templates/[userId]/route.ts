@@ -140,6 +140,9 @@ export async function GET(
         }
 
         const template = mapTemplateRow(templateRow);
+        if (!template) {
+          throw { status: 404, message: 'No template found' };
+        }
         const finalTemplate = requestedTemplateSlug
           ? { ...template, slug: requestedTemplateSlug }
           : template;
