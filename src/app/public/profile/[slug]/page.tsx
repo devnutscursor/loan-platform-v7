@@ -127,100 +127,155 @@ export default function PublicProfilePage() {
   const [templateData, setTemplateData] = useState<PublicTemplateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
 
-  // Add a refresh mechanism that can be triggered externally
-  const refreshProfile = useCallback(() => {
-    console.log('🔄 Refreshing public profile data...');
+  const PROFILE_STORAGE_PREFIX = 'lo:profile:';
+  const TEMPLATE_STORAGE_PREFIX = 'lo:template:';
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const getStoredProfile = (s: string): PublicProfileData | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(`${PROFILE_STORAGE_PREFIX}${s}`);
+      if (!raw) return null;
+      const { data, fetchedAt } = JSON.parse(raw);
+      if (!data || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > CACHE_TTL_MS) return null;
+      return data as PublicProfileData;
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredProfile = (s: string, data: PublicProfileData) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        `${PROFILE_STORAGE_PREFIX}${s}`,
+        JSON.stringify({ data, fetchedAt: Date.now() })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const getStoredTemplate = (userId: string, templateSlug: string | null): PublicTemplateData | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const key = `${TEMPLATE_STORAGE_PREFIX}${userId}:${templateSlug ?? 'default'}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const { data, fetchedAt } = JSON.parse(raw);
+      if (!data || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > CACHE_TTL_MS) return null;
+      return data as PublicTemplateData;
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredTemplate = (userId: string, templateSlug: string | null, data: PublicTemplateData) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const key = `${TEMPLATE_STORAGE_PREFIX}${userId}:${templateSlug ?? 'default'}`;
+      localStorage.setItem(key, JSON.stringify({ data, fetchedAt: Date.now() }));
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (!slug) return;
+
+    setError(null);
+
+    const storedProfile = getStoredProfile(slug);
+    const templateSlug = isPreview && previewTemplate ? previewTemplate : null;
+    const storedTemplate = storedProfile
+      ? getStoredTemplate(storedProfile.user.id, templateSlug)
+      : null;
+
+    if (storedProfile && (storedTemplate || true)) {
+      setProfileData(storedProfile);
+      if (storedTemplate) setTemplateData(storedTemplate);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setProfileData(null);
+      setTemplateData(null);
+    }
+
+    const fetchPublicProfileAndTemplate = async () => {
+      try {
+        if (!storedProfile) setLoading(true);
+
+        const profileResponse = await fetch(`/api/public-profile/${slug}`);
+        const profileResult = await profileResponse.json();
+
+        if (!profileResult.success) {
+          const errorMessage = profileResult.message || 'Failed to load profile';
+          setError(errorMessage);
+          setLoading(false);
+          return;
+        }
+
+        setProfileData(profileResult.data);
+        setStoredProfile(slug, profileResult.data);
+
+        const userId = profileResult.data.user.id;
+        let templateUrl = `/api/public-templates/${userId}`;
+        if (isPreview && previewTemplate) templateUrl += `?template=${previewTemplate}`;
+
+        const templateResponse = await fetch(templateUrl);
+        const templateResult = await templateResponse.json();
+
+        if (templateResult.success) {
+          if (isPreview && previewTemplate) {
+            templateResult.data.template = {
+              ...templateResult.data.template,
+              slug: previewTemplate
+            };
+          }
+          setTemplateData(templateResult.data);
+          setStoredTemplate(userId, templateSlug, templateResult.data);
+        }
+      } catch (err) {
+        console.error('Error fetching public profile:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPublicProfileAndTemplate();
+  }, [slug, isPreview, previewTemplate]);
+
+  const fetchPublicProfileAndTemplate = useCallback(async () => {
     setError(null);
     setLoading(true);
     setProfileData(null);
     setTemplateData(null);
-    fetchPublicProfileAndTemplate();
-  }, [slug, isPreview, previewTemplate]);
 
-  useEffect(() => {
-    if (slug) {
-      // Clear any previous error state and cached data when fetching new data
-      setError(null);
-      setLoading(true);
-      setProfileData(null);
-      setTemplateData(null);
-      fetchPublicProfileAndTemplate();
-    }
-  }, [slug, isPreview, previewTemplate]);
-
-  // Add periodic refresh to check if link status has changed
-  useEffect(() => {
-    if (error && (error.includes('no longer available') || error.includes('not found'))) {
-      console.log('🔄 Link appears to be deactivated, setting up periodic refresh...');
-      
-      const interval = setInterval(() => {
-        console.log('🔄 Checking if link has been reactivated...');
-        refreshProfile();
-      }, 5000); // Check every 5 seconds
-
-      // Clean up interval after 2 minutes
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        console.log('⏰ Stopped checking for link reactivation');
-      }, 120000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [error, refreshProfile]);
-
-  // Optimized: Fetch profile and template in parallel once we have userId
-  const fetchPublicProfileAndTemplate = async () => {
     try {
-      setLoading(true);
-      console.log('🔍 Fetching public profile for slug:', slug);
-      
-      // Step 1: Fetch profile data first (we need userId from this)
       const profileResponse = await fetch(`/api/public-profile/${slug}`);
-      
-      console.log('📡 Profile API response status:', profileResponse.status);
       const profileResult = await profileResponse.json();
-      console.log('📦 Profile API response data:', profileResult);
 
       if (!profileResult.success) {
-        // Handle different types of errors more gracefully
-        const errorMessage = profileResult.message || 'Failed to load profile';
-        
-        if (errorMessage.includes('no longer available') || errorMessage.includes('not found')) {
-          // This is expected behavior when link is deactivated, log as info
-          console.log('ℹ️ Profile link is currently unavailable:', errorMessage);
-        } else {
-          // This is an actual error, log as error
-          console.error('❌ Profile API returned error:', errorMessage);
-        }
-        
-        setError(errorMessage);
+        setError(profileResult.message || 'Failed to load profile');
         setLoading(false);
         return;
       }
 
-      // Step 2: Set profile data immediately and fetch template in parallel
       setProfileData(profileResult.data);
-      
-      const userId = profileResult.data.user.id;
-      
-      // Build template URL
-      let templateUrl = `/api/public-templates/${userId}`;
-      if (isPreview && previewTemplate) {
-        templateUrl += `?template=${previewTemplate}`;
-      }
+      setStoredProfile(slug, profileResult.data);
 
-      // Fetch template (this happens while React is processing the profile data update)
+      const userId = profileResult.data.user.id;
+      let templateUrl = `/api/public-templates/${userId}`;
+      if (isPreview && previewTemplate) templateUrl += `?template=${previewTemplate}`;
+
       const templateResponse = await fetch(templateUrl);
       const templateResult = await templateResponse.json();
-      console.log('🎨 Template API response:', templateResult);
-      
+
       if (templateResult.success) {
-        // Override template slug if in preview mode
         if (isPreview && previewTemplate) {
           templateResult.data.template = {
             ...templateResult.data.template,
@@ -228,18 +283,35 @@ export default function PublicProfilePage() {
           };
         }
         setTemplateData(templateResult.data);
-      } else {
-        console.error('❌ Template API error:', templateResult.message);
-        // Don't fail the whole page if template fails, just log it
+        setStoredTemplate(userId, isPreview && previewTemplate ? previewTemplate : null, templateResult.data);
       }
     } catch (err) {
-      console.error('❌ Error fetching public profile:', err);
+      console.error('Error fetching public profile:', err);
       setError('Failed to load profile');
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug, isPreview, previewTemplate]);
 
+  const refreshProfile = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setProfileData(null);
+    setTemplateData(null);
+    fetchPublicProfileAndTemplate();
+  }, [fetchPublicProfileAndTemplate]);
+
+  // Add periodic refresh to check if link status has changed
+  useEffect(() => {
+    if (error && (error.includes('no longer available') || error.includes('not found'))) {
+      const interval = setInterval(() => refreshProfile(), 5000);
+      const timeout = setTimeout(() => clearInterval(interval), 120000);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [error, refreshProfile]);
 
   // Debug: Always show loading state first
   console.log('🔍 Component render state:', { loading, error, profileData: !!profileData, slug });

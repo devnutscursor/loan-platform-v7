@@ -187,15 +187,44 @@ export default function TodaysRatesPage() {
     return parseInt(creditScore) || 740;
   };
 
-  // Fetch selected rates
-  const fetchSelectedRates = useCallback(async () => {
+  const SELECTED_RATES_STORAGE_PREFIX = 'lo:selected-rates:';
+  const SELECTED_RATES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const getStoredSelectedRates = (): SelectedRate[] | null => {
+    if (typeof window === 'undefined' || !user?.id) return null;
+    try {
+      const raw = localStorage.getItem(`${SELECTED_RATES_STORAGE_PREFIX}${user.id}`);
+      if (!raw) return null;
+      const { rates: stored, fetchedAt } = JSON.parse(raw);
+      if (!Array.isArray(stored) || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > SELECTED_RATES_CACHE_TTL_MS) return null;
+      return stored as SelectedRate[];
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredSelectedRates = (list: SelectedRate[]) => {
+    if (typeof window === 'undefined' || !user?.id) return;
+    try {
+      localStorage.setItem(
+        `${SELECTED_RATES_STORAGE_PREFIX}${user.id}`,
+        JSON.stringify({ rates: list, fetchedAt: Date.now() })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  // Fetch selected rates (silent = true skips loading state for background revalidate)
+  const fetchSelectedRates = useCallback(async (silent = false) => {
     if (!user?.id) return;
 
     try {
-      setLoadingSelectedRates(true);
+      if (!silent) setLoadingSelectedRates(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        setLoadingSelectedRates(false);
+        if (!silent) setLoadingSelectedRates(false);
         return;
       }
 
@@ -209,21 +238,30 @@ export default function TodaysRatesPage() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          setSelectedRates(result.rates || []);
+          const list = result.rates || [];
+          setSelectedRates(list);
+          setStoredSelectedRates(list);
         }
       }
     } catch (err) {
       console.error('Error fetching selected rates:', err);
     } finally {
-      setLoadingSelectedRates(false);
+      if (!silent) setLoadingSelectedRates(false);
     }
   }, [user?.id]);
 
-  // Fetch selected rates on mount and when tab changes
-  // Also fetch when on search tab to check for duplicates
+  // Fetch selected rates on mount and when tab changes; hydrate from cache first
   useEffect(() => {
-    fetchSelectedRates();
-  }, [activeTab, fetchSelectedRates]);
+    if (!user?.id) return;
+
+    const stored = getStoredSelectedRates();
+    if (stored && stored.length >= 0) {
+      setSelectedRates(stored);
+      setLoadingSelectedRates(false);
+    }
+
+    fetchSelectedRates(!!stored);
+  }, [activeTab, fetchSelectedRates, user?.id]);
 
   // Handle search form updates
   const handleSearchFormUpdate = useCallback(async (formData: SearchFormData, email?: string) => {

@@ -1,9 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { templates } from '@/lib/db/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { createClient } from '@supabase/supabase-js';
 
-// Cache configuration - revalidate every 60 seconds
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const TEMPLATE_CACHE_TTL_MS = 30000;
+const templateCache = new Map<
+  string,
+  { data: { success: true; data: any }; fetchedAt: number }
+>();
+const templateFetchPromises = new Map<string, Promise<{ success: true; data: any }>>();
+
+function mapTemplateRow(row: any) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    previewImage: row.preview_image,
+    isActive: row.is_active,
+    isPremium: row.is_premium,
+    isDefault: row.is_default,
+    userId: row.user_id,
+    colors: row.colors,
+    typography: row.typography,
+    content: row.content,
+    layout: row.layout,
+    advanced: row.advanced,
+    classes: row.classes,
+    headerModifications: row.header_modifications,
+    bodyModifications: row.body_modifications,
+    rightSidebarModifications: row.right_sidebar_modifications,
+    footerModifications: row.footer_modifications,
+    layoutConfig: row.layout_config,
+    isSelected: row.is_selected,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export const revalidate = 60;
 
 export async function GET(
@@ -14,8 +51,6 @@ export async function GET(
     const { userId } = await params;
     const { searchParams } = new URL(request.url);
     const requestedTemplateSlug = searchParams.get('template');
-    
-    console.log('🔍 Fetching public template for userId:', userId, 'requested template:', requestedTemplateSlug);
 
     if (!userId) {
       return NextResponse.json(
@@ -24,136 +59,132 @@ export async function GET(
       );
     }
 
-    let selectedTemplate = [];
-
-    // If a specific template is requested (preview mode), fetch both user and default in parallel
-    if (requestedTemplateSlug) {
-      console.log('🎨 Preview mode: Fetching specific template', requestedTemplateSlug);
-      
-      // Fetch user template and default template in parallel
-      const [userTemplate, defaultTemplate] = await Promise.all([
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.userId, userId),
-              eq(templates.slug, requestedTemplateSlug),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.slug, requestedTemplateSlug),
-              eq(templates.isDefault, true),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-      ]);
-      
-      // Prefer user template over default
-      selectedTemplate = userTemplate.length > 0 ? userTemplate : defaultTemplate;
-    } else {
-      // Normal mode: Fetch all candidate templates in parallel (reduces from 4 sequential to 1-2 queries)
-      const [selectedUserTemplate, template1User, defaultTemplate1, anyDefaultTemplate] = await Promise.all([
-        // Priority 1: User's selected template
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.userId, userId),
-              eq(templates.isSelected, true),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-        // Priority 2: User's template1
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.slug, 'template1'),
-              eq(templates.userId, userId),
-              eq(templates.isDefault, false),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-        // Priority 3: Default template1
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.slug, 'template1'),
-              eq(templates.isDefault, true),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-        // Priority 4: Any default template
-        db
-          .select()
-          .from(templates)
-          .where(
-            and(
-              eq(templates.isDefault, true),
-              eq(templates.isActive, true)
-            )
-          )
-          .limit(1),
-      ]);
-
-      // Select template based on priority (first non-empty result)
-      selectedTemplate = selectedUserTemplate.length > 0 
-        ? selectedUserTemplate 
-        : template1User.length > 0 
-        ? template1User 
-        : defaultTemplate1.length > 0 
-        ? defaultTemplate1 
-        : anyDefaultTemplate;
+    const cacheKey = `templates:${userId}:${requestedTemplateSlug ?? 'default'}`;
+    const cached = templateCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < TEMPLATE_CACHE_TTL_MS) {
+      const res = NextResponse.json(cached.data);
+      res.headers.set('X-Cache', 'HIT');
+      res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+      return res;
     }
 
-    if (selectedTemplate.length === 0) {
+    let promise = templateFetchPromises.get(cacheKey);
+    if (!promise) {
+      promise = (async () => {
+        let templateRow: any = null;
+
+        if (requestedTemplateSlug) {
+          const [userRes, defaultRes] = await Promise.all([
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('user_id', userId)
+              .eq('slug', requestedTemplateSlug)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('slug', requestedTemplateSlug)
+              .eq('is_default', true)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+          ]);
+          templateRow = userRes.data ?? defaultRes.data;
+        } else {
+          const [selRes, t1UserRes, t1DefaultRes, anyDefaultRes] = await Promise.all([
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('user_id', userId)
+              .eq('is_selected', true)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('slug', 'template1')
+              .eq('user_id', userId)
+              .eq('is_default', false)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('slug', 'template1')
+              .eq('is_default', true)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from('templates')
+              .select('*')
+              .eq('is_default', true)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle(),
+          ]);
+          templateRow =
+            selRes.data ??
+            t1UserRes.data ??
+            t1DefaultRes.data ??
+            anyDefaultRes.data;
+        }
+
+        if (!templateRow) {
+          throw { status: 404, message: 'No template found' };
+        }
+
+        const template = mapTemplateRow(templateRow);
+        if (!template) {
+          throw { status: 404, message: 'No template found' };
+        }
+        const finalTemplate = requestedTemplateSlug
+          ? { ...template, slug: requestedTemplateSlug }
+          : template;
+
+        const payload = {
+          success: true as const,
+          data: {
+            template: finalTemplate,
+            pageSettings: null,
+            metadata: {
+              templateSlug: finalTemplate.slug,
+              isCustomized: !finalTemplate.isDefault,
+              isPublished: true,
+            },
+          },
+        };
+
+        templateCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
+        templateFetchPromises.delete(cacheKey);
+        return payload;
+      })()
+        .then((p) => p)
+        .catch((err) => {
+          templateFetchPromises.delete(cacheKey);
+          throw err;
+        });
+      templateFetchPromises.set(cacheKey, promise);
+    }
+
+    const payload = await promise;
+    const res = NextResponse.json(payload);
+    res.headers.set('X-Cache', 'MISS');
+    res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return res;
+  } catch (err: any) {
+    if (err && typeof err.status === 'number') {
       return NextResponse.json(
-        { success: false, message: 'No template found' },
-        { status: 404 }
+        { success: false, message: err.message ?? 'Not found' },
+        { status: err.status }
       );
     }
-
-    const template = selectedTemplate[0];
-    
-    // Override template slug if a specific template was requested (for preview mode)
-    const finalTemplate = requestedTemplateSlug 
-      ? { ...template, slug: requestedTemplateSlug }
-      : template;
-
-    const response = NextResponse.json({
-      success: true,
-      data: {
-        template: finalTemplate,
-        pageSettings: null,
-        metadata: {
-          templateSlug: finalTemplate.slug,
-          isCustomized: !finalTemplate.isDefault,
-          isPublished: true,
-        }
-      },
-    });
-
-    // Add cache headers
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
-
-    return response;
-  } catch (error) {
-    console.error('Error fetching public template:', error);
+    console.error('Error fetching public template:', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }

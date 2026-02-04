@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { db, selectedRates, userCompanies } from '@/lib/db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const SELECTED_RATES_CACHE_TTL_MS = 30000;
+const selectedRatesCache = new Map<
+  string,
+  { data: { success: true; rates: any[] }; fetchedAt: number }
+>();
+const selectedRatesFetchPromises = new Map<string, Promise<{ success: true; rates: any[] }>>();
+
+function mapRateRow(row: any) {
+  return {
+    id: row.id,
+    rateData: row.rate_data,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 /**
  * GET /api/officers/selected-rates
@@ -19,85 +35,83 @@ export async function GET(request: NextRequest) {
     let officerId: string;
     let companyId: string;
 
-    // If officerId is provided as query param (for public access), use it directly
     if (officerIdParam) {
       officerId = officerIdParam;
-      
-      // Get company ID from user_companies
-      const userCompanyResult = await db
-        .select({ companyId: userCompanies.companyId })
-        .from(userCompanies)
-        .where(
-          and(
-            eq(userCompanies.userId, officerId),
-            eq(userCompanies.isActive, true)
-          )
-        )
+      const { data: ucRows, error: ucError } = await supabase
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', officerId)
+        .eq('is_active', true)
         .limit(1);
 
-      if (userCompanyResult.length === 0) {
+      if (ucError || !ucRows?.length) {
         return NextResponse.json({ error: 'Officer not found' }, { status: 404 });
       }
-
-      companyId = userCompanyResult[0].companyId;
+      companyId = (ucRows[0] as any).company_id;
     } else {
-      // Otherwise, require authentication
       const authHeader = request.headers.get('authorization');
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
       const token = authHeader.substring(7);
-      
-      // Verify the token and get user
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
       officerId = user.id;
-
-      // Get user's company ID
-      const userCompanyResult = await db
-        .select({ companyId: userCompanies.companyId })
-        .from(userCompanies)
-        .where(
-          and(
-            eq(userCompanies.userId, user.id),
-            eq(userCompanies.isActive, true)
-          )
-        )
+      const { data: ucRows, error: ucError } = await supabase
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
         .limit(1);
 
-      if (userCompanyResult.length === 0) {
+      if (ucError || !ucRows?.length) {
         return NextResponse.json({ error: 'Company not found' }, { status: 404 });
       }
-
-      companyId = userCompanyResult[0].companyId;
+      companyId = (ucRows[0] as any).company_id;
     }
 
-    // Fetch all selected rates for this officer
-    const rates = await db
-      .select()
-      .from(selectedRates)
-      .where(
-        and(
-          eq(selectedRates.officerId, officerId),
-          eq(selectedRates.companyId, companyId)
-        )
-      )
-      .orderBy(desc(selectedRates.createdAt));
+    const cacheKey = `selected-rates:${officerId}`;
+    const cached = selectedRatesCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < SELECTED_RATES_CACHE_TTL_MS) {
+      const res = NextResponse.json(cached.data);
+      res.headers.set('X-Cache', 'HIT');
+      res.headers.set('Cache-Control', 'private, max-age=30');
+      return res;
+    }
 
-    return NextResponse.json({
-      success: true,
-      rates: rates.map(rate => ({
-        id: rate.id,
-        rateData: rate.rateData,
-        createdAt: rate.createdAt,
-        updatedAt: rate.updatedAt,
-      })),
-    });
+    let promise = selectedRatesFetchPromises.get(cacheKey);
+    if (!promise) {
+      promise = (async () => {
+        const { data: rows, error } = await supabase
+          .from('selected_rates')
+          .select('id, rate_data, created_at, updated_at')
+          .eq('officer_id', officerId)
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false });
 
+        if (error) throw error;
+        const payload = { success: true as const, rates: (rows ?? []).map(mapRateRow) };
+        selectedRatesCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
+        selectedRatesFetchPromises.delete(cacheKey);
+        return payload;
+      })()
+        .then((p) => p)
+        .catch((err) => {
+          selectedRatesFetchPromises.delete(cacheKey);
+          throw err;
+        });
+      selectedRatesFetchPromises.set(cacheKey, promise);
+    }
+
+    const payload = await promise;
+    const res = NextResponse.json(payload);
+    res.headers.set('X-Cache', 'MISS');
+    res.headers.set('Cache-Control', 'private, max-age=30');
+    return res;
   } catch (error) {
     console.error('❌ Error fetching selected rates:', error);
     return NextResponse.json(

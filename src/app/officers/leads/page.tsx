@@ -131,11 +131,72 @@ export default function LeadsPage() {
     { label: 'Leads', href: '/officers/leads', icon: 'home' }
   ];
 
-  useEffect(() => {
-    if (accessToken) {
-      fetchLeads();
+  const LEADS_STORAGE_KEY_PREFIX = 'lo:leads:';
+  const LEADS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const getStoredLeads = (): Lead[] | null => {
+    if (typeof window === 'undefined' || !user?.id) return null;
+    try {
+      const raw = localStorage.getItem(`${LEADS_STORAGE_KEY_PREFIX}${user.id}`);
+      if (!raw) return null;
+      const { leads: stored, fetchedAt } = JSON.parse(raw);
+      if (!Array.isArray(stored) || typeof fetchedAt !== 'number') return null;
+      if (Date.now() - fetchedAt > LEADS_CACHE_TTL_MS) return null;
+      return stored as Lead[];
+    } catch {
+      return null;
     }
-  }, [accessToken]);
+  };
+
+  const setStoredLeads = (list: Lead[]) => {
+    if (typeof window === 'undefined' || !user?.id) return;
+    try {
+      localStorage.setItem(
+        `${LEADS_STORAGE_KEY_PREFIX}${user.id}`,
+        JSON.stringify({ leads: list, fetchedAt: Date.now() })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (!accessToken || !user?.id) return;
+
+    const stored = getStoredLeads();
+    if (stored && stored.length >= 0) {
+      setLeads(stored);
+      setLoading(false);
+    }
+
+    const fetchLeads = async () => {
+      try {
+        if (!stored) setLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/leads', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch leads');
+
+        const data = await response.json();
+        const list = data.leads || [];
+        setLeads(list);
+        setStoredLeads(list);
+      } catch (err) {
+        console.error('Error fetching leads:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch leads');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeads();
+  }, [accessToken, user?.id]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -157,13 +218,14 @@ export default function LeadsPage() {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch leads');
       }
 
       const data = await response.json();
       setLeads(data.leads || []);
+      setStoredLeads(data.leads || []);
     } catch (err) {
       console.error('Error fetching leads:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch leads');
