@@ -1,4 +1,14 @@
+import fs from 'fs';
+import path from 'path';
+import jwt from 'jsonwebtoken';
 import { parseString } from 'xml2js';
+
+/** Path to private.pem in project root (loan-officer-platform) */
+const PRIVATE_PEM_PATH = path.join(process.cwd(), 'private.pem');
+
+const DEFAULT_ACCESS_TOKEN_TTL_SECONDS = 55 * 60;
+let cachedAccessToken: string | null = null;
+let cachedAccessTokenExpiresAt = 0;
 
 export interface MortechRequest {
   request_id: number;
@@ -25,6 +35,7 @@ export interface MortechRequest {
   militaryVeteran?: boolean; // Military/Veteran status
   lockDays?: string; // Lock period in days (30, 45, 60)
   secondMortgageAmount?: number; // Second mortgage amount
+  targetPrice?: number; // -999 for full rate range
 }
 
 export interface MortechResponse {
@@ -76,6 +87,11 @@ export class MortechAPI {
   private thirdPartyName: string;
   private licenseKey: string;
   private emailAddress: string;
+  private partnerId: string | undefined;
+  private privateKey: string | undefined;
+  private xApiKey: string | undefined;
+  private authUrl: string;
+  private accessTokenTtlSeconds: number;
 
   constructor(config: {
     customerId: string;
@@ -83,23 +99,76 @@ export class MortechAPI {
     licenseKey: string;
     emailAddress: string;
     baseUrl?: string;
+    partnerId?: string;
+    privateKey?: string;
+    xApiKey?: string;
+    authUrl?: string;
+    accessTokenTtlSeconds?: number;
   }) {
     this.baseUrl = config.baseUrl || 'https://thirdparty.mortech-inc.com/mpg/servlet/mpgThirdPartyServlet';
     this.customerId = config.customerId;
     this.thirdPartyName = config.thirdPartyName;
     this.licenseKey = config.licenseKey;
     this.emailAddress = config.emailAddress;
+    this.partnerId = config.partnerId;
+    this.privateKey = config.privateKey;
+    this.xApiKey = config.xApiKey;
+    this.authUrl = config.authUrl || 'https://api.mortech-inc.com/auth';
+    this.accessTokenTtlSeconds =
+      typeof config.accessTokenTtlSeconds === 'number' && config.accessTokenTtlSeconds > 0
+        ? config.accessTokenTtlSeconds
+        : DEFAULT_ACCESS_TOKEN_TTL_SECONDS;
+  }
+
+  private isJwtAuthConfigured(): boolean {
+    return Boolean(this.partnerId && this.privateKey && this.xApiKey);
+  }
+
+  private async getAccessToken(): Promise<string | null> {
+    const now = Math.floor(Date.now() / 1000);
+    if (cachedAccessToken && cachedAccessTokenExpiresAt > now + 30) {
+      return cachedAccessToken;
+    }
+    if (!this.isJwtAuthConfigured()) {
+      return null;
+    }
+    const jwtPayload = {
+      partnerId: this.partnerId,
+      customerId: this.customerId,
+      iat: now,
+    };
+    const signedJwt = jwt.sign(jwtPayload, this.privateKey!, { algorithm: 'RS256' });
+    const authResponse = await fetch(this.authUrl, {
+      method: 'GET',
+      headers: {
+        authorizationtoken: `Bearer ${signedJwt}`,
+        'x-api-key': this.xApiKey!,
+        Accept: 'application/json',
+      },
+    });
+    if (!authResponse.ok) {
+      const errorText = await authResponse.text();
+      throw new Error(`Mortech Auth API error: ${authResponse.status} ${authResponse.statusText} - ${errorText}`);
+    }
+    const authData = (await authResponse.json()) as { accesstoken?: string };
+    if (!authData?.accesstoken) {
+      throw new Error('Mortech Auth API error: missing accesstoken in response');
+    }
+    cachedAccessToken = authData.accesstoken;
+    cachedAccessTokenExpiresAt = now + this.accessTokenTtlSeconds;
+    return cachedAccessToken;
   }
 
   async getRates(request: Omit<MortechRequest, 'request_id' | 'customerId' | 'thirdPartyName' | 'licenseKey' | 'emailAddress'>, options?: { includeRawXml?: boolean }): Promise<MortechResponse> {
     try {
+      const targetPrice = request.targetPrice !== undefined && request.targetPrice !== null ? request.targetPrice : -999;
       const params = new URLSearchParams({
         request_id: '1',
         customerId: this.customerId,
         thirdPartyName: this.thirdPartyName,
         licenseKey: this.licenseKey,
         emailAddress: this.emailAddress,
-        targetprice: '-999',
+        targetPrice: String(targetPrice),
         propertyZip: request.propertyZip,
         appraisedvalue: request.appraisedvalue.toString(),
         loan_amount: request.loan_amount.toString(),
@@ -142,13 +211,29 @@ export class MortechAPI {
       console.log('- lockDays:', request.lockDays);
       console.log('- secondMortgageAmount:', request.secondMortgageAmount);
 
-      const response = await fetch(this.baseUrl + '?' + params.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/xml, text/xml',
-          'User-Agent': 'LoanOfficerPlatform/1.0',
-        },
-      });
+      const accessToken = await this.getAccessToken();
+      const headers: Record<string, string> = {
+        Accept: 'application/xml, text/xml',
+        'User-Agent': 'LoanOfficerPlatform/1.0',
+      };
+      if (accessToken) {
+        headers['authorizationtoken'] = accessToken;
+      }
+      if (this.xApiKey) {
+        headers['x-api-key'] = this.xApiKey;
+      }
+
+      let response = await fetch(this.baseUrl + '?' + params.toString(), { method: 'GET', headers });
+
+      if ((response.status === 401 || response.status === 403) && this.isJwtAuthConfigured()) {
+        cachedAccessToken = null;
+        cachedAccessTokenExpiresAt = 0;
+        const newToken = await this.getAccessToken();
+        if (newToken) {
+          headers['authorizationtoken'] = newToken;
+          response = await fetch(this.baseUrl + '?' + params.toString(), { method: 'GET', headers });
+        }
+      }
 
       if (!response.ok) {
         throw new Error(`Mortech API error: ${response.status} ${response.statusText}`);
@@ -207,71 +292,80 @@ export class MortechAPI {
             return;
           }
 
-          // Parse quotes
+          // Parse quotes (full rate range: iterate all quote elements in each results block)
           const quotes: MortechQuote[] = [];
-          
+
           if (mortech.results) {
             for (const resultItem of mortech.results) {
-              const quote = resultItem.quote[0];
-              const quoteDetail = quote.quote_detail[0];
-              const eligibility = resultItem.eligibility[0];
+              const quoteList = Array.isArray(resultItem.quote) ? resultItem.quote : [resultItem.quote];
+              const eligibilityList = resultItem.eligibility
+                ? (Array.isArray(resultItem.eligibility) ? resultItem.eligibility : [resultItem.eligibility])
+                : [];
+              const fallbackEligibility = {
+                eligibilityCheck: [''],
+                comments: [''],
+              };
 
-              // Parse fees
-              const fees: MortechFee[] = [];
-              if (quoteDetail.fees && quoteDetail.fees[0].fee_list) {
-                const feeList = quoteDetail.fees[0].fee_list;
-                if (Array.isArray(feeList)) {
-                  for (const feeItem of feeList) {
-                    // Handle different XML structures
-                    const feeData = feeItem.$ || feeItem;
+              for (let qIdx = 0; qIdx < quoteList.length; qIdx++) {
+                const quote = quoteList[qIdx];
+                const quoteDetail = quote.quote_detail[0];
+                const eligibility = eligibilityList[qIdx] ?? eligibilityList[0] ?? fallbackEligibility;
+
+                // Parse fees
+                const fees: MortechFee[] = [];
+                if (quoteDetail.fees && quoteDetail.fees[0].fee_list) {
+                  const feeList = quoteDetail.fees[0].fee_list;
+                  if (Array.isArray(feeList)) {
+                    for (const feeItem of feeList) {
+                      const feeData = feeItem.$ || feeItem;
+                      fees.push({
+                        hudline: feeData.hudline || '',
+                        description: feeData.description || '',
+                        feeamount: parseFloat(feeData.feeamount || '0'),
+                        section: feeData.section || '',
+                        paymenttype: feeData.paymenttype || '',
+                        prepaid: feeData.prepaid === 'true',
+                      });
+                    }
+                  } else if (feeList.$) {
                     fees.push({
-                      hudline: feeData.hudline || '',
-                      description: feeData.description || '',
-                      feeamount: parseFloat(feeData.feeamount || '0'),
-                      section: feeData.section || '',
-                      paymenttype: feeData.paymenttype || '',
-                      prepaid: feeData.prepaid === 'true',
+                      hudline: feeList.$.hudline || '',
+                      description: feeList.$.description || '',
+                      feeamount: parseFloat(feeList.$.feeamount || '0'),
+                      section: feeList.$.section || '',
+                      paymenttype: feeList.$.paymenttype || '',
+                      prepaid: feeList.$.prepaid === 'true',
                     });
                   }
-                } else if (feeList.$) {
-                  // Single fee item
-                  fees.push({
-                    hudline: feeList.$.hudline || '',
-                    description: feeList.$.description || '',
-                    feeamount: parseFloat(feeList.$.feeamount || '0'),
-                    section: feeList.$.section || '',
-                    paymenttype: feeList.$.paymenttype || '',
-                    prepaid: feeList.$.prepaid === 'true',
-                  });
                 }
-              }
 
-              quotes.push({
-                productId: quote.$.product_id,
-                vendorName: quote.$.vendor_name,
-                vendorProductName: quote.$.vendor_product_name,
-                vendorProductCode: quote.$.vendor_product_code,
-                productDesc: quote.$.productDesc,
-                productTerm: quote.$.productTerm,
-                rate: parseFloat(quoteDetail.$.rate),
-                apr: parseFloat(quoteDetail.$.apr),
-                monthlyPayment: parseFloat(quoteDetail.$.piti),
-                points: parseFloat(quoteDetail.$.price),
-                originationFee: parseFloat(quoteDetail.$.originationFee),
-                upfrontFee: parseFloat(quoteDetail.$.upfrontFee),
-                monthlyPremium: parseFloat(quoteDetail.$.monthlyPremium),
-                downPayment: parseFloat(quoteDetail.$.downPayment),
-                loanAmount: parseFloat(quoteDetail.$.loanAmount),
-                lockTerm: parseInt(resultItem.$.lockTerm),
-                termType: resultItem.$.termType,
-                pricingStatus: quote.$.pricingStatus,
-                lastUpdate: quote.$.lastUpdate,
-                fees,
-                eligibility: {
-                  eligibilityCheck: eligibility.eligibilityCheck[0],
-                  comments: eligibility.comments[0] || '',
-                },
-              });
+                quotes.push({
+                  productId: quote.$.product_id,
+                  vendorName: quote.$.vendor_name,
+                  vendorProductName: quote.$.vendor_product_name,
+                  vendorProductCode: quote.$.vendor_product_code,
+                  productDesc: quote.$.productDesc,
+                  productTerm: quote.$.productTerm,
+                  rate: parseFloat(quoteDetail.$.rate),
+                  apr: parseFloat(quoteDetail.$.apr),
+                  monthlyPayment: parseFloat(quoteDetail.$.piti),
+                  points: parseFloat(quoteDetail.$.price),
+                  originationFee: parseFloat(quoteDetail.$.originationFee),
+                  upfrontFee: parseFloat(quoteDetail.$.upfrontFee),
+                  monthlyPremium: parseFloat(quoteDetail.$.monthlyPremium),
+                  downPayment: parseFloat(quoteDetail.$.downPayment),
+                  loanAmount: parseFloat(quoteDetail.$.loanAmount),
+                  lockTerm: parseInt(resultItem.$.lockTerm),
+                  termType: resultItem.$.termType,
+                  pricingStatus: quote.$.pricingStatus ?? '',
+                  lastUpdate: quote.$.lastUpdate ?? '',
+                  fees,
+                  eligibility: {
+                    eligibilityCheck: eligibility.eligibilityCheck?.[0] ?? '',
+                    comments: eligibility.comments?.[0] ?? '',
+                  },
+                });
+              }
             }
           }
 
@@ -292,12 +386,42 @@ export class MortechAPI {
   }
 }
 
+function loadPrivateKey(): string | undefined {
+  try {
+    if (fs.existsSync(PRIVATE_PEM_PATH)) {
+      return fs.readFileSync(PRIVATE_PEM_PATH, 'utf8');
+    }
+  } catch {
+    // fall through to env
+  }
+  const base64 = process.env.MORTECH_PRIVATE_KEY_BASE64;
+  if (base64) {
+    try {
+      return Buffer.from(base64, 'base64').toString('utf8');
+    } catch {
+      throw new Error('Failed to decode MORTECH_PRIVATE_KEY_BASE64');
+    }
+  }
+  const raw = process.env.MORTECH_PRIVATE_KEY;
+  if (raw) {
+    return raw.replace(/\\n/g, '\n');
+  }
+  return undefined;
+}
+
 // Helper function to create Mortech API instance
 export function createMortechAPI(): MortechAPI {
   const customerId = process.env.MORTECH_CUSTOMER_ID;
   const thirdPartyName = process.env.MORTECH_THIRD_PARTY_NAME;
   const licenseKey = process.env.MORTECH_LICENSE_KEY;
   const emailAddress = process.env.MORTECH_EMAIL_ADDRESS;
+  const partnerId = process.env.MORTECH_PARTNER_ID;
+  const xApiKey = process.env.MORTECH_X_API_KEY;
+  const privateKey = loadPrivateKey();
+  const authUrl = process.env.MORTECH_AUTH_URL;
+  const accessTokenTtlSeconds = process.env.MORTECH_ACCESS_TOKEN_TTL_SECONDS
+    ? parseInt(process.env.MORTECH_ACCESS_TOKEN_TTL_SECONDS, 10)
+    : undefined;
 
   if (!customerId || !thirdPartyName || !licenseKey || !emailAddress) {
     throw new Error('Missing required Mortech configuration. Please set MORTECH_CUSTOMER_ID, MORTECH_THIRD_PARTY_NAME, MORTECH_LICENSE_KEY, and MORTECH_EMAIL_ADDRESS environment variables.');
@@ -308,5 +432,11 @@ export function createMortechAPI(): MortechAPI {
     thirdPartyName,
     licenseKey,
     emailAddress,
+    baseUrl: process.env.MORTECH_BASE_URL,
+    partnerId: partnerId || undefined,
+    xApiKey: xApiKey || undefined,
+    privateKey,
+    authUrl: authUrl || undefined,
+    accessTokenTtlSeconds,
   });
 }

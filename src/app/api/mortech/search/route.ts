@@ -202,6 +202,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       rates: transformedRates,
+      ratesCount: transformedRates.length,
       source: 'mortech_api',
       isMockData: false,
       rateLimit: {
@@ -538,6 +539,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       rates: transformedRates,
+      ratesCount: transformedRates.length,
       source: 'mortech_api',
       isMockData: false,
       rateLimit: {
