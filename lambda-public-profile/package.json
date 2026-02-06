@@ -1,0 +1,10 @@
+{
+  "name": "public-profile-lambda",
+  "version": "1.0.0",
+  "description": "Lambda for public profile by slug (Option B - Provisioned Concurrency)",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
