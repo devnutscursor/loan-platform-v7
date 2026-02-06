@@ -5,7 +5,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-const PROFILE_CACHE_TTL_MS = 30000;
+// Match keep-warm interval so cache lasts until next job run (default 2 min)
+const KEEP_WARM_MINUTES = parseInt(process.env.KEEP_WARM_INTERVAL_MINUTES || '2', 10);
+const PROFILE_CACHE_TTL_MS = Math.max(60_000, KEEP_WARM_MINUTES * 60 * 1000);
 const profileCache = new Map<
   string,
   { data: { success: true; data: any }; fetchedAt: number }
