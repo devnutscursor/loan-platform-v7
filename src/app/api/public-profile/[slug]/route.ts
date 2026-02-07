@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import { getSupabaseService } from '@/lib/supabase/service';
 
 // Match keep-warm interval so cache lasts until next job run (default 2 min)
 const KEEP_WARM_MINUTES = parseInt(process.env.KEEP_WARM_INTERVAL_MINUTES || '2', 10);
@@ -84,6 +80,7 @@ export async function GET(
       );
     }
 
+    const supabase = getSupabaseService();
     const cacheKey = `profile:${slug}`;
     const cached = profileCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL_MS) {

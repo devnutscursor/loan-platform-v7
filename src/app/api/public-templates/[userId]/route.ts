@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import { getSupabaseService } from '@/lib/supabase/service';
 
 const TEMPLATE_CACHE_TTL_MS = 30000;
 const templateCache = new Map<
@@ -59,6 +55,7 @@ export async function GET(
       );
     }
 
+    const supabase = getSupabaseService();
     const cacheKey = `templates:${userId}:${requestedTemplateSlug ?? 'default'}`;
     const cached = templateCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < TEMPLATE_CACHE_TTL_MS) {

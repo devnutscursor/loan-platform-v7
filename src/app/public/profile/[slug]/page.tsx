@@ -132,11 +132,6 @@ export default function PublicProfilePage() {
   const TEMPLATE_STORAGE_PREFIX = 'lo:template:';
   const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-  // Option B: Lambda with Provisioned Concurrency (no cold start)
-  const profileApiBase = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_PUBLIC_PROFILE_API_URL ?? '') : '';
-  const profileApiUrl = (s: string) =>
-    profileApiBase ? `${profileApiBase.replace(/\/$/, '')}/${encodeURIComponent(s)}` : `/api/public-profile/${s}`;
-
   const getStoredProfile = (s: string): PublicProfileData | null => {
     if (typeof window === 'undefined') return null;
     try {
@@ -213,7 +208,7 @@ export default function PublicProfilePage() {
       try {
         if (!storedProfile) setLoading(true);
 
-        const profileResponse = await fetch(profileApiUrl(slug));
+        const profileResponse = await fetch(`/api/public-profile/${slug}`);
         const profileResult = await profileResponse.json();
 
         if (!profileResult.success) {
@@ -252,7 +247,7 @@ export default function PublicProfilePage() {
     };
 
     fetchPublicProfileAndTemplate();
-  }, [slug, isPreview, previewTemplate, profileApiBase]);
+  }, [slug, isPreview, previewTemplate]);
 
   const fetchPublicProfileAndTemplate = useCallback(async () => {
     setError(null);
@@ -261,7 +256,7 @@ export default function PublicProfilePage() {
     setTemplateData(null);
 
     try {
-      const profileResponse = await fetch(profileApiUrl(slug));
+      const profileResponse = await fetch(`/api/public-profile/${slug}`);
       const profileResult = await profileResponse.json();
 
       if (!profileResult.success) {
@@ -296,7 +291,7 @@ export default function PublicProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, isPreview, previewTemplate, profileApiBase]);
+  }, [slug, isPreview, previewTemplate]);
 
   const refreshProfile = useCallback(() => {
     setError(null);
