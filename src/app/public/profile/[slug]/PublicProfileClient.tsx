@@ -18,7 +18,23 @@ export interface PublicProfileData {
     role: string;
     isActive: boolean;
   };
-  company: Record<string, unknown>;
+  company: {
+    id: string;
+    name: string;
+    logo?: string;
+    website?: string;
+    address?: any;
+    phone?: string;
+    email?: string;
+    license_number?: string;
+    company_nmls_number?: string;
+    company_social_media?: {
+      facebook?: string;
+      twitter?: string;
+      linkedin?: string;
+      instagram?: string;
+    };
+  };
   publicLink: {
     id: string;
     publicSlug: string;

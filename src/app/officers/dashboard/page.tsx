@@ -59,6 +59,7 @@ type DashboardFetchResult = {
   leads: Lead[];
   publicLink: PublicLink | null;
   publicProfileTemplate: string;
+  companyId?: string;
 };
 
 const DASHBOARD_FETCH_TTL_MS = 10000;
@@ -208,11 +209,13 @@ export default function OfficersDashboardPage() {
             }
           });
 
+          const result = await response.json().catch(() => ({}));
+
           if (!response.ok) {
-            throw new Error('Failed to fetch dashboard data');
+            const message = result?.error || response.statusText || `Request failed (${response.status})`;
+            throw new Error(message);
           }
 
-          const result = await response.json();
           if (!result.success) {
             throw new Error(result.error || 'Dashboard data fetch failed');
           }
