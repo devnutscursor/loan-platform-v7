@@ -132,10 +132,7 @@ export default function PublicProfilePage() {
   const TEMPLATE_STORAGE_PREFIX = 'lo:template:';
   const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-  // Option B: Lambda with Provisioned Concurrency (no cold start)
-  const profileApiBase = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_PUBLIC_PROFILE_API_URL ?? '') : '';
-  const profileApiUrl = (s: string) =>
-    profileApiBase ? `${profileApiBase.replace(/\/$/, '')}/${encodeURIComponent(s)}` : `/api/public-profile/${s}`;
+  const profileApiUrl = (s: string) => `/api/public-profile/${encodeURIComponent(s)}`;
 
   const getStoredProfile = (s: string): PublicProfileData | null => {
     if (typeof window === 'undefined') return null;
@@ -223,10 +220,29 @@ export default function PublicProfilePage() {
           return;
         }
 
-        setProfileData(profileResult.data);
-        setStoredProfile(slug, profileResult.data);
+        const data = profileResult.data;
+        setProfileData(data);
+        setStoredProfile(slug, data);
 
-        const userId = profileResult.data.user.id;
+        const userId = data.user.id;
+        const needTemplatesApi = (isPreview && previewTemplate) || !data.template;
+
+        if (!needTemplatesApi && data.template) {
+          const templateDataFromProfile: PublicTemplateData = {
+            template: data.template,
+            pageSettings: data.pageSettings ?? null,
+            metadata: {
+              templateSlug: data.template?.slug ?? 'template1',
+              isCustomized: !data.template?.isDefault,
+              isPublished: true,
+            },
+          };
+          setTemplateData(templateDataFromProfile);
+          setStoredTemplate(userId, templateSlug, templateDataFromProfile);
+          setLoading(false);
+          return;
+        }
+
         let templateUrl = `/api/public-templates/${userId}`;
         if (isPreview && previewTemplate) templateUrl += `?template=${previewTemplate}`;
 
@@ -252,7 +268,7 @@ export default function PublicProfilePage() {
     };
 
     fetchPublicProfileAndTemplate();
-  }, [slug, isPreview, previewTemplate, profileApiBase]);
+  }, [slug, isPreview, previewTemplate]);
 
   const fetchPublicProfileAndTemplate = useCallback(async () => {
     setError(null);
@@ -270,10 +286,29 @@ export default function PublicProfilePage() {
         return;
       }
 
-      setProfileData(profileResult.data);
-      setStoredProfile(slug, profileResult.data);
+      const data = profileResult.data;
+      setProfileData(data);
+      setStoredProfile(slug, data);
 
-      const userId = profileResult.data.user.id;
+      const userId = data.user.id;
+      const needTemplatesApi = (isPreview && previewTemplate) || !data.template;
+
+      if (!needTemplatesApi && data.template) {
+        const templateDataFromProfile: PublicTemplateData = {
+          template: data.template,
+          pageSettings: data.pageSettings ?? null,
+          metadata: {
+            templateSlug: data.template?.slug ?? 'template1',
+            isCustomized: !data.template?.isDefault,
+            isPublished: true,
+          },
+        };
+        setTemplateData(templateDataFromProfile);
+        setStoredTemplate(userId, isPreview && previewTemplate ? previewTemplate : null, templateDataFromProfile);
+        setLoading(false);
+        return;
+      }
+
       let templateUrl = `/api/public-templates/${userId}`;
       if (isPreview && previewTemplate) templateUrl += `?template=${previewTemplate}`;
 
@@ -296,7 +331,7 @@ export default function PublicProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [slug, isPreview, previewTemplate, profileApiBase]);
+  }, [slug, isPreview, previewTemplate]);
 
   const refreshProfile = useCallback(() => {
     setError(null);

@@ -5,9 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Match keep-warm interval so cache lasts until next job run (default 2 min)
-const KEEP_WARM_MINUTES = parseInt(process.env.KEEP_WARM_INTERVAL_MINUTES || '2', 10);
-const PROFILE_CACHE_TTL_MS = Math.max(60_000, KEEP_WARM_MINUTES * 60 * 1000);
+const PROFILE_CACHE_TTL_MS = 120_000; // 2 min in-memory cache for fast repeat loads
 const profileCache = new Map<
   string,
   { data: { success: true; data: any }; fetchedAt: number }
@@ -142,7 +140,7 @@ export async function GET(
           }
         })().catch(() => {});
 
-        const [userRes, companyRes, pageSettingsRes] = await Promise.all([
+        const [userRes, companyRes, pageSettingsRes, selRes, t1UserRes, t1DefaultRes, anyDefaultRes] = await Promise.all([
           supabase
             .from('users')
             .select('id, first_name, last_name, email, phone, nmls_number, avatar, role, is_active')
@@ -163,6 +161,37 @@ export async function GET(
             .order('updated_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
+          supabase
+            .from('templates')
+            .select('*')
+            .eq('user_id', link.user_id)
+            .eq('is_selected', true)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('templates')
+            .select('*')
+            .eq('slug', 'template1')
+            .eq('user_id', link.user_id)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('templates')
+            .select('*')
+            .eq('slug', 'template1')
+            .eq('is_default', true)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('templates')
+            .select('*')
+            .eq('is_default', true)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         const userData = userRes.data;
@@ -172,9 +201,14 @@ export async function GET(
         if (!userData) throw { status: 404, message: 'User data not found' };
         if (!companyData) throw { status: 404, message: 'Company data not found' };
 
-        let templateData: any = null;
         const templateId = pageSettingsRow && (pageSettingsRow as any).template_id;
-        if (templateId) {
+        const defaultTemplateRow =
+          selRes.data ?? t1UserRes.data ?? t1DefaultRes.data ?? anyDefaultRes.data;
+        let templateData: any =
+          defaultTemplateRow && (!templateId || defaultTemplateRow.id === templateId)
+            ? defaultTemplateRow
+            : null;
+        if (templateId && !templateData) {
           const templateRes = await supabase
             .from('templates')
             .select('*')

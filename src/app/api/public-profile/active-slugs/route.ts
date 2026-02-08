@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * GET /api/public-profile/active-slugs
- * Returns all active public profile slugs for keep-warm (EventBridge + Lambda).
+ * Returns all active public profile slugs (e.g. for cache preloading).
  * Secured by ?key=KEEP_WARM_SECRET or header x-keep-warm-key.
  */
 export async function GET(request: NextRequest) {

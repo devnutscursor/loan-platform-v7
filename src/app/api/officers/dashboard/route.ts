@@ -11,13 +11,13 @@ const DASHBOARD_CACHE_TTL_MS = 30000;
 const dashboardCache = new Map<
   string,
   {
-    data: { leads: any[]; publicLink: any | null; publicProfileTemplate: string };
+    data: { leads: any[]; publicLink: any | null; publicProfileTemplate: string; companyId?: string };
     fetchedAt: number;
   }
 >();
 const dashboardFetchPromises = new Map<
   string,
-  Promise<{ leads: any[]; publicLink: any | null; publicProfileTemplate: string }>
+  Promise<{ leads: any[]; publicLink: any | null; publicProfileTemplate: string; companyId?: string }>
 >();
 
 export async function GET(request: NextRequest) {
@@ -47,12 +47,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    let companyId = searchParams.get('companyId');
+
     if (!companyId) {
-      return NextResponse.json(
-        { success: false, error: 'companyId is required' },
-        { status: 400 }
-      );
+      const { data: userCompany } = await serviceSupabase
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      const resolved = (userCompany as { company_id?: string } | null)?.company_id ?? null;
+      if (!resolved) {
+        return NextResponse.json(
+          { success: false, error: 'companyId is required' },
+          { status: 400 }
+        );
+      }
+      companyId = resolved;
     }
 
     const cacheKey = `${user.id}:${companyId}`;
@@ -112,7 +123,8 @@ export async function GET(request: NextRequest) {
       return {
         leads: leadsResult.data || [],
         publicLink: publicLinkResult.data || null,
-        publicProfileTemplate: templateSlug
+        publicProfileTemplate: templateSlug,
+        companyId
       };
     })();
 
