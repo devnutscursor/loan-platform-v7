@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           .eq('officer_id', user.id)
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
-          .limit(50),
+          .limit(20),
         supabase
           .from('loan_officer_public_links')
           .select('public_slug, is_active')
