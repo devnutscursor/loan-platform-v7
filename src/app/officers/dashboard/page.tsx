@@ -59,6 +59,7 @@ type DashboardFetchResult = {
   leads: Lead[];
   publicLink: PublicLink | null;
   publicProfileTemplate: string;
+  companyId?: string;
 };
 
 const DASHBOARD_FETCH_TTL_MS = 10000;
@@ -131,50 +132,55 @@ export default function OfficersDashboardPage() {
     return stats;
   }, []);
 
-  // Fetch dashboard data
+  // Fetch dashboard data (starts as soon as we have user + token; companyId resolved server-side when not sent)
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Wait for auth to complete and ensure we have required data
-      if (authLoading || !user?.id || !companyId) {
+      if (authLoading || !user?.id) {
         return;
       }
 
       try {
         setError(null);
-        const fetchKey = `${user.id}:${companyId}`;
+        const effectiveCompanyId = companyId ?? 'no-company';
+        const fetchKey = `${user.id}:${effectiveCompanyId}`;
         const now = Date.now();
-        const storageKey = getDashboardStorageKey(user.id, companyId);
         let hasStoredData = false;
 
-        try {
-          const raw = localStorage.getItem(storageKey);
-          if (raw) {
-            const parsed = JSON.parse(raw) as {
-              fetchedAt?: number;
-              data?: { leads: any[]; publicLink: any | null; publicProfileTemplate: string };
-            };
-            if (parsed?.data && parsed?.fetchedAt && (now - parsed.fetchedAt) < DASHBOARD_STORAGE_TTL_MS) {
-              setLeads(parsed.data.leads || []);
-              setLeadStats(calculateLeadStats(parsed.data.leads || []));
-              setPublicLink(parsed.data.publicLink || null);
-              setPublicProfileTemplate(parsed.data.publicProfileTemplate || 'template1');
-              hasStoredData = true;
+        if (companyId) {
+          const storageKey = getDashboardStorageKey(user.id, companyId);
+          try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw) as {
+                fetchedAt?: number;
+                data?: { leads: any[]; publicLink: any | null; publicProfileTemplate: string };
+              };
+              if (parsed?.data && parsed?.fetchedAt && (now - parsed.fetchedAt) < DASHBOARD_STORAGE_TTL_MS) {
+                setLeads(parsed.data.leads || []);
+                setLeadStats(calculateLeadStats(parsed.data.leads || []));
+                setPublicLink(parsed.data.publicLink || null);
+                setPublicProfileTemplate(parsed.data.publicProfileTemplate || 'template1');
+                hasStoredData = true;
+              }
             }
+          } catch (error) {
+            console.error('Error reading cached dashboard data:', error);
           }
-        } catch (error) {
-          console.error('Error reading cached dashboard data:', error);
         }
 
         if (hasStoredData) {
           setLoading(false);
+          return;
         }
 
         if (dashboardFetchCache && dashboardFetchCache.key === fetchKey &&
           (now - dashboardFetchCache.fetchedAt) < DASHBOARD_FETCH_TTL_MS) {
-          setLeads(dashboardFetchCache.result.leads);
-          setLeadStats(calculateLeadStats(dashboardFetchCache.result.leads));
-          setPublicLink(dashboardFetchCache.result.publicLink);
-          setPublicProfileTemplate(dashboardFetchCache.result.publicProfileTemplate);
+          const result = dashboardFetchCache.result;
+          setLeads(result.leads);
+          setLeadStats(calculateLeadStats(result.leads));
+          setPublicLink(result.publicLink);
+          setPublicProfileTemplate(result.publicProfileTemplate);
+          setLoading(false);
           return;
         }
 
@@ -184,17 +190,18 @@ export default function OfficersDashboardPage() {
           setLeadStats(calculateLeadStats(result.leads));
           setPublicLink(result.publicLink);
           setPublicProfileTemplate(result.publicProfileTemplate);
+          setLoading(false);
           return;
         }
 
-        if (!hasStoredData) {
-          setLoading(true);
-        }
+        setLoading(true);
 
-        // Load dashboard data from a single server endpoint
         dashboardFetchKey = fetchKey;
+        const url = companyId
+          ? `/api/officers/dashboard?companyId=${encodeURIComponent(companyId)}`
+          : '/api/officers/dashboard';
         dashboardFetchPromise = (async () => {
-          const response = await fetch(`/api/officers/dashboard?companyId=${encodeURIComponent(companyId)}`, {
+          const response = await fetch(url, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -202,11 +209,13 @@ export default function OfficersDashboardPage() {
             }
           });
 
+          const result = await response.json().catch(() => ({}));
+
           if (!response.ok) {
-            throw new Error('Failed to fetch dashboard data');
+            const message = result?.error || response.statusText || `Request failed (${response.status})`;
+            throw new Error(message);
           }
 
-          const result = await response.json();
           if (!result.success) {
             throw new Error(result.error || 'Dashboard data fetch failed');
           }
@@ -214,29 +223,29 @@ export default function OfficersDashboardPage() {
           return {
             leads: result.leads || [],
             publicLink: result.publicLink || null,
-            publicProfileTemplate: result.publicProfileTemplate || 'template1'
+            publicProfileTemplate: result.publicProfileTemplate || 'template1',
+            companyId: result.companyId
           };
         })();
 
         const result = await dashboardFetchPromise;
-        dashboardFetchCache = { key: fetchKey, result, fetchedAt: Date.now() };
-        try {
-          localStorage.setItem(
-            storageKey,
-            JSON.stringify({ data: result, fetchedAt: Date.now() })
-          );
-        } catch (error) {
-          console.error('Error writing cached dashboard data:', error);
+        const resolvedCompanyId = result.companyId ?? companyId;
+        dashboardFetchCache = { key: `${user.id}:${resolvedCompanyId}`, result, fetchedAt: Date.now() };
+
+        if (resolvedCompanyId) {
+          try {
+            localStorage.setItem(
+              getDashboardStorageKey(user.id, resolvedCompanyId),
+              JSON.stringify({ data: { leads: result.leads, publicLink: result.publicLink, publicProfileTemplate: result.publicProfileTemplate }, fetchedAt: Date.now() })
+            );
+          } catch (error) {
+            console.error('Error writing cached dashboard data:', error);
+          }
         }
 
-        // Handle leads result
         setLeads(result.leads);
         setLeadStats(calculateLeadStats(result.leads));
-
-        // Handle public link result
         setPublicLink(result.publicLink);
-
-        // Handle template result
         setPublicProfileTemplate(result.publicProfileTemplate);
 
       } catch (err) {
