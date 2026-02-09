@@ -613,11 +613,11 @@ export default function TodaysRatesPage() {
             </p>
           </div>
 
-          {/* Tabs */}
+          {/* Tabs - use app greenish on officers dashboard (template colors only on public profile & customizer) */}
           <div 
             className="toggle-switch relative inline-flex p-1 mb-4"
             style={{
-              backgroundColor: templateColors.border,
+              backgroundColor: '#e5e7eb',
               borderRadius: `${templateLayout.borderRadius}px`,
               width: 'fit-content'
             }}
@@ -630,7 +630,7 @@ export default function TodaysRatesPage() {
               }`}
               style={{
                 borderRadius: `${templateLayout.borderRadius}px`,
-                backgroundColor: activeTab === 'search' ? templateColors.primary : 'transparent'
+                backgroundColor: activeTab === 'search' ? '#005b7c' : 'transparent'
               }}
             >
               Search Rates
@@ -643,7 +643,7 @@ export default function TodaysRatesPage() {
               }`}
               style={{
                 borderRadius: `${templateLayout.borderRadius}px`,
-                backgroundColor: activeTab === 'selected' ? templateColors.primary : 'transparent'
+                backgroundColor: activeTab === 'selected' ? '#005b7c' : 'transparent'
               }}
             >
               Selected Rates
@@ -671,6 +671,7 @@ export default function TodaysRatesPage() {
                   loading={loading}
                   template={selectedTemplate as 'template1' | 'template2'}
                   isPublic={false}
+                  useAppTheme={true}
                 />
               </SpotlightCard>
 

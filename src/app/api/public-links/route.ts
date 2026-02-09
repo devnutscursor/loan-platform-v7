@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { loanOfficerPublicLinks, users, companies } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { getSupabaseService } from '@/lib/supabase/service';
 import { z } from 'zod';
 
-// Schema for creating public links
 const createPublicLinkSchema = z.object({
-  expiresAt: z.string().optional(), // ISO string
+  expiresAt: z.string().optional(),
   maxUses: z.number().optional(),
 });
 
-// GET: Check if user has a public link
+function mapRow(row: any) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    publicSlug: row.public_slug,
+    isActive: row.is_active,
+    currentUses: row.current_uses ?? 0,
+    maxUses: row.max_uses,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,32 +33,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const existingLink = await db
-      .select({
-        id: loanOfficerPublicLinks.id,
-        publicSlug: loanOfficerPublicLinks.publicSlug,
-        isActive: loanOfficerPublicLinks.isActive,
-        currentUses: loanOfficerPublicLinks.currentUses,
-        maxUses: loanOfficerPublicLinks.maxUses,
-        expiresAt: loanOfficerPublicLinks.expiresAt,
-        createdAt: loanOfficerPublicLinks.createdAt,
-      })
-      .from(loanOfficerPublicLinks)
-      .where(
-        and(
-          eq(loanOfficerPublicLinks.userId, userId),
-          eq(loanOfficerPublicLinks.companyId, companyId),
-          eq(loanOfficerPublicLinks.isActive, true)
-        )
-      )
-      .limit(1);
+    const supabase = getSupabaseService();
+    const { data, error } = await supabase
+      .from('loan_officer_public_links')
+      .select('id, public_slug, is_active, current_uses, max_uses, expires_at, created_at')
+      .eq('user_id', userId)
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
 
+    if (error) {
+      console.error('Error checking public link:', error);
+      return NextResponse.json(
+        { success: false, message: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+
+    const mapped = mapRow(data);
     return NextResponse.json({
       success: true,
-      hasLink: existingLink.length > 0,
-      data: existingLink[0] || null,
+      hasLink: !!mapped,
+      data: mapped,
     });
-
   } catch (error) {
     console.error('Error checking public link:', error);
     return NextResponse.json(
@@ -59,7 +66,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Create a new public link
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -72,94 +78,88 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate input
     const validatedData = createPublicLinkSchema.parse({ expiresAt, maxUses });
+    const supabase = getSupabaseService();
 
-    // Check if user already has any public link (active or inactive)
-    console.log('🔍 Checking for existing links for userId:', userId, 'companyId:', companyId);
-    const existingLink = await db
-      .select()
-      .from(loanOfficerPublicLinks)
-      .where(
-        and(
-          eq(loanOfficerPublicLinks.userId, userId),
-          eq(loanOfficerPublicLinks.companyId, companyId)
-        )
-      )
-      .limit(1);
-    
-    console.log('🔗 Existing link query result:', existingLink);
+    const { data: existing, error: existingError } = await supabase
+      .from('loan_officer_public_links')
+      .select('id, public_slug, is_active, current_uses, max_uses, expires_at, created_at')
+      .eq('user_id', userId)
+      .eq('company_id', companyId)
+      .limit(1)
+      .maybeSingle();
 
-    if (existingLink.length > 0) {
-      const link = existingLink[0];
-      console.log('✅ Found existing link:', {
-        id: link.id,
-        publicSlug: link.publicSlug,
-        isActive: link.isActive
-      });
-      
-      // If link exists but is inactive, reactivate it
-      if (!link.isActive) {
-        console.log('🔄 Reactivating existing link...');
-        const reactivatedLink = await db
-          .update(loanOfficerPublicLinks)
-          .set({
-            isActive: true,
-            updatedAt: new Date(),
-          })
-          .where(eq(loanOfficerPublicLinks.id, link.id))
-          .returning();
+    if (existingError) {
+      console.error('Error checking existing link:', existingError);
+      return NextResponse.json(
+        { success: false, message: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+
+    if (existing) {
+      if (!existing.is_active) {
+        const { data: updated, error: updateError } = await supabase
+          .from('loan_officer_public_links')
+          .update({ is_active: true, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select('id, public_slug, is_active, current_uses, max_uses, expires_at, created_at')
+          .single();
+
+        if (updateError) {
+          console.error('Error reactivating link:', updateError);
+          return NextResponse.json(
+            { success: false, message: 'Internal server error' },
+            { status: 500 }
+          );
+        }
 
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const publicUrl = `${baseUrl}/public/profile/${reactivatedLink[0].publicSlug}`;
-
-        console.log('✅ Link reactivated:', reactivatedLink[0]);
         return NextResponse.json({
           success: true,
-          data: reactivatedLink[0],
-          publicUrl,
+          data: mapRow(updated),
+          publicUrl: `${baseUrl}/public/profile/${updated.public_slug}`,
           message: 'Public link reactivated',
         });
       }
-      
-      // If link is already active, return it
-      console.log('✅ Link already active, returning existing link');
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const publicUrl = `${baseUrl}/public/profile/${link.publicSlug}`;
 
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       return NextResponse.json({
         success: true,
-        data: link,
-        publicUrl,
+        data: mapRow(existing),
+        publicUrl: `${baseUrl}/public/profile/${existing.public_slug}`,
         message: 'Public link already exists',
       });
     }
 
-    // Generate a unique public slug
     const publicSlug = `${userId.slice(0, 8)}-${Date.now().toString(36)}`;
-
-    // Create the public link
-    const newLink = await db
-      .insert(loanOfficerPublicLinks)
-      .values({
-        userId,
-        companyId,
-        publicSlug,
-        isActive: true,
-        expiresAt: validatedData.expiresAt ? new Date(validatedData.expiresAt) : null,
-        maxUses: validatedData.maxUses || null,
+    const { data: inserted, error: insertError } = await supabase
+      .from('loan_officer_public_links')
+      .insert({
+        user_id: userId,
+        company_id: companyId,
+        public_slug: publicSlug,
+        is_active: true,
+        expires_at: validatedData.expiresAt ? validatedData.expiresAt : null,
+        max_uses: validatedData.maxUses ?? null,
       })
-      .returning();
+      .select('id, public_slug, is_active, current_uses, max_uses, expires_at, created_at')
+      .single();
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
-    const publicUrl = `${baseUrl}/public/profile/${newLink[0].publicSlug}`;
+    if (insertError) {
+      console.error('Error creating public link:', insertError);
+      return NextResponse.json(
+        { success: false, message: 'Internal server error' },
+        { status: 500 }
+      );
+    }
 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.json({
       success: true,
-      data: newLink[0],
-      publicUrl,
+      data: mapRow(inserted),
+      publicUrl: `${baseUrl}/public/profile/${inserted.public_slug}`,
     });
-
   } catch (error) {
     console.error('Error creating public link:', error);
     return NextResponse.json(
@@ -169,7 +169,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Update an existing public link
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -183,19 +182,21 @@ export async function PUT(request: NextRequest) {
     }
 
     const validatedData = createPublicLinkSchema.parse({ expiresAt, maxUses });
+    const supabase = getSupabaseService();
 
-    const updatedLink = await db
-      .update(loanOfficerPublicLinks)
-      .set({
-        isActive: isActive !== undefined ? isActive : undefined,
-        expiresAt: validatedData.expiresAt ? new Date(validatedData.expiresAt) : undefined,
-        maxUses: validatedData.maxUses !== undefined ? validatedData.maxUses : undefined,
-        updatedAt: new Date(),
-      })
-      .where(eq(loanOfficerPublicLinks.id, linkId))
-      .returning();
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (isActive !== undefined) updates.is_active = isActive;
+    if (validatedData.expiresAt !== undefined) updates.expires_at = validatedData.expiresAt;
+    if (validatedData.maxUses !== undefined) updates.max_uses = validatedData.maxUses;
 
-    if (updatedLink.length === 0) {
+    const { data: updated, error } = await supabase
+      .from('loan_officer_public_links')
+      .update(updates)
+      .eq('id', linkId)
+      .select('id, public_slug, is_active, current_uses, max_uses, expires_at, created_at')
+      .maybeSingle();
+
+    if (error || !updated) {
       return NextResponse.json(
         { success: false, message: 'Public link not found' },
         { status: 404 }
@@ -204,9 +205,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: updatedLink[0],
+      data: mapRow(updated),
     });
-
   } catch (error) {
     console.error('Error updating public link:', error);
     return NextResponse.json(
@@ -216,7 +216,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE: Deactivate a public link
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -229,16 +228,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const updatedLink = await db
-      .update(loanOfficerPublicLinks)
-      .set({
-        isActive: false,
-        updatedAt: new Date(),
-      })
-      .where(eq(loanOfficerPublicLinks.id, linkId))
-      .returning();
+    const supabase = getSupabaseService();
+    const { data, error } = await supabase
+      .from('loan_officer_public_links')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', linkId)
+      .select('id')
+      .maybeSingle();
 
-    if (updatedLink.length === 0) {
+    if (error) {
+      console.error('Error deactivating public link:', error);
+      return NextResponse.json(
+        { success: false, message: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
       return NextResponse.json(
         { success: false, message: 'Public link not found' },
         { status: 404 }
@@ -249,7 +255,6 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Public link deactivated successfully',
     });
-
   } catch (error) {
     console.error('Error deactivating public link:', error);
     return NextResponse.json(
