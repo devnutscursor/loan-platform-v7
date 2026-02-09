@@ -58,11 +58,15 @@ interface MortgageSearchFormProps {
   // NEW: Public mode props
   isPublic?: boolean;
   publicTemplateData?: any;
+  /** When true, use app greenish for tabs/button (officers dashboard). When false, use template colors (public profile, customizer). */
+  useAppTheme?: boolean;
   // Initial values from questionnaire
   initialValues?: Partial<SearchFormData>;
   // Verified email from questionnaire (for unauthenticated users)
   verifiedEmail?: string;
 }
+
+const APP_THEME_PRIMARY = '#005b7c';
 
 function MortgageSearchForm({ 
   onSearch, 
@@ -71,6 +75,7 @@ function MortgageSearchForm({
   // NEW: Public mode props
   isPublic = false,
   publicTemplateData,
+  useAppTheme = false,
   // Initial values from questionnaire
   initialValues,
   // Verified email from questionnaire
@@ -98,7 +103,7 @@ function MortgageSearchForm({
   const templateData = isPublic && publicTemplateData 
     ? publicTemplateData 
     : getTemplateSync(template);
-  const templateColors = templateData?.template?.colors || {
+  const templateColorsRaw = templateData?.template?.colors || {
     primary: '#111827',
     secondary: '#111827',
     background: '#ffffff',
@@ -106,6 +111,9 @@ function MortgageSearchForm({
     textSecondary: '#6b7280',
     border: '#e5e7eb'
   };
+  const templateColors = useAppTheme
+    ? { ...templateColorsRaw, primary: APP_THEME_PRIMARY }
+    : templateColorsRaw;
   
   // Get layout data for border radius
   const templateLayout = templateData?.template?.layout || {
