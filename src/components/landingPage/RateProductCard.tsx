@@ -116,10 +116,10 @@ export default function RateProductCard({
             </span>
           </div>
 
-          {/* Monthly Payment */}
+          {/* P&I */}
           <div>
             <span className="text-xs font-medium block mb-1" style={{ color: colors.textSecondary }}>
-              Monthly Payment*
+              P&I*
             </span>
             <span className="text-base font-semibold" style={{ color: colors.text }}>
               {formatCurrency(product.monthlyPayment)}

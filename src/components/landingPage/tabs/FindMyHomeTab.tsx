@@ -178,9 +178,33 @@ button: {
       ...(safeTemplateClasses?.status || {}) 
     }
   };
+
+  // Find My Home / Home AI Search: custom widget URL from customizer (e.g. LoanStar), default LoanStar booking widget
+  const defaultFindMyHomeWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
+  const findMyHomeWidgetUrl = templateData?.template?.bodyModifications?.findMyHomeWidgetUrl ?? defaultFindMyHomeWidgetUrl;
+  const findMyHomeHeader = templateData?.template?.bodyModifications?.findMyHomeHeader ?? '';
+  const findMyHomeBody = templateData?.template?.bodyModifications?.findMyHomeBody ?? '';
+  const hasValidCustomUrl = findMyHomeWidgetUrl?.trim() !== '' &&
+    (findMyHomeWidgetUrl.startsWith('http://') || findMyHomeWidgetUrl.startsWith('https://'));
+
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
+  const [customIframeLoaded, setCustomIframeLoaded] = useState(false);
   const widgetIframeRef = React.useRef<HTMLIFrameElement>(null);
   const idxWidgetLoadedRef = React.useRef(false);
+
+  // Load LoanStar form_embed.js when using a theloanstar.com widget URL
+  useEffect(() => {
+    if (!hasValidCustomUrl || typeof document === 'undefined') return;
+    if (!findMyHomeWidgetUrl.includes('theloanstar.com')) return;
+    if (document.querySelector('script[src="https://app.theloanstar.com/js/form_embed.js"]')) return;
+    const script = document.createElement('script');
+    script.src = 'https://app.theloanstar.com/js/form_embed.js';
+    script.type = 'text/javascript';
+    document.body.appendChild(script);
+    return () => {
+      script.remove();
+    };
+  }, [hasValidCustomUrl, findMyHomeWidgetUrl]);
 
   // Update ref when state changes
   useEffect(() => {
@@ -280,21 +304,99 @@ button: {
     };
   }, [idxWidgetLoaded]);
 
+  // Reset custom iframe loading when URL changes
+  useEffect(() => {
+    if (hasValidCustomUrl) setCustomIframeLoaded(false);
+  }, [findMyHomeWidgetUrl, hasValidCustomUrl]);
+
   // Stub variables for legacy code (never executed, kept for reference)
   const searchCriteria: any = {};
   const handleInputChange = (_field: string, _value: string) => {};
   const handleSearch = () => {};
   const setShowIframe = (_show: boolean) => {};
 
+  // Custom widget URL (e.g. LoanStar): show header/body + iframe
+  if (hasValidCustomUrl) {
+    return (
+      <div
+        className={`w-full ${className}`}
+        style={{ fontFamily: typography.fontFamily }}
+      >
+        {(findMyHomeHeader || findMyHomeBody) && (
+          <div className="w-full mb-4 space-y-2">
+            {findMyHomeHeader && (
+              <h2
+                className={classes.heading.h2}
+                style={{ color: colors.text, fontFamily: typography.fontFamily }}
+              >
+                {findMyHomeHeader}
+              </h2>
+            )}
+            {findMyHomeBody && (
+              <p
+                className={classes.body.base}
+                style={{ color: colors.textSecondary, fontFamily: typography.fontFamily }}
+              >
+                {findMyHomeBody}
+              </p>
+            )}
+          </div>
+        )}
+        <div
+          className="w-full mt-6 relative"
+          style={{
+            minHeight: '600px',
+            borderRadius: `${layout.borderRadius}px`,
+            overflow: 'auto',
+            backgroundColor: colors.background,
+            border: `1px solid ${colors.border}`
+          }}
+        >
+          {!customIframeLoaded && (
+            <div
+              className="flex items-center justify-center py-12 absolute inset-0"
+              style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}
+            >
+              <div className="text-center">
+                <div
+                  className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
+                  style={{ borderColor: colors.primary }}
+                />
+                <p style={{ color: colors.textSecondary }}>Loading widget...</p>
+              </div>
+            </div>
+          )}
+          <iframe
+            src={findMyHomeWidgetUrl}
+            title="Home AI Search Widget"
+            className="w-full border-0"
+            style={{
+              minHeight: '600px',
+              width: '100%',
+              border: 'none',
+              overflow: 'auto',
+              opacity: customIframeLoaded ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out',
+              pointerEvents: customIframeLoaded ? 'auto' : 'none'
+            }}
+            scrolling="yes"
+            onLoad={() => setCustomIframeLoaded(true)}
+            onError={() => setCustomIframeLoaded(true)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Default: IDX Widget Iframe
   return (
-    <div 
+    <div
       className={`w-full ${className}`}
       style={{ fontFamily: typography.fontFamily }}
     >
-      {/* IDX Widget Iframe Container */}
-      <div 
+      <div
         className="w-full mt-6 relative"
-        style={{ 
+        style={{
           minHeight: '600px',
           borderRadius: `${layout.borderRadius}px`,
           overflow: 'hidden',
@@ -305,10 +407,10 @@ button: {
         {!idxWidgetLoaded && (
           <div className="flex items-center justify-center py-12 absolute inset-0" style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}>
             <div className="text-center">
-              <div 
+              <div
                 className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
                 style={{ borderColor: colors.primary }}
-              ></div>
+              />
               <p style={{ color: colors.textSecondary }}>Loading property search...</p>
             </div>
           </div>
@@ -332,25 +434,21 @@ button: {
         />
       </div>
 
-      {/* Global styles for IDX widget iframe to ensure proper rendering */}
       <style jsx global>{`
         #idxwidget-iframe-122191 {
           width: 100% !important;
           max-width: 100% !important;
           min-height: 600px;
         }
-        /* Ensure IDX widget iframe is responsive */
         @media (max-width: 768px) {
           #idxwidget-iframe-122191 {
             min-height: 500px;
           }
         }
-        /* Hide any search bars that appear in the parent document (outside iframe) */
         body > #idx-ai-smart-search-122191 {
           display: none !important;
         }
       `}</style>
-
     </div>
   );
 }

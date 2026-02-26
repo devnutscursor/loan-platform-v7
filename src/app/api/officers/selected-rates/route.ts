@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { db, selectedRates, userCompanies } from '@/lib/db';
+import { seedSelectedRatesForOfficer } from '@/lib/mortech/seedSelectedRates';
 import { eq, and } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -48,6 +49,25 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Officer not found' }, { status: 404 });
       }
       companyId = (ucRows[0] as any).company_id;
+
+      // PUBLIC MODE:
+      // For public profile requests (officerId query param), ensure that
+      // all 8 program buckets are seeded using the shared seeding helper.
+      // This guarantees Today’s Rates can always show the lowest rate
+      // for each client-specified bucket.
+      const { rates } = await seedSelectedRatesForOfficer(officerId, companyId);
+
+      const res = NextResponse.json({
+        success: true as const,
+        rates: rates.map((row) => ({
+          id: row.id,
+          rateData: row.rateData,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        })),
+      });
+      res.headers.set('Cache-Control', 'public, max-age=60');
+      return res;
     } else {
       const authHeader = request.headers.get('authorization');
       if (!authHeader || !authHeader.startsWith('Bearer ')) {

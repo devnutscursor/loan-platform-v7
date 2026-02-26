@@ -40,6 +40,12 @@ interface Template {
     enabledTabs?: string[];
     activeTab?: string;
     homeValueWidgetUrl?: string;
+    findMyHomeWidgetUrl?: string;
+    findMyHomeHeader?: string;
+    findMyHomeBody?: string;
+    scheduleCallWidgetUrl?: string;
+    scheduleCallHeader?: string;
+    scheduleCallBody?: string;
   };
   rightSidebarModifications?: {
     companyName?: string;
@@ -397,7 +403,7 @@ export default function CustomizerPage() {
   // Update previewActiveTab when template's activeTab changes
   React.useEffect(() => {
     const templateActiveTab = mergedTemplate?.bodyModifications?.activeTab;
-    const enabledTabs = mergedTemplate?.bodyModifications?.enabledTabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
+    const enabledTabs = mergedTemplate?.bodyModifications?.enabledTabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'schedule-call', 'learning-center', 'neighborhood-reports', 'calculators'];
     
     if (templateActiveTab && enabledTabs.includes(templateActiveTab)) {
       // On initial load, always set it. After that, only update if it changed
@@ -1300,7 +1306,7 @@ export default function CustomizerPage() {
                   </div>
                   
                   {/* Section Content */}
-                  <div className="flex-1 overflow-auto p-4">
+                  <div className="flex-1 min-h-0 overflow-auto p-4">
                     <div className="space-y-6">
                       {customizerState.activeSection === 'general' && (
                         <GeneralSettings 
@@ -1957,12 +1963,15 @@ function HeaderModifications({ template, officerInfo, onChange, onSave, setIsDel
 function BodyModifications({ template, onChange }: SettingsProps) {
 
   const bodyMods = template?.bodyModifications || {};
+  const defaultFindMyHomeWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
+  const defaultScheduleCallWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
   const availableTabs = [
     { id: 'todays-rates', label: "Today's Rates" },
     { id: 'get-custom-rate', label: 'Get My Custom Rate' },
     { id: 'document-checklist', label: 'Document Checklist' },
     { id: 'my-home-value', label: 'My Home Value' },
     { id: 'find-my-home', label: 'Find My Home' },
+    { id: 'schedule-call', label: 'Schedule a Call' },
     { id: 'learning-center', label: 'Learning Center' },
     { id: 'neighborhood-reports', label: 'Neighborhood Reports' },
     { id: 'calculators', label: 'Calculators' }
@@ -2049,6 +2058,96 @@ function BodyModifications({ template, onChange }: SettingsProps) {
             <p className="text-xs text-gray-500 mt-1">
               Enter the CloudCMA widget URL for the My Home Value tab iframe. This URL will be used to display the home value estimation widget.
             </p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Find My Home / Home AI Search Tab Settings</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Home AI Search Widget URL
+            </label>
+            <input
+              type="text"
+              value={bodyMods.findMyHomeWidgetUrl ?? defaultFindMyHomeWidgetUrl}
+              onChange={(e) => onChange('findMyHomeWidgetUrl', e.target.value)}
+              placeholder="https://app.theloanstar.com/widget/booking/..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the widget URL for the Find My Home / Home AI Search tab iframe. This URL will be used to display the home search or booking widget (e.g. LoanStar).
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Header (optional)
+            </label>
+            <input
+              type="text"
+              value={bodyMods.findMyHomeHeader || ''}
+              onChange={(e) => onChange('findMyHomeHeader', e.target.value)}
+              placeholder="e.g. Find Your Home"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Body text (optional)
+            </label>
+            <textarea
+              value={bodyMods.findMyHomeBody || ''}
+              onChange={(e) => onChange('findMyHomeBody', e.target.value)}
+              placeholder="Short description above the widget"
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold text-gray-900 mb-4">Schedule Call Tab Settings</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Schedule Call Widget URL
+            </label>
+            <input
+              type="text"
+              value={bodyMods.scheduleCallWidgetUrl ?? defaultScheduleCallWidgetUrl}
+              onChange={(e) => onChange('scheduleCallWidgetUrl', e.target.value)}
+              placeholder="https://app.theloanstar.com/widget/booking/..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the widget URL for the Schedule Call tab iframe. This URL will be used to display the booking calendar widget (e.g. LoanStar).
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Header (optional)
+            </label>
+            <input
+              type="text"
+              value={bodyMods.scheduleCallHeader || ''}
+              onChange={(e) => onChange('scheduleCallHeader', e.target.value)}
+              placeholder="e.g. Schedule a Call"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Body text (optional)
+            </label>
+            <textarea
+              value={bodyMods.scheduleCallBody || ''}
+              onChange={(e) => onChange('scheduleCallBody', e.target.value)}
+              placeholder="Short description above the calendar widget"
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+            />
           </div>
         </div>
       </div>

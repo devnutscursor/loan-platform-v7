@@ -575,7 +575,7 @@ export default function LeadDetailsPage() {
                 <p className="text-gray-900">{lead.loanDetails.interestRate}% / {lead.loanDetails.apr}% APR</p>
               </div>
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-md border border-blue-200 financial-highlight">
-                <label className="block text-sm font-medium text-blue-700 mb-2">Monthly Payment</label>
+                <label className="block text-sm font-medium text-blue-700 mb-2">P&I</label>
                 <p className="text-2xl font-bold text-blue-600">{formatCurrency(lead.loanDetails.monthlyPayment)}</p>
               </div>
             </div>

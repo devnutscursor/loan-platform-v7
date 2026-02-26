@@ -16,6 +16,7 @@ export interface MortechRequest {
   thirdPartyName: string;
   licenseKey: string;
   emailAddress: string;
+  propertyState?: string; // Two-letter state code (e.g. CA, TX)
   propertyZip: string;
   appraisedvalue: number;
   loan_amount: number;
@@ -23,7 +24,13 @@ export interface MortechRequest {
   loanpurpose: 'Purchase' | 'Refinance';
   proptype: 'Single Family' | 'Condo' | 'Townhouse' | 'Multi-Family';
   occupancy: 'Primary' | 'Secondary' | 'Investment';
-  loanProduct1: string; // e.g., "30 year fixed", "15 year fixed", "5 year ARM/30 yrs"
+  /**
+   * Loan product description (e.g. "30 year fixed", "15 year fixed", "5 year ARM/30 yrs").
+   * Optional when using productList (explicit product IDs); in that case Mortech
+   * determines the term from the product itself and loanProduct1 should be omitted.
+   */
+  loanProduct1?: string;
+  productList?: string; // Optional: comma-separated product IDs
   filterId?: string; // Optional filter for Best Offer Strategy
   pmiCompany?: number; // -999 for best MI company
   noMI?: number; // 0 for borrower paid MI
@@ -55,6 +62,16 @@ export interface MortechQuote {
   rate: number;
   apr: number;
   monthlyPayment: number;
+  /**
+   * Execution price on a 0–100 scale (e.g. 98.75, 100.00, 101.25).
+   * Parsed from <ratesheet_price> in the Mortech XML.
+   * Used for Lowest / PAR / Higher selection (closest to 99 / 100).
+   */
+  executionPrice?: number;
+  /**
+   * Discount points charged/credited to the borrower (e.g. 0.000, 1.000, 2.250).
+   * Parsed from quote_detail.$.price in the Mortech XML.
+   */
   points: number;
   originationFee: number;
   upfrontFee: number;
@@ -169,6 +186,7 @@ export class MortechAPI {
         licenseKey: this.licenseKey,
         emailAddress: this.emailAddress,
         targetPrice: String(targetPrice),
+        ...(request.propertyState && { propertyState: request.propertyState }),
         propertyZip: request.propertyZip,
         appraisedvalue: request.appraisedvalue.toString(),
         loan_amount: request.loan_amount.toString(),
@@ -176,7 +194,10 @@ export class MortechAPI {
         loanpurpose: request.loanpurpose,
         proptype: request.proptype,
         occupancy: request.occupancy,
-        loanProduct1: request.loanProduct1,
+        // Only send loanProduct1 when provided; when using productList,
+        // Mortech expects productList instead of loanProduct1.
+        ...(request.loanProduct1 && { loanProduct1: request.loanProduct1 }),
+        ...(request.productList && { productList: request.productList }),
         ...(request.filterId && { filterId: request.filterId }),
         ...(request.pmiCompany && { pmiCompany: request.pmiCompany.toString() }),
         ...(request.noMI !== undefined && { noMI: request.noMI.toString() }),
@@ -205,6 +226,7 @@ export class MortechAPI {
       console.log('- propertyType:', request.proptype);
       console.log('- occupancy:', request.occupancy);
       console.log('- loanProduct1:', request.loanProduct1);
+      console.log('- productList:', request.productList);
       console.log('- filterId:', request.filterId);
       console.log('- waiveEscrow:', request.waiveEscrow);
       console.log('- militaryVeteran:', request.militaryVeteran);
@@ -311,6 +333,17 @@ export class MortechAPI {
                 const quoteDetail = quote.quote_detail[0];
                 const eligibility = eligibilityList[qIdx] ?? eligibilityList[0] ?? fallbackEligibility;
 
+                // Execution price (0–100 scale) used by Marksman "Price" column.
+                // This is distinct from borrower points (quote_detail.$.price).
+                const ratesheetPriceRaw =
+                  Array.isArray(quoteDetail.ratesheet_price) && quoteDetail.ratesheet_price.length > 0
+                    ? quoteDetail.ratesheet_price[0]
+                    : quoteDetail.ratesheet_price;
+                const executionPrice =
+                  typeof ratesheetPriceRaw === 'string' && ratesheetPriceRaw.trim() !== ''
+                    ? parseFloat(ratesheetPriceRaw)
+                    : undefined;
+
                 // Parse fees
                 const fees: MortechFee[] = [];
                 if (quoteDetail.fees && quoteDetail.fees[0].fee_list) {
@@ -349,6 +382,7 @@ export class MortechAPI {
                   rate: parseFloat(quoteDetail.$.rate),
                   apr: parseFloat(quoteDetail.$.apr),
                   monthlyPayment: parseFloat(quoteDetail.$.piti),
+                  executionPrice,
                   points: parseFloat(quoteDetail.$.price),
                   originationFee: parseFloat(quoteDetail.$.originationFee),
                   upfrontFee: parseFloat(quoteDetail.$.upfrontFee),

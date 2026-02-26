@@ -76,10 +76,12 @@ export default function PublicProfileClient({
   initialProfileData,
   initialTemplateData,
   initialSlug,
+  initialProductCategoryOptions,
 }: {
   initialProfileData: PublicProfileData | null;
   initialTemplateData: PublicTemplateData | null;
   initialSlug: string | null;
+  initialProductCategoryOptions?: { value: string; label: string }[];
 }) {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -293,6 +295,7 @@ export default function PublicProfileClient({
       profileData={profileData}
       templateData={templateData}
       isPreview={false}
+      initialProductCategoryOptions={initialProductCategoryOptions}
     />
   );
 }

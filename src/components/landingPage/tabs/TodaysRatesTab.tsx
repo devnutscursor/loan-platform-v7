@@ -5,6 +5,7 @@ import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 import RateResults from '@/components/landingPage/RateResults';
 import { supabase } from '@/lib/supabase/client';
+import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
 
 interface TodaysRatesTabProps {
   selectedTemplate: 'template1' | 'template2';
@@ -145,22 +146,89 @@ export default function TodaysRatesTab({
 
   // Transform selected rates to RateResults format
   const transformRatesToRateResults = () => {
-    return selectedRates.map((selectedRate) => {
-      const rate = selectedRate.rateData;
+    // Helper to safely extract interest rate
+    const getInterestRate = (rate: any): number => {
+      const value = rate?.interestRate ?? rate?.rate;
+      return typeof value === 'number' && !Number.isNaN(value) ? value : Number.POSITIVE_INFINITY;
+    };
+
+    // For each defined program bucket, find all matching selected rates and
+    // pick the one with the lowest interest rate.
+    const bucketBestRates = PROGRAM_BUCKETS.map((bucket) => {
+      const matchLower = bucket.match.toLowerCase();
+
+      const matching = selectedRates.filter((selectedRate) => {
+        const rate = selectedRate.rateData || {};
+        const program = (rate.loanProgram || '').toLowerCase();
+        const productDesc = (rate.productDesc || '').toLowerCase();
+        const vendorName = (rate.vendorProductName || '').toLowerCase();
+        const vendorCode = (rate.vendorProductCode || '').toLowerCase();
+        const combined = `${program} ${productDesc} ${vendorName} ${vendorCode}`;
+        return combined.includes(matchLower);
+      });
+
+      if (matching.length === 0) {
+        return null;
+      }
+
+      const best = matching.reduce((bestSoFar, current) => {
+        const bestRate = getInterestRate(bestSoFar.rateData);
+        const currentRate = getInterestRate(current.rateData);
+        return currentRate < bestRate ? current : bestSoFar;
+      });
+
+      return { bucket, selectedRate: best };
+    }).filter(
+      (entry): entry is { bucket: (typeof PROGRAM_BUCKETS)[number]; selectedRate: SelectedRate } =>
+        entry !== null
+    );
+
+    // Map the best rate per bucket into RateResults format
+    return bucketBestRates.map(({ bucket, selectedRate }) => {
+      const rate = selectedRate.rateData || {};
+
+      // Normalize numeric fields
+      const rawLoanTerm = rate.loanTerm ?? rate.productTerm ?? 30;
+      const loanTerm =
+        typeof rawLoanTerm === 'number'
+          ? rawLoanTerm
+          : parseInt(String(rawLoanTerm), 10) || 30;
+
+      const interestRate = getInterestRate(rate);
+      const apr =
+        typeof rate.apr === 'number' && !Number.isNaN(rate.apr) ? rate.apr : 0;
+      const monthlyPayment =
+        typeof rate.monthlyPayment === 'number' && !Number.isNaN(rate.monthlyPayment)
+          ? rate.monthlyPayment
+          : 0;
+      const fees =
+        typeof rate.fees === 'number' && !Number.isNaN(rate.fees) ? rate.fees : 0;
+      const points =
+        typeof rate.points === 'number' && !Number.isNaN(rate.points) ? rate.points : 0;
+      const credits =
+        typeof rate.credits === 'number' && !Number.isNaN(rate.credits)
+          ? rate.credits
+          : 0;
+      const lockPeriodRaw = rate.lockPeriod ?? rate.lockTerm ?? 30;
+      const lockPeriod =
+        typeof lockPeriodRaw === 'number'
+          ? lockPeriodRaw
+          : parseInt(String(lockPeriodRaw), 10) || 30;
+
       return {
-        id: rate.id || selectedRate.id,
-        lenderName: 'Today\'s Rates', // Always use this to pass the filter
-        loanProgram: rate.loanProgram || rate.productDesc || 'Mortgage Rate',
+        id: rate.id || rate.productId || selectedRate.id,
+        lenderName: "Today's Rates",
+        loanProgram: bucket.label,
         loanType: rate.loanType || rate.termType || 'Fixed',
-        loanTerm: rate.loanTerm || rate.productTerm || 30,
-        interestRate: rate.interestRate || rate.rate || 0,
-        apr: rate.apr || 0,
-        monthlyPayment: rate.monthlyPayment || 0,
-        fees: rate.fees || 0,
-        points: rate.points || 0,
-        credits: rate.credits || 0,
-        lockPeriod: rate.lockPeriod || rate.lockTerm || 30,
-        searchParams: rate.searchParams // Include search parameters if available
+        loanTerm,
+        interestRate: Number.isFinite(interestRate) ? interestRate : 0,
+        apr,
+        monthlyPayment,
+        fees,
+        points,
+        credits,
+        lockPeriod,
+        searchParams: rate.searchParams,
       };
     });
   };
@@ -253,7 +321,7 @@ export default function TodaysRatesTab({
                     style={{ backgroundColor: colors.border }}
                   />
                 </div>
-                {/* Monthly Payment Skeleton */}
+                {/* P&I Skeleton */}
                 <div>
                   <div 
                     className="h-3 w-24 mb-2 rounded"

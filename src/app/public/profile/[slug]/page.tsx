@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPublicProfileData } from '@/lib/public-profile';
+import { getMortechCatalogProducts } from '@/lib/mortech/catalog';
 import PublicProfileClient from './PublicProfileClient';
 import type { PublicProfileData, PublicTemplateData } from './PublicProfileClient';
 
@@ -34,11 +35,18 @@ export default async function PublicProfilePage({
     throw err;
   }
 
+  const catalog = await getMortechCatalogProducts().catch(() => []);
+  const initialProductCategoryOptions = catalog.map((p) => ({
+    value: p.id,
+    label: p.productName,
+  }));
+
   return (
     <PublicProfileClient
       initialProfileData={initialProfileData}
       initialTemplateData={initialTemplateData}
       initialSlug={slug}
+      initialProductCategoryOptions={initialProductCategoryOptions}
     />
   );
 }

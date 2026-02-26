@@ -25,6 +25,8 @@ interface MortgageRateComparisonProps {
   publicTemplateData?: any;
   userId?: string;
   companyId?: string;
+  /** Preloaded Product Category options (SSR). Pass from server when available. */
+  initialProductCategoryOptions?: { value: string; label: string }[];
 }
 
 interface RateProduct {
@@ -41,6 +43,8 @@ interface RateProduct {
   points: number;
   credits: number;
   lockPeriod: number;
+  /** Custom Quote: "Lowest Rate" | "PAR" | "Higher Rate" when reduceToThree was used */
+  quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate';
 }
 
 // Map property type from form to Mortech format
@@ -81,6 +85,7 @@ interface SearchFormData {
   occupancy: string;
   loanType: string;
   loanTerm: string;
+   productCategory: string;
   eligibleForLowerRate: boolean;
   loanPurpose: string;
   homeValue: string;
@@ -120,7 +125,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   isPublic = false,
   publicTemplateData,
   userId,
-  companyId
+  companyId,
+  initialProductCategoryOptions,
 }: MortgageRateComparisonProps) {
   const searchParams = useSearchParams();
   const { user } = useAuth(); // Check if current visitor is authenticated
@@ -583,7 +589,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       secondMortgageAmount: '',
       amortizationTypes: ["Fixed", "ARM"],
       armFixedTerms: ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
-      loanTerms: ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"]
+      loanTerms: ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"],
+      productCategory: ''
     };
 
     // Store questionnaire form data to pass to MortgageSearchForm
@@ -628,7 +635,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       secondMortgageAmount: formDataPartial.secondMortgageAmount || '',
       amortizationTypes: formDataPartial.amortizationTypes || ["Fixed", "ARM"],
       armFixedTerms: formDataPartial.armFixedTerms || ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
-      loanTerms: formDataPartial.loanTerms || ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"]
+      loanTerms: formDataPartial.loanTerms || ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"],
+      productCategory: formDataPartial.productCategory || ''
     };
 
     return formData;
@@ -735,6 +743,13 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         }
       }
 
+      // Optional: product category selected from catalog (maps to Mortech productList on the server)
+      if (formData.productCategory) {
+        request.productCategory = formData.productCategory;
+      }
+      // Custom Rates tab: return only 3 options (Lowest Rate ~99, PAR ~100, Higher Rate ≥100)
+      request.reduceToThree = true;
+
       console.log('📤 Sending request to Mortech API:', request);
 
       // Build headers
@@ -787,7 +802,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
           fees: (rate.originationFee || 0) + (rate.upfrontFee || 0),
           points: rate.points || 0,
           credits: 0,
-          lockPeriod: rate.lockTerm || 30
+          lockPeriod: rate.lockTerm || 30,
+          ...(rate.quoteType && { quoteType: rate.quoteType }),
         }));
 
         setProducts(transformed);
@@ -1582,15 +1598,18 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       {/* Main Content */}
       <main className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
         {/* Search Form */}
-        <MortgageSearchForm 
-          onSearch={handleSearch} 
-          loading={loading} 
-          template={template}
-          isPublic={isPublic}
-          publicTemplateData={publicTemplateData}
-          initialValues={questionnaireFormData}
-          verifiedEmail={verifiedEmail || undefined}
-        />
+        <div className="pb-24">
+          <MortgageSearchForm 
+            onSearch={handleSearch} 
+            loading={loading} 
+            template={template}
+            isPublic={isPublic}
+            publicTemplateData={publicTemplateData}
+            initialValues={questionnaireFormData}
+            verifiedEmail={verifiedEmail || undefined}
+            initialProductCategoryOptions={initialProductCategoryOptions}
+          />
+        </div>
 
         {/* Validation Message */}
         {validationMessage && (

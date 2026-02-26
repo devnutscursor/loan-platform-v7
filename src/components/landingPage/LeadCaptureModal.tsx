@@ -373,7 +373,7 @@ button: {
                   </span>
                 </div>
                 <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
-                  <span style={{ color: colors.textSecondary }}>Monthly Payment:</span>
+                  <span style={{ color: colors.textSecondary }}>P&I:</span>
                   <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
                     ${loanProduct.monthlyPayment.toLocaleString()}
                   </span>

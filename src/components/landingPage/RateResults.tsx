@@ -22,6 +22,8 @@ interface RateProduct {
   points: number;
   credits: number;
   lockPeriod: number;
+  /** Custom Quote label when API returned 3 options: Lowest Rate / PAR / Higher Rate */
+  quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate';
   searchParams?: {
     purchasePrice?: number;
     downPayment?: number;
@@ -539,7 +541,7 @@ function RateResults({
                       className="px-4 py-4 text-left text-sm font-semibold"
                       style={{ color: colors.primary }}
                     >
-                      Monthly Payment*
+                      P&I*
                     </th>
                     <th 
                       className="px-4 py-4 text-center text-sm font-semibold"
@@ -555,15 +557,24 @@ function RateResults({
                     <React.Fragment key={`${product.id}-${index}-${product.interestRate}-${product.apr}`}>
                       <tr className="transition-colors hover:opacity-90">
                         <td className="px-4 py-4">
-                          <div className="flex items-center space-x-2">
-                            {React.createElement(icons.document, { 
-                              size: 16, 
-                              color: colors.primary 
-                            })}
-                            <span className="text-sm font-medium"
-                                  style={{ color: colors.text }}>
-                              {product.loanTerm}-Year Fixed
-                            </span>
+                          <div className="flex flex-col">
+                            {product.quoteType && (
+                              <span className="text-xs font-semibold" style={{ color: colors.primary }}>
+                                {product.quoteType}
+                              </span>
+                            )}
+                            <div className="flex items-center space-x-2">
+                              {React.createElement(icons.document, { 
+                                size: 16, 
+                                color: colors.primary 
+                              })}
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: colors.text }}
+                              >
+                                {product.loanProgram || `${product.loanTerm}-Year Fixed`}
+                              </span>
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -668,6 +679,9 @@ function RateResults({
                 </tbody>
               </table>
             </div>
+            <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+              * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
+            </p>
           </div>
 
           {/* Cards View - Mobile */}
@@ -687,6 +701,9 @@ function RateResults({
                 />
               ))}
             </div>
+            <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+              * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
+            </p>
           </div>
         </div>
       </div>
@@ -756,7 +773,7 @@ function RateResults({
                       <span className="font-medium text-gray-900">{formatRate(selectedProduct.apr)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-700">Monthly Payment:</span>
+                      <span className="text-gray-700">P&I:</span>
                       <span className="font-medium text-green-600">{formatCurrency(selectedProduct.monthlyPayment)}</span>
                     </div>
                     <div className="flex justify-between">
@@ -792,7 +809,7 @@ function RateResults({
                     <h5 className="font-medium text-gray-900 mb-2">Cost Breakdown</h5>
                     <div className="text-sm text-gray-700 space-y-1">
                       <div className="flex justify-between">
-                        <span>Monthly Payment:</span>
+                        <span>P&I:</span>
                         <span className="text-gray-900">{formatCurrency(selectedProduct.monthlyPayment)}</span>
                       </div>
                       <div className="flex justify-between">

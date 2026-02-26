@@ -427,6 +427,36 @@ export const mortechApiCalls = pgTable('mortech_api_calls', {
   officerCalledAtIdx: index('mortech_api_calls_officer_called_at_idx').on(table.officerId, table.calledAt),
 }));
 
+// Mortech Investors catalog table - Stores investors from MORTECH (request_id=2)
+export const mortechInvestors = pgTable('mortech_investors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  parentId: text('parent_id').notNull().unique(), // MORTECH parent_id
+  name: text('name').notNull(), // Investor display name from MORTECH
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  parentIdIdx: index('mortech_investors_parent_id_idx').on(table.parentId),
+  activeIdx: index('mortech_investors_active_idx').on(table.isActive),
+}));
+
+// Mortech Products catalog table - Stores products per investor (request_id=3)
+export const mortechProducts = pgTable('mortech_products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  investorId: uuid('investor_id').references(() => mortechInvestors.id, { onDelete: 'cascade' }),
+  parentId: text('parent_id').notNull(), // MORTECH parent_id (redundant but useful for lookups)
+  productId: text('product_id').notNull(), // MORTECH product_id
+  name: text('name').notNull(), // Product name from MORTECH
+  vendorProductCode: text('vendor_product_code'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  parentProductIdx: index('mortech_products_parent_product_idx').on(table.parentId, table.productId),
+  investorIdx: index('mortech_products_investor_idx').on(table.investorId),
+  activeIdx: index('mortech_products_active_idx').on(table.isActive),
+}));
+
 
 // Email Verifications table - Tracks email verification with OTP codes for public users
 export const emailVerifications = pgTable('email_verifications', {
@@ -494,3 +524,7 @@ export type EmailVerification = typeof emailVerifications.$inferSelect;
 export type NewEmailVerification = typeof emailVerifications.$inferInsert;
 export type MortechEmailRateLimit = typeof mortechEmailRateLimits.$inferSelect;
 export type NewMortechEmailRateLimit = typeof mortechEmailRateLimits.$inferInsert;
+export type MortechInvestor = typeof mortechInvestors.$inferSelect;
+export type NewMortechInvestor = typeof mortechInvestors.$inferInsert;
+export type MortechProduct = typeof mortechProducts.$inferSelect;
+export type NewMortechProduct = typeof mortechProducts.$inferInsert;
