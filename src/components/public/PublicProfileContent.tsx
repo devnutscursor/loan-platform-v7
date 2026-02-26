@@ -53,6 +53,8 @@ interface PublicProfileContentProps {
   isPreview?: boolean;
   companyName?: string;
   forceMobileViewport?: boolean; // Force mobile viewport simulation
+  /** Preloaded Product Category options (SSR). */
+  initialProductCategoryOptions?: { value: string; label: string }[];
 }
 
 // Skeleton Loading Component
@@ -110,7 +112,8 @@ export default function PublicProfileContent({
   onTabChange,
   isPreview = false,
   companyName,
-  forceMobileViewport = false
+  forceMobileViewport = false,
+  initialProductCategoryOptions,
 }: PublicProfileContentProps) {
   // Get active tab from template customization if available, otherwise use initialActiveTab
   const bodyMods = profileData?.template?.bodyModifications || 
@@ -121,7 +124,7 @@ export default function PublicProfileContent({
 
   const templateActiveTab = bodyMods?.activeTab || bodyMods?.active_tab;
   // Handle both camelCase and snake_case for enabledTabs
-  const enabledTabs = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
+  const enabledTabs = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'schedule-call', 'learning-center', 'neighborhood-reports', 'calculators'];
   
   // Use template's activeTab if available and enabled, otherwise use initialActiveTab
   const initialTab = (templateActiveTab && enabledTabs.includes(templateActiveTab)) 
@@ -147,7 +150,7 @@ export default function PublicProfileContent({
 
     const templateActiveTab = bodyMods?.activeTab || bodyMods?.active_tab;
     // Handle both camelCase and snake_case for enabledTabs
-    const enabledTabsFromEffect = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'learning-center', 'neighborhood-reports', 'calculators'];
+    const enabledTabsFromEffect = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'schedule-call', 'learning-center', 'neighborhood-reports', 'calculators'];
     
     // Debug logging
     console.log('🔍 PublicProfileContent: Enabled tabs check:', {
@@ -382,6 +385,7 @@ export default function PublicProfileContent({
                                   { id: 'document-checklist', label: 'Document Checklist', icon: 'document' },
                                   { id: 'my-home-value', label: 'My Home Value', icon: 'home' },
                                   { id: 'find-my-home', label: 'Find My Home', icon: 'home' },
+                                  { id: 'schedule-call', label: 'Schedule a Call', icon: 'calendar' },
                                   { id: 'learning-center', label: 'Learning Center', icon: 'about' },
                                   { id: 'neighborhood-reports', label: 'Neighborhood Reports', icon: 'location' }
                                 ];
@@ -453,6 +457,7 @@ export default function PublicProfileContent({
                           companyId={profileData.company.id}
                           hideTabNavigation={true}
                           forceMobileView={forceMobileViewport}
+                          initialProductCategoryOptions={initialProductCategoryOptions}
                         />
                       </div>
                     </div>
@@ -477,6 +482,7 @@ export default function PublicProfileContent({
                           userId={profileData.user.id}
                           companyId={profileData.company.id}
                           forceMobileView={forceMobileViewport}
+                          initialProductCategoryOptions={initialProductCategoryOptions}
                         />
                       </div>
                     </div>

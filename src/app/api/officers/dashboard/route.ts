@@ -29,11 +29,21 @@ export async function GET(request: NextRequest) {
     let authError = null;
 
     if (token) {
+      // Primary path: validate explicit bearer token
       const supabaseClient = createClient();
       const result = await supabaseClient.auth.getUser(token);
       user = result.data.user;
       authError = result.error;
+
+      // Fallback: if token is invalid/expired, try cookie-based auth session
+      if (authError || !user) {
+        const supabase = await createRouteClient();
+        const cookieResult = await supabase.auth.getUser();
+        user = cookieResult.data.user;
+        authError = cookieResult.error;
+      }
     } else {
+      // No bearer token provided – rely on cookie-based session
       const supabase = await createRouteClient();
       const result = await supabase.auth.getUser();
       user = result.data.user;

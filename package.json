@@ -12,11 +12,14 @@
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "db:run-migration": "tsx scripts/run-migration.ts",
+    "db:baseline": "tsx scripts/baseline-migrations.ts",
+    "sync-mortech-catalog": "tsx scripts/sync-mortech-catalog.ts",
     "type-check": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",
     "seed:auth": "tsx scripts/seed-auth.ts",
     "seed:reset": "tsx scripts/reset-seed.ts",
     "test:mortech": "tsx scripts/test-mortech-comprehensive.ts",
+    "test:mortech-ratecaddy-buckets": "tsx scripts/test-mortech-ratecaddy-buckets.ts",
     "serve:test-results": "node scripts/serve-test-results.js"
   },
   "dependencies": {

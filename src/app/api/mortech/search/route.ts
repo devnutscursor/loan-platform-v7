@@ -1,10 +1,128 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createMortechAPI } from '@/lib/mortech/api';
+import { createMortechAPI, type MortechQuote } from '@/lib/mortech/api';
 import { checkRateLimit, recordApiCall } from '@/lib/mortech/rate-limit';
 import { checkEmailRateLimit, recordEmailApiCall } from '@/lib/mortech/email-rate-limit';
 import { db, userCompanies } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
+
+/**
+ * Custom Quote: 3 options by Mortech execution price.
+ * Mortech XML:
+ *   - <ratesheet_price> → we map to quote.executionPrice (0–100 scale; Marksman "Price" column).
+ *   - quote_detail.$.price → we map to quote.points (borrower discount points).
+ *
+ * Business rule (from client):
+ *   - First find PAR = row whose executionPrice is closest to 100.
+ *   - Then show exactly 3 rows for the selected product:
+ *       • One row just below PAR in the price ladder (lower executionPrice → more discount → usually lower rate)
+ *       • PAR row itself (≈ 100)
+ *       • One row just above PAR in the price ladder (higher executionPrice → more credit → usually higher rate)
+ *   - If there is no exact 99.00, still use “one below and one above” relative to PAR.
+ *   - If there are not enough neighbors on one side, fall back to the closest remaining rows.
+ *
+ * Verify: curl -X POST http://localhost:3000/api/mortech/search -H "Content-Type: application/json" \
+ *   -d '{"propertyZip":"95825","appraisedvalue":500000,"loan_amount":400000,"fico":740,"loanpurpose":"Purchase","proptype":"Single Family","occupancy":"Primary","loanProduct1":"30 year fixed","reduceToThree":true}'
+ * Response rates[] will have 3 items with quoteType: "Lowest Rate" | "PAR" | "Higher Rate"; each has executionPrice and points.
+ */
+const PRICE_LOWEST_TARGET = 99;  // discount / pay points → lowest rate
+const PRICE_PAR_TARGET = 100;   // par; premium ≥100 → higher rate / credit
+
+function pickThreeQuotesByPrice(quotes: MortechQuote[]): { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] {
+  if (!quotes.length) return [];
+
+  // Prefer executionPrice (0–100 scale). Fallback to points when executionPrice is missing.
+  const getPrice = (q: MortechQuote) => {
+    const ep = q.executionPrice;
+    if (typeof ep === 'number' && Number.isFinite(ep) && ep > 0) return ep;
+    return q.points;
+  };
+
+  // 1) Sort full ladder by executionPrice (or fallback price) ascending.
+  const sorted = [...quotes].sort((a, b) => getPrice(a) - getPrice(b));
+
+  // 2) Find PAR index: executionPrice closest to 100 across the entire ladder.
+  let parIndex = 0;
+  let bestDiff = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < sorted.length; i++) {
+    const price = getPrice(sorted[i]);
+    const diff = Math.abs(price - PRICE_PAR_TARGET);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      parIndex = i;
+    }
+  }
+
+  const chosenIndices = new Set<number>();
+  chosenIndices.add(parIndex);
+
+  // Prefer one neighbor below PAR (lower executionPrice) and one above PAR (higher executionPrice).
+  const belowIndex = parIndex - 1;
+  const aboveIndex = parIndex + 1;
+  if (belowIndex >= 0) {
+    chosenIndices.add(belowIndex);
+  }
+  if (aboveIndex < sorted.length) {
+    chosenIndices.add(aboveIndex);
+  }
+
+  // If we still have fewer than 3, fill remaining slots with closest-by-price rows not yet chosen.
+  if (chosenIndices.size < 3 && sorted.length > chosenIndices.size) {
+    const remainingIndices = sorted
+      .map((_, idx) => idx)
+      .filter(idx => !chosenIndices.has(idx))
+      .sort((a, b) => {
+        const da = Math.abs(getPrice(sorted[a]) - PRICE_PAR_TARGET);
+        const db = Math.abs(getPrice(sorted[b]) - PRICE_PAR_TARGET);
+        return da - db;
+      });
+
+    for (const idx of remainingIndices) {
+      chosenIndices.add(idx);
+      if (chosenIndices.size >= 3) break;
+    }
+  }
+
+  // Map chosen indices to quote + provisional labels based on their price relative to PAR.
+  const parPrice = getPrice(sorted[parIndex]);
+  let lowestAssigned = false;
+  let higherAssigned = false;
+
+  const labeled: { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] = [];
+
+  for (const idx of chosenIndices) {
+    const quote = sorted[idx];
+    if (idx === parIndex) {
+      labeled.push({ quote, quoteType: 'PAR' });
+    } else {
+      const price = getPrice(quote);
+      if (price < parPrice && !lowestAssigned) {
+        labeled.push({ quote, quoteType: 'Lowest Rate' });
+        lowestAssigned = true;
+      } else if (price >= parPrice && !higherAssigned) {
+        labeled.push({ quote, quoteType: 'Higher Rate' });
+        higherAssigned = true;
+      } else if (!lowestAssigned) {
+        labeled.push({ quote, quoteType: 'Lowest Rate' });
+        lowestAssigned = true;
+      } else {
+        labeled.push({ quote, quoteType: 'Higher Rate' });
+        higherAssigned = true;
+      }
+    }
+  }
+
+  // Return in a stable order: Lowest Rate, PAR, Higher Rate (when present).
+  const byOrder: ('Lowest Rate' | 'PAR' | 'Higher Rate')[] = ['Lowest Rate', 'PAR', 'Higher Rate'];
+  const ordered: { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] = [];
+
+  for (const qt of byOrder) {
+    const entry = labeled.find(item => item.quoteType === qt);
+    if (entry) ordered.push(entry);
+  }
+
+  return ordered;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -371,7 +489,12 @@ export async function POST(request: NextRequest) {
       waiveEscrow = false,
       militaryVeteran = false,
       lockDays = '30',
-      secondMortgageAmount = 0 as number | string
+      secondMortgageAmount = 0 as number | string,
+      productCategory,
+      /** When true (e.g. Custom Rates tab), return only 3 quotes: Lowest Rate (~99), PAR (~100), Higher Rate (≥100) by Mortech price. */
+      reduceToThree = false,
+      // Additional context (non-test-script fields)
+      propertyState,
     } = body;
     
     // Use test script format if provided, otherwise fall back to old format
@@ -381,6 +504,10 @@ export async function POST(request: NextRequest) {
     const finalLoanPurpose = loanpurpose || loanPurpose || 'Purchase';
     const finalPropertyType = proptype || propertyType || 'Single Family';
     const finalLoanTerm = loanProduct1 || loanTerm || '30 year fixed';
+    // TEMP: Default propertyState to 'CA' when not provided, so Mortech productList requests work
+    const finalPropertyState = propertyState || 'CA';
+    // Always send a lock period; default to 30 days
+    const finalLockDays = lockDays || '30';
 
     // Handle empty string values for numeric fields
     const safeSecondMortgageAmount = (() => {
@@ -408,6 +535,7 @@ export async function POST(request: NextRequest) {
       finalPropertyValue,
       finalCreditScore,
       propertyZip,
+      finalPropertyState,
       finalLoanPurpose,
       finalPropertyType,
       occupancy,
@@ -420,7 +548,22 @@ export async function POST(request: NextRequest) {
     const mortechAPI = createMortechAPI();
 
     // Prepare request - matching test script format EXACTLY
+    // Derive productList from productCategory, if provided (value is `${parent_id}:${product_id}`)
+    let productList: string | undefined;
+    if (typeof productCategory === 'string' && productCategory.trim() !== '') {
+      const parts = productCategory.split(':');
+      if (parts.length === 2 && parts[1].trim() !== '') {
+        productList = parts[1].trim();
+      }
+    }
+
+    console.log('🔎 Mortech product selection:', {
+      productCategoryRaw: productCategory,
+      derivedProductList: productList,
+    });
+
     const mortechRequest = {
+      ...(finalPropertyState && { propertyState: finalPropertyState }),
       propertyZip,
       appraisedvalue: finalPropertyValue,
       loan_amount: finalLoanAmount,
@@ -428,19 +571,24 @@ export async function POST(request: NextRequest) {
       loanpurpose: finalLoanPurpose,
       proptype: finalPropertyType,
       occupancy,
-      loanProduct1: finalLoanTerm,
+      // Only send loanProduct1 when not forcing a specific product via productList
+      ...( !productList && { loanProduct1: finalLoanTerm } ),
+      ...(productList && { productList }),
       // filterId is optional
       ...(filterId && { filterId }),
+      // Always indicate borrower-paid MI by default; pmiCompany is optional
       ...(includeMI && { 
         pmiCompany: -999, // Best MI company
-        noMI: 0, // Borrower paid MI
       }),
+      noMI: 0,
       // Additional custom rate parameters - only include if they have meaningful values
       ...(waiveEscrow === true && { waiveEscrow: true }),
       ...(militaryVeteran === true && { militaryVeteran: true }),
-      ...(lockDays && lockDays !== '30' && { lockDays }),
+      lockDays: finalLockDays,
       ...(safeSecondMortgageAmount > 0 && { secondMortgageAmount: safeSecondMortgageAmount })
     };
+
+    console.log('🔎 Final Mortech request payload:', mortechRequest);
 
     // Call Mortech API
     const response = await mortechAPI.getRates(mortechRequest);
@@ -494,8 +642,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Transform response to match your existing frontend format
-    const transformedRates = response.quotes?.map(quote => ({
+    // Optionally reduce to exactly 3 quotes for Custom Rates tab (by Mortech price: ~99, ~100, ≥100)
+    const quotesToTransform: { quote: MortechQuote; quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] =
+      reduceToThree && response.quotes?.length
+        ? pickThreeQuotesByPrice(response.quotes).map(({ quote, quoteType }) => ({ quote, quoteType }))
+        : (response.quotes ?? []).map(quote => ({ quote }));
+
+    const transformOne = (quote: MortechQuote, quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate') => ({
       id: quote.productId,
       lenderName: quote.vendorName,
       productName: quote.vendorProductCode || quote.vendorProductName,
@@ -505,6 +658,10 @@ export async function POST(request: NextRequest) {
       interestRate: quote.rate,
       apr: quote.apr,
       monthlyPayment: quote.monthlyPayment,
+      // Execution price (Marksman-style 0–100 scale) for debugging / analytics.
+      ...(typeof quote.executionPrice === 'number' && Number.isFinite(quote.executionPrice) && quote.executionPrice > 0
+        ? { executionPrice: quote.executionPrice }
+        : {}),
       points: quote.points,
       originationFee: quote.originationFee,
       upfrontFee: quote.upfrontFee,
@@ -522,12 +679,14 @@ export async function POST(request: NextRequest) {
         prepaid: fee.prepaid
       })),
       eligibility: quote.eligibility,
-      // Additional fields for compatibility
-      credits: 0, // Not provided by Mortech, set to 0
+      credits: 0,
       lockPeriod: quote.lockTerm,
-    })) || [];
+      ...(quoteType && { quoteType }),
+    });
 
-    console.log(`✅ Found ${transformedRates.length} rates from Mortech`);
+    const transformedRates = quotesToTransform.map(({ quote, quoteType }) => transformOne(quote, quoteType));
+
+    console.log(`✅ Found ${transformedRates.length} rates from Mortech${reduceToThree ? ' (reduced to 3 for Custom Quote)' : ''}`);
     console.log('📊 Transformed rates sample:', transformedRates[0]);
     console.log('🔍 Response structure:', {
       success: true,

@@ -17,7 +17,8 @@ import {
   FindMyHomeTab,
   LearningCenterTab,
   NeighborhoodReportsTab,
-  CalculatorsTab
+  CalculatorsTab,
+  ScheduleCallTab
 } from './tabs';
 
 export type TabId = 
@@ -29,7 +30,8 @@ export type TabId =
   | 'find-my-home'
   | 'learning-center'
   | 'neighborhood-reports'
-  | 'calculators';
+  | 'calculators'
+  | 'schedule-call';
 
 // Loading component for heavy tabs
 const TabLoadingSkeleton = React.memo(({ selectedTemplate }: { selectedTemplate: 'template1' | 'template2' }) => {
@@ -74,6 +76,8 @@ interface LandingPageTabsProps {
   hideTabNavigation?: boolean; // Hide the tab navigation (for sidebar layout)
   // Force mobile view (for customizer mobile preview)
   forceMobileView?: boolean;
+  /** Preloaded Product Category options (SSR). Pass from server when available. */
+  initialProductCategoryOptions?: { value: string; label: string }[];
 }
 
 const tabs: Tab[] = [
@@ -114,6 +118,12 @@ const tabs: Tab[] = [
     description: 'Search for properties'
   },
   {
+    id: 'schedule-call',
+    label: 'Schedule a Call',
+    icon: 'calendar',
+    description: 'Book a call on your calendar'
+  },
+  {
     id: 'learning-center',
     label: 'Learning Center',
     icon: 'about',
@@ -148,7 +158,8 @@ export default function LandingPageTabs({
   // Layout props
   hideTabNavigation = false,
   // Force mobile view
-  forceMobileView = false
+  forceMobileView = false,
+  initialProductCategoryOptions,
 }: LandingPageTabsProps) {
   const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
@@ -271,6 +282,7 @@ export default function LandingPageTabs({
               publicTemplateData={publicTemplateData}
               userId={userId}
               companyId={companyId}
+              initialProductCategoryOptions={initialProductCategoryOptions}
             />
           </Suspense>
         );
@@ -299,6 +311,13 @@ export default function LandingPageTabs({
       case 'find-my-home':
         return <FindMyHomeTab 
           selectedTemplate={selectedTemplate} 
+          isPublic={isPublic}
+          publicTemplateData={publicTemplateData}
+        />;
+      
+      case 'schedule-call':
+        return <ScheduleCallTab
+          selectedTemplate={selectedTemplate}
           isPublic={isPublic}
           publicTemplateData={publicTemplateData}
         />;

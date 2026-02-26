@@ -16,6 +16,7 @@ interface SearchFormData {
   occupancy: string;
   loanType: string;
   loanTerm: string; // Added loan term field
+  productCategory: string;
   eligibleForLowerRate: boolean;
   loanPurpose: string;
   // Refinance-specific fields
@@ -64,6 +65,8 @@ interface MortgageSearchFormProps {
   initialValues?: Partial<SearchFormData>;
   // Verified email from questionnaire (for unauthenticated users)
   verifiedEmail?: string;
+  /** Preloaded Product Category options (SSR). When set, dropdown uses these and does not fetch on mount. */
+  initialProductCategoryOptions?: SmartDropdownOption[];
 }
 
 const APP_THEME_PRIMARY = '#005b7c';
@@ -79,7 +82,8 @@ function MortgageSearchForm({
   // Initial values from questionnaire
   initialValues,
   // Verified email from questionnaire
-  verifiedEmail: verifiedEmailProp
+  verifiedEmail: verifiedEmailProp,
+  initialProductCategoryOptions,
 }: MortgageSearchFormProps) {
   const { getTemplateSync } = useEfficientTemplates();
   const { user } = useAuth();
@@ -121,6 +125,12 @@ function MortgageSearchForm({
     padding: { small: 8, medium: 16, large: 24 },
     spacing: 16
   };
+
+  const [productCategoryOptions, setProductCategoryOptions] = useState<SmartDropdownOption[]>(
+    initialProductCategoryOptions ?? []
+  );
+  const [productCategoryLoading, setProductCategoryLoading] = useState(!initialProductCategoryOptions?.length);
+  const [productCategoryError, setProductCategoryError] = useState<string | null>(null);
 
   const creditScoreOptions = useMemo<SmartDropdownOption[]>(() => [
     { value: '800+', label: '800 or greater' },
@@ -168,6 +178,52 @@ function MortgageSearchForm({
     { value: 'Yes', label: 'Yes' }
   ], []);
 
+  // Load Product Category options only when not provided by SSR
+  useEffect(() => {
+    if (initialProductCategoryOptions?.length) return;
+    let cancelled = false;
+
+    const loadProductCategories = async () => {
+      try {
+        setProductCategoryLoading(true);
+        setProductCategoryError(null);
+
+        const response = await fetch('/api/mortech/catalog/products');
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Failed to load product catalog');
+        }
+
+        if (cancelled) return;
+
+        // Show only product name (after dash), not "Investor – Product"
+        const options: SmartDropdownOption[] = (result.products || []).map((p: any) => ({
+          value: p.id as string,
+          label: (p.productName ?? String(p.id)) as string,
+        }));
+
+        setProductCategoryOptions(options);
+      } catch (error) {
+        if (!cancelled) {
+          const message =
+            error instanceof Error ? error.message : 'Failed to load product catalog';
+          setProductCategoryError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setProductCategoryLoading(false);
+        }
+      }
+    };
+
+    loadProductCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialProductCategoryOptions?.length]);
+
   // Format currency for display in inputs (e.g. "550000" -> "$550,000")
   const formatCurrencyForInput = useCallback((value: string): string => {
     const digits = value.replace(/\D/g, '');
@@ -198,6 +254,7 @@ function MortgageSearchForm({
     occupancy: 'PrimaryResidence',
     loanType: 'Conventional',
     loanTerm: '30',
+    productCategory: '',
     eligibleForLowerRate: false,
     loanPurpose: 'Purchase',
     // Refinance-specific fields
@@ -237,6 +294,39 @@ function MortgageSearchForm({
     ...defaultFormData,
     ...initialValues
   });
+
+  // Filter Product Category options based on selected loan term (e.g. show only 15 Yr products when 15-year term is selected)
+  const filteredProductCategoryOptions = useMemo<SmartDropdownOption[]>(() => {
+    // If no loan term selected yet, show all options
+    if (!formData.loanTerm) return productCategoryOptions;
+
+    // Our loanTermOptions use numeric years as value ('15', '30', etc.)
+    const termYears = formData.loanTerm; // e.g. '15'
+    const termSubstring = `${termYears} Yr`; // e.g. '15 Yr'
+
+    return productCategoryOptions.filter(
+      (opt) =>
+        typeof opt.label === 'string' &&
+        opt.label.includes(termSubstring)
+    );
+  }, [formData.loanTerm, productCategoryOptions]);
+
+  // When loan term changes and the previously selected Product Category no longer matches,
+  // clear the selection to avoid an invalid combination.
+  useEffect(() => {
+    if (!formData.productCategory) return;
+
+    const stillValid = filteredProductCategoryOptions.some(
+      (opt) => opt.value === formData.productCategory
+    );
+
+    if (!stillValid) {
+      setFormData((prev) => ({
+        ...prev,
+        productCategory: '',
+      }));
+    }
+  }, [filteredProductCategoryOptions, formData.productCategory, setFormData]);
 
   // Update form data when initialValues change (from questionnaire)
   useEffect(() => {
@@ -784,6 +874,42 @@ function MortgageSearchForm({
           </div>
         </div>
 
+        {/* Product Category - built from all Mortech investors/products */}
+        <div style={{ marginTop: spacing[4] }}>
+          <label style={{ 
+            display: 'block', 
+            fontSize: typography.fontSize.sm, 
+            fontWeight: typography.fontWeight.medium, 
+            color: colors.gray[600], 
+            marginBottom: spacing.sm 
+          }}>
+            Product Category
+          </label>
+          <SmartDropdown
+            value={formData.productCategory}
+            onChange={(value) => handleInputChange('productCategory', value)}
+            options={filteredProductCategoryOptions}
+            placeholder={
+              productCategoryLoading
+                ? 'Loading product categories...'
+                : 'Select product category'
+            }
+            borderRadius={templateLayout.borderRadius}
+            buttonClassName="h-10 w-full min-w-0"
+          />
+          {productCategoryError && (
+            <div
+              style={{
+                marginTop: spacing[1],
+                fontSize: typography.fontSize.xs,
+                color: colors.red[500],
+              }}
+            >
+              {productCategoryError}
+            </div>
+          )}
+        </div>
+
         {/* Additional Options Section */}
         <div style={{ marginTop: spacing[4] }}>
           <button
@@ -981,6 +1107,9 @@ function MortgageSearchForm({
             {loading ? 'Searching...' : 'Update Rates'}
           </button>
         </div>
+
+        {/* Spacer to ensure dropdown menu stays fully inside the card background */}
+        <div style={{ height: spacing[8] }} />
 
       </form>
       </div>
