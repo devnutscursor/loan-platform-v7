@@ -1278,8 +1278,8 @@ export default function CustomizerPage() {
               ) : (
                 // Section Details View
                 <div className="h-full flex flex-col">
-                  {/* Back Button Header */}
-                  <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                  {/* Back Button Header - sticky so it stays visible when scrolling */}
+                  <div className="p-4 border-b border-gray-200 flex-shrink-0 sticky top-0 z-10 bg-white">
                     <button
                       onClick={handleBackToSections}
                       className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -1963,7 +1963,7 @@ function HeaderModifications({ template, officerInfo, onChange, onSave, setIsDel
 function BodyModifications({ template, onChange }: SettingsProps) {
 
   const bodyMods = template?.bodyModifications || {};
-  const defaultFindMyHomeWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
+  const defaultFindMyHomeWidgetUrl = '//theloanstar.idxbroker.com/idx/widgets/117781';
   const defaultScheduleCallWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
   const availableTabs = [
     { id: 'todays-rates', label: "Today's Rates" },

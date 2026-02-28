@@ -179,13 +179,19 @@ button: {
     }
   };
 
-  // Find My Home / Home AI Search: custom widget URL from customizer (e.g. LoanStar), default LoanStar booking widget
-  const defaultFindMyHomeWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
-  const findMyHomeWidgetUrl = templateData?.template?.bodyModifications?.findMyHomeWidgetUrl ?? defaultFindMyHomeWidgetUrl;
+  // Find My Home / Home AI Search: custom widget URL from customizer (e.g. LoanStar / IDX),
+  // default to the IDX widget URL provided by the client (protocol-relative, no http/https prefix)
+  const defaultFindMyHomeWidgetUrl = '//theloanstar.idxbroker.com/idx/widgets/117781';
+  const findMyHomeWidgetUrl =
+    templateData?.template?.bodyModifications?.findMyHomeWidgetUrl ?? defaultFindMyHomeWidgetUrl;
   const findMyHomeHeader = templateData?.template?.bodyModifications?.findMyHomeHeader ?? '';
   const findMyHomeBody = templateData?.template?.bodyModifications?.findMyHomeBody ?? '';
-  const hasValidCustomUrl = findMyHomeWidgetUrl?.trim() !== '' &&
-    (findMyHomeWidgetUrl.startsWith('http://') || findMyHomeWidgetUrl.startsWith('https://'));
+  const trimmedFindMyHomeUrl = (findMyHomeWidgetUrl || '').trim();
+  const hasValidCustomUrl =
+    trimmedFindMyHomeUrl !== '' &&
+    (trimmedFindMyHomeUrl.startsWith('http://') ||
+      trimmedFindMyHomeUrl.startsWith('https://') ||
+      trimmedFindMyHomeUrl.startsWith('//'));
 
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
   const [customIframeLoaded, setCustomIframeLoaded] = useState(false);

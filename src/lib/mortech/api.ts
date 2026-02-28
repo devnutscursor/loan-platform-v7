@@ -347,27 +347,58 @@ export class MortechAPI {
                 // Parse fees
                 const fees: MortechFee[] = [];
                 if (quoteDetail.fees && quoteDetail.fees[0].fee_list) {
-                  const feeList = quoteDetail.fees[0].fee_list;
-                  if (Array.isArray(feeList)) {
-                    for (const feeItem of feeList) {
-                      const feeData = feeItem.$ || feeItem;
-                      fees.push({
-                        hudline: feeData.hudline || '',
-                        description: feeData.description || '',
-                        feeamount: parseFloat(feeData.feeamount || '0'),
-                        section: feeData.section || '',
-                        paymenttype: feeData.paymenttype || '',
-                        prepaid: feeData.prepaid === 'true',
-                      });
+                  const feeListContainer = quoteDetail.fees[0].fee_list;
+
+                  /**
+                   * xml2js typically produces:
+                   * fees: [
+                   *   {
+                   *     fee_list: [
+                   *       {
+                   *         fee: [
+                   *           { $: { description: 'Origination Fee', feeamount: '5000.00', ... } },
+                   *           ...
+                   *         ]
+                   *       }
+                   *     ]
+                   *   }
+                   * ]
+                   *
+                   * However, we keep the parsing defensive in case of slight structural differences.
+                   */
+
+                  const feeNodes: any[] = [];
+
+                  if (Array.isArray(feeListContainer)) {
+                    for (const node of feeListContainer) {
+                      if (node && Array.isArray(node.fee)) {
+                        feeNodes.push(...node.fee);
+                      } else if (node && node.fee) {
+                        feeNodes.push(node.fee);
+                      } else {
+                        // Fallback for legacy shapes where fee_list itself is the fee node
+                        feeNodes.push(node);
+                      }
                     }
-                  } else if (feeList.$) {
+                  } else if (feeListContainer && Array.isArray(feeListContainer.fee)) {
+                    feeNodes.push(...feeListContainer.fee);
+                  } else if (feeListContainer && feeListContainer.fee) {
+                    feeNodes.push(feeListContainer.fee);
+                  } else {
+                    // Final fallback: treat fee_list as a single fee node with attributes
+                    feeNodes.push(feeListContainer);
+                  }
+
+                  for (const node of feeNodes) {
+                    const feeData = node.$ || node;
+                    if (!feeData) continue;
                     fees.push({
-                      hudline: feeList.$.hudline || '',
-                      description: feeList.$.description || '',
-                      feeamount: parseFloat(feeList.$.feeamount || '0'),
-                      section: feeList.$.section || '',
-                      paymenttype: feeList.$.paymenttype || '',
-                      prepaid: feeList.$.prepaid === 'true',
+                      hudline: feeData.hudline || '',
+                      description: feeData.description || '',
+                      feeamount: parseFloat(feeData.feeamount || '0'),
+                      section: feeData.section || '',
+                      paymenttype: feeData.paymenttype || '',
+                      prepaid: feeData.prepaid === 'true',
                     });
                   }
                 }

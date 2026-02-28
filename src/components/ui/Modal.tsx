@@ -70,10 +70,10 @@ export default function Modal({ isOpen, onClose, title, children, className = ''
         onClick={onClose}
       />
       
-      {/* Modal */}
-      <div className={`relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 ${className}`}>
+      {/* Modal: max-h so it doesn't overflow viewport; content area scrolls when long */}
+      <div className={`relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden ${className}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
@@ -83,8 +83,8 @@ export default function Modal({ isOpen, onClose, title, children, className = ''
           </button>
         </div>
         
-        {/* Content */}
-        <div className="p-6">
+        {/* Content - scrollable when content is long */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {children}
         </div>
       </div>

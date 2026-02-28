@@ -27,6 +27,16 @@ interface MortgageRateComparisonProps {
   companyId?: string;
   /** Preloaded Product Category options (SSR). Pass from server when available. */
   initialProductCategoryOptions?: { value: string; label: string }[];
+  /** Optional callback to navigate to Today's Rates tab from public profile */
+  onNavigateToTodaysRates?: () => void;
+}
+
+interface RateFeeItem {
+  description: string;
+  amount: number;
+  section: string;
+  paymentType: string;
+  prepaid: boolean;
 }
 
 interface RateProduct {
@@ -39,12 +49,20 @@ interface RateProduct {
   interestRate: number;
   apr: number;
   monthlyPayment: number;
+  /**
+   * Total of all upfront fees for summary display.
+   * Computed from feeItems when available.
+   */
   fees: number;
   points: number;
   credits: number;
   lockPeriod: number;
   /** Custom Quote: "Lowest Rate" | "PAR" | "Higher Rate" when reduceToThree was used */
   quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate';
+  /**
+   * Detailed itemized fee breakdown from Mortech.
+   */
+  feeItems?: RateFeeItem[];
 }
 
 // Map property type from form to Mortech format
@@ -127,6 +145,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
   userId,
   companyId,
   initialProductCategoryOptions,
+  onNavigateToTodaysRates,
 }: MortgageRateComparisonProps) {
   const searchParams = useSearchParams();
   const { user } = useAuth(); // Check if current visitor is authenticated
@@ -789,22 +808,48 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
 
       // Transform results
       if (result.rates && Array.isArray(result.rates)) {
-        const transformed: RateProduct[] = result.rates.map((rate: any, index: number) => ({
-          id: rate.id || `rate-${index}`,
-          lenderName: rate.lenderName || 'Lender',
-          productName: rate.productName || 'Mortgage Product',
-          loanProgram: rate.loanProgram || 'Conventional',
-          loanType: rate.loanType || 'Fixed',
-          loanTerm: parseInt(rate.loanTerm) || 30,
-          interestRate: rate.interestRate || 0,
-          apr: rate.apr || 0,
-          monthlyPayment: rate.monthlyPayment || 0,
-          fees: (rate.originationFee || 0) + (rate.upfrontFee || 0),
-          points: rate.points || 0,
-          credits: 0,
-          lockPeriod: rate.lockTerm || 30,
-          ...(rate.quoteType && { quoteType: rate.quoteType }),
-        }));
+        const transformed: RateProduct[] = result.rates.map((rate: any, index: number) => {
+          const feeItems: RateFeeItem[] = Array.isArray(rate.fees)
+            ? rate.fees.map((f: any) => ({
+                description: f.description,
+                amount:
+                  typeof f.amount === 'number'
+                    ? f.amount
+                    : typeof f.feeamount === 'number'
+                      ? f.feeamount
+                      : parseFloat(f.amount ?? f.feeamount ?? '0') || 0,
+                section: f.section,
+                paymentType: f.paymentType,
+                prepaid: !!f.prepaid,
+              }))
+            : [];
+
+          const totalFees =
+            feeItems.length > 0
+              ? feeItems.reduce(
+                  (sum, f) => sum + (Number.isFinite(f.amount) ? f.amount : 0),
+                  0,
+                )
+              : (rate.originationFee || 0) + (rate.upfrontFee || 0);
+
+          return {
+            id: rate.id || `rate-${index}`,
+            lenderName: rate.lenderName || 'Lender',
+            productName: rate.productName || 'Mortgage Product',
+            loanProgram: rate.loanProgram || 'Conventional',
+            loanType: rate.loanType || 'Fixed',
+            loanTerm: parseInt(rate.loanTerm) || 30,
+            interestRate: rate.interestRate || 0,
+            apr: rate.apr || 0,
+            monthlyPayment: rate.monthlyPayment || 0,
+            fees: totalFees,
+            points: rate.points || 0,
+            credits: 0,
+            lockPeriod: rate.lockTerm || 30,
+            ...(rate.quoteType && { quoteType: rate.quoteType }),
+            feeItems,
+          };
+        });
 
         setProducts(transformed);
         setRawData(result.rates);
@@ -1284,7 +1329,15 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
                 <span className='text-sm @sm:text-base'>{getTemplateContent().primaryButton}</span>
               </button>
               <button 
-                onClick={() => setShowLanding(false)}
+                onClick={() => {
+                  if (isPublic && typeof onNavigateToTodaysRates === 'function') {
+                    // In public profile, "Compare All Rates" should jump to Today's Rates tab instead of showing parameters UI
+                    onNavigateToTodaysRates();
+                  } else {
+                    // Previous behavior (kept for non-public contexts): hide landing and show parameters/questionnaire UI
+                    setShowLanding(false);
+                  }
+                }}
                 className="flex items-center justify-center space-x-2 px-[14px] py-[10px] @xl:px-[30px] @xl:py-[14px] text-sm @xl:text-lg font-semibold transition-colors border-2 w-full @xl:w-auto"
                 style={{ 
                   backgroundColor: colors.background,

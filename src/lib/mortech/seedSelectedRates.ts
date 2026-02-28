@@ -90,12 +90,12 @@ export async function seedSelectedRatesForOfficer(
 
   const mortechAPI = createMortechAPI();
 
-  // Standard scenario used for default seeding
+  // Standard scenario for Today's Rates: $550k loan, 20% down (purchase $687,500)
   const standardScenario = {
     propertyState: 'CA',
     propertyZip: '95825',
-    appraisedvalue: 500000,
-    loan_amount: 400000,
+    appraisedvalue: 687500,
+    loan_amount: 550000,
     fico: 740,
     loanpurpose: 'Purchase' as const,
     proptype: 'Single Family' as const,
@@ -156,26 +156,43 @@ export async function seedSelectedRatesForOfficer(
     loanPurpose: standardScenario.loanpurpose,
   } as const;
 
-  const inserts = bucketBestQuotes.map(({ bucket, quote }) => ({
-    officerId,
-    companyId: resolvedCompanyId,
-    rateData: {
-      id: quote.productId,
-      lenderName: quote.vendorName,
-      loanProgram: bucket.label,
-      productDesc: quote.productDesc,
-      loanType: quote.termType,
-      loanTerm: quote.productTerm,
-      interestRate: quote.rate,
-      apr: quote.apr,
-      monthlyPayment: quote.monthlyPayment,
-      fees: 0,
-      points: quote.points,
-      credits: 0,
-      lockPeriod: quote.lockTerm,
-      searchParams: defaultSearchParams,
-    },
-  }));
+  const inserts = bucketBestQuotes.map(({ bucket, quote }) => {
+    const feeItems =
+      quote.fees?.map((fee: any) => ({
+        description: fee.description,
+        amount: fee.feeamount,
+        section: fee.section,
+        paymentType: fee.paymenttype,
+        prepaid: fee.prepaid,
+      })) ?? [];
+
+    const totalFees = feeItems.reduce(
+      (sum: number, f: any) => sum + (Number.isFinite(f.amount) ? f.amount : 0),
+      0,
+    );
+
+    return {
+      officerId,
+      companyId: resolvedCompanyId,
+      rateData: {
+        id: quote.productId,
+        lenderName: quote.vendorName,
+        loanProgram: bucket.label,
+        productDesc: quote.productDesc,
+        loanType: quote.termType,
+        loanTerm: quote.productTerm,
+        interestRate: quote.rate,
+        apr: quote.apr,
+        monthlyPayment: quote.monthlyPayment,
+        fees: totalFees,
+        feeItems,
+        points: quote.points,
+        credits: 0,
+        lockPeriod: quote.lockTerm,
+        searchParams: defaultSearchParams,
+      },
+    };
+  });
 
   if (inserts.length === 0) {
     const mappedExisting: SeededSelectedRateRow[] = (existingRatesRaw as any[]).map((row) => ({

@@ -16,6 +16,14 @@ import RateResults from '@/components/landingPage/RateResults';
 import { useNotification } from '@/components/ui/Notification';
 import Modal from '@/components/ui/Modal';
 
+interface RateFeeItem {
+  description: string;
+  amount: number;
+  section: string;
+  paymentType: string;
+  prepaid: boolean;
+}
+
 interface Rate {
   id: string;
   lenderName: string;
@@ -25,10 +33,18 @@ interface Rate {
   interestRate: number;
   apr: number;
   monthlyPayment: number;
+  /**
+   * Total of all upfront fees for summary display.
+   * Computed from feeItems when available.
+   */
   fees: number;
   points: number;
   credits: number;
   lockPeriod: number;
+  /**
+   * Detailed itemized fee breakdown from Mortech.
+   */
+  feeItems?: RateFeeItem[];
   searchParams?: {
     purchasePrice?: number;
     downPayment?: number;
@@ -418,21 +434,45 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
           });
         }
 
-        const transformedRates: Rate[] = result.rates.map((rate: any) => ({
-          id: rate.id || rate.productId,
-          lenderName: rate.lenderName || rate.vendorName,
-          loanProgram: rate.loanProgram || rate.productDesc,
-          loanType: rate.loanType || rate.termType,
-          loanTerm: rate.loanTerm || rate.productTerm,
-          interestRate: rate.interestRate || rate.rate,
-          apr: rate.apr,
-          monthlyPayment: rate.monthlyPayment,
-          fees: rate.fees || 0,
-          points: rate.points || 0,
-          credits: rate.credits || 0,
-          lockPeriod: rate.lockPeriod || rate.lockTerm || 30,
-          ...rate, // Include all original fields
-        }));
+        const transformedRates: Rate[] = result.rates.map((rate: any) => {
+          const feeItems: RateFeeItem[] = Array.isArray(rate.fees)
+            ? rate.fees.map((f: any) => ({
+                description: f.description,
+                amount:
+                  typeof f.amount === 'number'
+                    ? f.amount
+                    : typeof f.feeamount === 'number'
+                      ? f.feeamount
+                      : parseFloat(f.amount ?? f.feeamount ?? '0') || 0,
+                section: f.section,
+                paymentType: f.paymentType,
+                prepaid: !!f.prepaid,
+              }))
+            : [];
+
+          const totalFees = feeItems.reduce(
+            (sum, f) => sum + (Number.isFinite(f.amount) ? f.amount : 0),
+            0,
+          );
+
+          return {
+            id: rate.id || rate.productId,
+            lenderName: rate.lenderName || rate.vendorName,
+            loanProgram: rate.loanProgram || rate.productDesc,
+            loanType: rate.loanType || rate.termType,
+            loanTerm: rate.loanTerm || rate.productTerm,
+            interestRate: rate.interestRate || rate.rate,
+            apr: rate.apr,
+            monthlyPayment: rate.monthlyPayment,
+            fees: totalFees,
+            points: rate.points || 0,
+            credits: rate.credits || 0,
+            lockPeriod: rate.lockPeriod || rate.lockTerm || 30,
+            feeItems,
+            // Preserve the original quote data for any future needs
+            ...rate,
+          };
+        });
 
         setRates(transformedRates);
         setRateLimit(result.rateLimit || null);
@@ -939,13 +979,22 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
                               </div>
                             )}
                           </div>
-                          <Button
-                            variant="danger"
-                            onClick={() => handleRemoveRateClick(selectedRate)}
-                            className="w-full md:w-auto"
-                          >
-                            Remove
-                          </Button>
+                          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2 sm:min-w-0">
+                            <Button
+                              variant="secondary"
+                              onClick={() => handleViewDetailsClick(rate as Rate)}
+                              className="w-full sm:w-auto sm:min-w-[110px]"
+                            >
+                              Details
+                            </Button>
+                            <Button
+                              variant="danger"
+                              onClick={() => handleRemoveRateClick(selectedRate)}
+                              className="w-full sm:w-auto sm:min-w-[110px]"
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </div>
                       </SpotlightCard>
                     );
@@ -1164,6 +1213,36 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
                 </div>
               </div>
             </div>
+
+            {rateToView.feeItems && rateToView.feeItems.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">Itemized Fees</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2 pr-4 text-left text-gray-600 font-medium">Description</th>
+                        <th className="py-2 px-4 text-left text-gray-600 font-medium">Section</th>
+                        <th className="py-2 px-4 text-left text-gray-600 font-medium">Payment</th>
+                        <th className="py-2 pl-4 text-right text-gray-600 font-medium">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rateToView.feeItems.map((fee, idx) => (
+                        <tr key={`${fee.description}-${idx}`} className="border-b border-gray-100">
+                          <td className="py-1.5 pr-4 text-gray-900">{fee.description}</td>
+                          <td className="py-1.5 px-4 text-gray-700">{fee.section}</td>
+                          <td className="py-1.5 px-4 text-gray-700">{fee.paymentType}</td>
+                          <td className="py-1.5 pl-4 text-right text-gray-900">
+                            {formatCurrency(fee.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+              </div>
+              </div>
+            )}
 
             {rateToView.searchParams && (
               <div className="pt-4 border-t border-gray-200">

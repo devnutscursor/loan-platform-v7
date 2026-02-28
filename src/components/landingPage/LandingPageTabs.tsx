@@ -283,6 +283,7 @@ export default function LandingPageTabs({
               userId={userId}
               companyId={companyId}
               initialProductCategoryOptions={initialProductCategoryOptions}
+              onNavigateToTodaysRates={() => onTabChange('todays-rates')}
             />
           </Suspense>
         );

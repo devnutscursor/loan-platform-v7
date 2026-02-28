@@ -201,8 +201,26 @@ export default function TodaysRatesTab({
         typeof rate.monthlyPayment === 'number' && !Number.isNaN(rate.monthlyPayment)
           ? rate.monthlyPayment
           : 0;
-      const fees =
-        typeof rate.fees === 'number' && !Number.isNaN(rate.fees) ? rate.fees : 0;
+      const feeItems = Array.isArray(rate.feeItems)
+        ? rate.feeItems
+        : Array.isArray(rate.fees)
+          ? rate.fees
+          : [];
+      const totalFees =
+        feeItems.length > 0
+          ? feeItems.reduce(
+              (sum: number, f: any) =>
+                sum +
+                (Number.isFinite(f.amount)
+                  ? f.amount
+                  : Number.isFinite(f.feeamount)
+                    ? f.feeamount
+                    : 0),
+              0,
+            )
+          : typeof rate.fees === 'number' && !Number.isNaN(rate.fees)
+            ? rate.fees
+            : 0;
       const points =
         typeof rate.points === 'number' && !Number.isNaN(rate.points) ? rate.points : 0;
       const credits =
@@ -224,11 +242,12 @@ export default function TodaysRatesTab({
         interestRate: Number.isFinite(interestRate) ? interestRate : 0,
         apr,
         monthlyPayment,
-        fees,
+        fees: totalFees,
         points,
         credits,
         lockPeriod,
         searchParams: rate.searchParams,
+        feeItems,
       };
     });
   };
@@ -241,22 +260,6 @@ export default function TodaysRatesTab({
         padding: `${layout.padding.medium}px 0`
       }}
     >
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h2 
-          className="text-xl @md:text-2xl font-bold mb-2"
-          style={{ color: colors.text }}
-        >
-          Today's Mortgage Rates
-        </h2>
-        <p 
-          className="text-base @md:text-lg"
-          style={{ color: colors.textSecondary }}
-        >
-          Current rates selected by your loan officer
-        </p>
-      </div>
-
       {/* Error Message */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4" style={{ borderRadius: `${layout.borderRadius}px` }}>

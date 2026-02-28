@@ -9,6 +9,14 @@ import { useNotification } from '@/components/ui/Notification';
 import SmartDropdown, { type SmartDropdownOption } from '@/components/ui/SmartDropdown';
 import RateProductCard from './RateProductCard';
 
+interface RateFeeItem {
+  description: string;
+  amount: number;
+  section: string;
+  paymentType: string;
+  prepaid: boolean;
+}
+
 interface RateProduct {
   id: string;
   lenderName: string;
@@ -18,6 +26,10 @@ interface RateProduct {
   interestRate: number;
   apr: number;
   monthlyPayment: number;
+  /**
+   * Total of all upfront fees for summary display.
+   * Computed from feeItems when available.
+   */
   fees: number;
   points: number;
   credits: number;
@@ -31,6 +43,10 @@ interface RateProduct {
     creditScore: string;
     loanPurpose: 'Purchase' | 'Refinance';
   };
+  /**
+   * Detailed itemized fee breakdown from Mortech.
+   */
+  feeItems?: RateFeeItem[];
 }
 
 interface ApiProduct {
@@ -134,10 +150,6 @@ function RateResults({
   const [selectedLoanProduct, setSelectedLoanProduct] = useState<RateProduct | null>(null);
 
   // Memoized handlers to prevent unnecessary re-renders
-  const handleSortChange = useCallback((newSortBy: 'rate' | 'payment' | 'fees') => {
-    setSortBy(newSortBy);
-  }, []);
-
   const handleTermChange = useCallback((term: string) => {
     setSelectedTerm(term);
   }, []);
@@ -322,13 +334,6 @@ function RateResults({
     { value: '5', label: '5y/6m ARM' }
   ], []);
 
-  // Sort options for SmartDropdown
-  const sortOptions: SmartDropdownOption[] = useMemo(() => [
-    { value: 'rate', label: 'Low Rate' },
-    { value: 'payment', label: 'Low Payment' },
-    { value: 'fees', label: 'Low Fees' }
-  ], []);
-
   if (loading) {
     return (
       <div style={{
@@ -422,7 +427,7 @@ function RateResults({
               fontWeight: typography.fontWeight.bold,
               color: colors.text,
               lineHeight: typography.lineHeight.tight
-            }}>Mortgage Rates</h2>
+            }}>{dataSource === 'todays-rates' ? "Today's Mortgage Rates" : 'Mortgage Rates'}</h2>
             <p style={{
               fontSize: typography.fontSize.sm,
               color: colors.textSecondary,
@@ -439,38 +444,6 @@ function RateResults({
                 hour12: true 
               })}
             </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Loan Term Filter and Sort Controls */}
-      <div className="p-4 border-b" style={{ borderBottomColor: colors.border }}>
-        <div className="@container">
-          <div className="flex flex-col @[640px]:flex-row @[640px]:justify-end gap-4">
-            {/* Dropdowns Group - Right side on desktop, stacked on mobile */}
-            <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-3">
-
-              {/* Sort Controls */}
-              <div className="flex flex-col @[640px]:flex-row items-stretch @[640px]:items-center gap-2 w-full @[640px]:w-auto">
-                
-                <span 
-                  className="text-sm font-medium @[640px]:whitespace-nowrap"
-                  style={{ color: colors.primary }}
-                >
-                  Sort By:
-                </span>
-                <div className="w-full @[640px]:w-auto @[640px]:min-w-[140px] min-w-0">
-                  <SmartDropdown
-                    value={sortBy}
-                    onChange={(value) => handleSortChange(value as 'rate' | 'payment' | 'fees')}
-                    options={sortOptions}
-                    placeholder="Sort by"
-                    buttonClassName="border-gray-300 focus:ring-2 focus:ring-offset-2 w-full @[640px]:w-auto"
-                    borderRadius={layout.borderRadius}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -778,7 +751,9 @@ function RateResults({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-700">Total Fees:</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(selectedProduct.fees)}</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(selectedProduct.fees)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-700">Points:</span>
@@ -810,19 +785,55 @@ function RateResults({
                     <div className="text-sm text-gray-700 space-y-1">
                       <div className="flex justify-between">
                         <span>P&I:</span>
-                        <span className="text-gray-900">{formatCurrency(selectedProduct.monthlyPayment)}</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(selectedProduct.monthlyPayment)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Upfront Costs:</span>
-                        <span className="text-gray-900">{formatCurrency(selectedProduct.fees)}</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(selectedProduct.fees)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Lender Credits:</span>
-                        <span className="text-green-600">{formatCurrency(selectedProduct.credits)}</span>
+                        <span className="text-green-600">
+                          {formatCurrency(selectedProduct.credits)}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {selectedProduct.feeItems && selectedProduct.feeItems.length > 0 && (
+                  <div className="mt-6">
+                    <h5 className="font-medium text-gray-900 mb-2">Itemized Fees</h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="py-2 pr-4 text-left text-gray-600 font-medium">Description</th>
+                            <th className="py-2 px-4 text-left text-gray-600 font-medium">Section</th>
+                            <th className="py-2 px-4 text-left text-gray-600 font-medium">Payment</th>
+                            <th className="py-2 pl-4 text-right text-gray-600 font-medium">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedProduct.feeItems.map((fee, idx) => (
+                            <tr key={`${fee.description}-${idx}`} className="border-b border-gray-100">
+                              <td className="py-1.5 pr-4 text-gray-900">{fee.description}</td>
+                              <td className="py-1.5 px-4 text-gray-700">{fee.section}</td>
+                              <td className="py-1.5 px-4 text-gray-700">{fee.paymentType}</td>
+                              <td className="py-1.5 pl-4 text-right text-gray-900">
+                                {formatCurrency(fee.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Request Information Section */}

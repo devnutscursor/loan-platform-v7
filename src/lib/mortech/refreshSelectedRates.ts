@@ -53,14 +53,17 @@ async function refreshSelectedRateRows(
         const rate = (row.rateData as Record<string, unknown>) || {};
         const search = (rate.searchParams as Record<string, unknown>) || {};
 
+        // Default: $550k loan, 20% down => purchase price $687,500 (Today's Rates standard)
+        const DEFAULT_PURCHASE_PRICE = 687500;
+        const DEFAULT_LOAN_AMOUNT = 550000;
         const appraisedvalue =
           typeof search.purchasePrice === 'number' && !Number.isNaN(search.purchasePrice)
             ? search.purchasePrice
-            : 500000;
+            : DEFAULT_PURCHASE_PRICE;
         const loan_amount =
           typeof search.loanAmount === 'number' && !Number.isNaN(search.loanAmount)
             ? search.loanAmount
-            : 400000;
+            : DEFAULT_LOAN_AMOUNT;
         const fico = parseFico(search.creditScore);
         const loanpurpose =
           search.loanPurpose === 'Refinance' ? 'Refinance' : 'Purchase';
@@ -107,6 +110,20 @@ async function refreshSelectedRateRows(
             );
           }
 
+          const feeItems =
+            quote.fees?.map((fee) => ({
+              description: fee.description,
+              amount: fee.feeamount,
+              section: fee.section,
+              paymentType: fee.paymenttype,
+              prepaid: fee.prepaid,
+            })) ?? [];
+
+          const totalFees = feeItems.reduce(
+            (sum, f) => sum + (Number.isFinite(f.amount) ? f.amount : 0),
+            0,
+          );
+
           const updatedRateData = {
             ...rate,
             interestRate: quote.rate,
@@ -115,6 +132,9 @@ async function refreshSelectedRateRows(
             points: quote.points,
             lockPeriod: quote.lockTerm,
             executionPrice: quote.executionPrice,
+            // Store detailed fee breakdown and numeric summary for DB-backed views.
+            fees: totalFees,
+            feeItems,
           };
 
           await db
