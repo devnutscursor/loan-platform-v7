@@ -5,6 +5,9 @@ import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
 
+// Prevent duplicate IDX widget script injection when multiple instances mount (e.g. customizer preview)
+const injectedIdxWidgetIds = new Set<string>();
+
 interface FindMyHomeTabProps {
   selectedTemplate: 'template1' | 'template2';
   className?: string;
@@ -193,15 +196,22 @@ button: {
       trimmedFindMyHomeUrl.startsWith('https://') ||
       trimmedFindMyHomeUrl.startsWith('//'));
 
+  // IDX widget script URLs (e.g. //theloanstar.idxbroker.com/idx/widgets/117781) return JS that must run in page, not in iframe
+  const idxWidgetScriptMatch = trimmedFindMyHomeUrl.match(/\/idx\/widgets\/([^/?]+)/i);
+  const isIdxWidgetScriptUrl = Boolean(idxWidgetScriptMatch);
+  const idxWidgetId = idxWidgetScriptMatch ? idxWidgetScriptMatch[1] : null; // e.g. "117781"
+
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
   const [customIframeLoaded, setCustomIframeLoaded] = useState(false);
   const widgetIframeRef = React.useRef<HTMLIFrameElement>(null);
   const idxWidgetLoadedRef = React.useRef(false);
+  const idxWidgetContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Load LoanStar form_embed.js when using a theloanstar.com widget URL
+  // Load LoanStar form_embed.js when using a theloanstar.com booking widget URL (not for IDX script widgets)
   useEffect(() => {
     if (!hasValidCustomUrl || typeof document === 'undefined') return;
-    if (!findMyHomeWidgetUrl.includes('theloanstar.com')) return;
+    const url = (findMyHomeWidgetUrl || '').trim();
+    if (!url.includes('theloanstar.com') || /\/idx\/widgets\//i.test(url)) return;
     if (document.querySelector('script[src="https://app.theloanstar.com/js/form_embed.js"]')) return;
     const script = document.createElement('script');
     script.src = 'https://app.theloanstar.com/js/form_embed.js';
@@ -315,6 +325,54 @@ button: {
     if (hasValidCustomUrl) setCustomIframeLoaded(false);
   }, [findMyHomeWidgetUrl, hasValidCustomUrl]);
 
+  // IDX widget script: inject <script id="idxwidgetsrc-{id}" src={url}> so the script runs and renders the widget in-page.
+  // Customizer preview can remount rapidly; clean old global nodes first to avoid duplicate widgets.
+  useEffect(() => {
+    if (!isIdxWidgetScriptUrl || !idxWidgetId || !idxWidgetContainerRef.current || typeof document === 'undefined') return;
+    const container = idxWidgetContainerRef.current;
+    const scriptId = `idxwidgetsrc-${idxWidgetId}`;
+    const widgetElementId = `idx-ai-smart-search-${idxWidgetId}`;
+
+    // Remove any stale duplicates from previous mounts/hot reloads before injecting
+    document.querySelectorAll(`#${scriptId}, #${widgetElementId}`).forEach((node) => node.remove());
+
+    if (injectedIdxWidgetIds.has(scriptId)) return;
+    injectedIdxWidgetIds.add(scriptId);
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = trimmedFindMyHomeUrl;
+    script.charset = 'UTF-8';
+    script.type = 'text/javascript';
+    script.async = false;
+    const dedupeRenderedWidgets = () => {
+      // Keep only the first rendered idx-ai-smart-search widget in this container
+      const renderedWidgets = Array.from(container.querySelectorAll('idx-ai-smart-search'));
+      if (renderedWidgets.length > 1) {
+        renderedWidgets.slice(1).forEach((node) => node.remove());
+      }
+    };
+    script.onload = () => {
+      // Widget script can render asynchronously; dedupe once shortly after load
+      setTimeout(dedupeRenderedWidgets, 200);
+      setCustomIframeLoaded(true);
+    };
+    script.onerror = () => setCustomIframeLoaded(true);
+    container.appendChild(script);
+
+    const timeout = setTimeout(() => {
+      dedupeRenderedWidgets();
+      setCustomIframeLoaded(true);
+    }, 8000);
+    return () => {
+      clearTimeout(timeout);
+      injectedIdxWidgetIds.delete(scriptId);
+      script.remove();
+      document.querySelectorAll(`#${scriptId}, #${widgetElementId}`).forEach((node) => node.remove());
+      while (container.firstChild) container.removeChild(container.firstChild);
+    };
+  }, [isIdxWidgetScriptUrl, idxWidgetId, trimmedFindMyHomeUrl, hasValidCustomUrl]);
+
   // Stub variables for legacy code (never executed, kept for reference)
   const searchCriteria: any = {};
   const handleInputChange = (_field: string, _value: string) => {};
@@ -372,23 +430,35 @@ button: {
               </div>
             </div>
           )}
-          <iframe
-            src={findMyHomeWidgetUrl}
-            title="Home AI Search Widget"
-            className="w-full border-0"
-            style={{
-              minHeight: '600px',
-              width: '100%',
-              border: 'none',
-              overflow: 'auto',
-              opacity: customIframeLoaded ? 1 : 0,
-              transition: 'opacity 0.3s ease-in-out',
-              pointerEvents: customIframeLoaded ? 'auto' : 'none'
-            }}
-            scrolling="yes"
-            onLoad={() => setCustomIframeLoaded(true)}
-            onError={() => setCustomIframeLoaded(true)}
-          />
+          {isIdxWidgetScriptUrl ? (
+            <div
+              ref={idxWidgetContainerRef}
+              className="w-full min-h-[600px]"
+              style={{
+                opacity: customIframeLoaded ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out',
+                pointerEvents: customIframeLoaded ? 'auto' : 'none'
+              }}
+            />
+          ) : (
+            <iframe
+              src={trimmedFindMyHomeUrl}
+              title="Home AI Search Widget"
+              className="w-full border-0"
+              style={{
+                minHeight: '600px',
+                width: '100%',
+                border: 'none',
+                overflow: 'auto',
+                opacity: customIframeLoaded ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out',
+                pointerEvents: customIframeLoaded ? 'auto' : 'none'
+              }}
+              scrolling="yes"
+              onLoad={() => setCustomIframeLoaded(true)}
+              onError={() => setCustomIframeLoaded(true)}
+            />
+          )}
         </div>
       </div>
     );
