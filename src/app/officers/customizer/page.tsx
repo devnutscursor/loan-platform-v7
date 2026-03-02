@@ -266,8 +266,8 @@ export default function CustomizerPage() {
           }
         },
         content: {
-          headline: 'Welcome to Our Service',
-          subheadline: 'Get started with our amazing platform today.',
+          headline: 'Get Started with Your Loan Today',
+          subheadline: '',
           ctaText: 'Get Started',
           ctaSecondary: 'Learn More',
           companyName: 'Your Company',
@@ -2513,8 +2513,8 @@ function ContentSettings({ template, onChange }: SettingsProps) {
 
   // Provide default values to prevent controlled/uncontrolled input errors
   const content = {
-    headline: template.content?.headline || 'Welcome to Our Service',
-    subheadline: template.content?.subheadline || 'Get started with our amazing platform today.',
+    headline: template.content?.headline || 'Get Started with Your Loan Today',
+    subheadline: template.content?.subheadline || '',
     ctaText: template.content?.ctaText || 'Get Started',
     companyName: template.content?.companyName || 'Your Company'
   };

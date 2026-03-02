@@ -105,9 +105,11 @@ export default function LeadCaptureModal({
     }
   };
   
-  const content = templateData?.template?.content || {
-    headline: 'Get Started',
-    subheadline: 'Complete your information to get started with this loan',
+  // For this modal we want a fixed headline and no subheadline,
+  // independent from the site-wide template content.
+  const content = {
+    headline: 'Get Started with Your Loan Today',
+    subheadline: '',
     ctaText: 'Get Started',
     ctaSecondary: 'Cancel'
   };
@@ -322,9 +324,11 @@ button: {
                   <h2 className={`${classes.heading.h2}`} style={{ color: colors.text }}>
                     {content.headline}
                   </h2>
-                  <p className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
-                    {content.subheadline}
-                  </p>
+                  {content.subheadline && (
+                    <p className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
+                      {content.subheadline}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={handleClose}
@@ -354,12 +358,6 @@ button: {
                 Selected Loan Product
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
-                  <span style={{ color: colors.textSecondary }}>Lender:</span>
-                  <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>
-                    {loanProduct.lenderName}
-                  </span>
-                </div>
                 <div className={`${classes.body.small} flex flex-col @lg:flex-row`}>
                   <span style={{ color: colors.textSecondary }}>Program:</span>
                   <span className="ml-0 @lg:ml-1 font-medium" style={{ color: colors.text }}>

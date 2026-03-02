@@ -711,10 +711,6 @@ function RateResults({
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-700">Lender:</span>
-                      <span className="font-medium text-gray-900">{selectedProduct.lenderName}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-gray-700">Loan Program:</span>
                       <span className="font-medium text-gray-900">{selectedProduct.loanProgram}</span>
                     </div>
