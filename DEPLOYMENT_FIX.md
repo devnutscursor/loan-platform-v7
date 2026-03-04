@@ -25,9 +25,9 @@ DATABASE_URL=postgresql://postgres.furmgdzzerkqcljsxjbt:vivoy15!@aws-1-ap-southe
 UPSTASH_REDIS_REST_URL=https://boss-shrew-28295.upstash.io
 UPSTASH_REDIS_REST_TOKEN=AW6HAAIncDIxMDk3MGZmNjFhYzg0NjQyYTBiYmJlMDRlN2JhZWY4OXAyMjgyOTU
 
-# App Configuration
-NEXT_PUBLIC_SITE_URL=https://banking-bride-clone.vercel.app
-NEXT_PUBLIC_APP_URL=https://banking-bride-clone.vercel.app
+# App Configuration (required for invite links — use production URL here; for local dev use .env.local with http://localhost:3000)
+NEXT_PUBLIC_SITE_URL=https://ratecaddy.com
+NEXT_PUBLIC_APP_URL=https://ratecaddy.com
 
 # Optimal Blue API Configuration
 OB_BASE_URL=https://marketplace.optimalblue.com/consumer/api
@@ -61,7 +61,28 @@ DATABASE_URL=postgresql://postgres.furmgdzzerkqcljsxjbt:vivoy15!@aws-1-ap-southe
 
 2. **Redeploy** on Vercel (should happen automatically)
 
-### 4. **Verify the Fix:**
+### 4. **Set Supabase Site URL & Redirect URLs (invite emails + allow localhost + production):**
+
+Invitation emails use the **Site URL** from your Supabase project. To support both **production (e.g. ratecaddy.com)** and **local dev (localhost:3000)**:
+
+1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project  
+2. Go to **Authentication** → **URL Configuration**
+
+3. **Site URL** — set to your **production** URL (invite emails will use this):
+   - e.g. `https://ratecaddy.com` (no trailing slash)
+
+4. **Redirect URLs** — add **all** allowed origins (one per line) so login/invite redirects work from both production and local:
+   ```
+   https://ratecaddy.com
+   https://ratecaddy.com/**
+   http://localhost:3000
+   http://localhost:3000/**
+   ```
+   Supabase only redirects to URLs listed here. Without `http://localhost:3000` and `http://localhost:3000/**`, local dev invite/login links will be rejected.
+
+After this, invite emails will point to your production URL, and both ratecaddy.com and localhost:3000 will be allowed for redirects.
+
+### 5. **Verify the Fix:**
 
 After deployment, test these URLs:
 - ✅ `/officers/leads` - Should load leads properly

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createPersonalTemplatesForUser } from '@/lib/template-manager';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
     const { data: inviteResult, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
       {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/invite?officer=true&company=${companyId}`,
+        redirectTo: `${getAppBaseUrl()}/auth/invite?officer=true&company=${companyId}`,
         data: {
           first_name: firstName,
           last_name: lastName,

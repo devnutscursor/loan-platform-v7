@@ -152,8 +152,23 @@ export default function TodaysRatesTab({
       return typeof value === 'number' && !Number.isNaN(value) ? value : Number.POSITIVE_INFINITY;
     };
 
+    // Helper to safely extract execution price (Mortech ratesheet_price)
+    const getExecutionPrice = (rate: any): number | undefined => {
+      const value = rate?.executionPrice;
+      return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+    };
+
+    // Compute borrower points relative to PAR (100) from execution price.
+    const getParPoints = (rate: any): number => {
+      const ep = getExecutionPrice(rate);
+      if (ep === undefined) return 0;
+      const diff = 100 - ep;
+      if (Math.abs(diff) < 0.0005) return 0;
+      return Number(diff.toFixed(3));
+    };
+
     // For each defined program bucket, find all matching selected rates and
-    // pick the one with the lowest interest rate.
+    // pick the one whose executionPrice is closest to PAR (100).
     const bucketBestRates = PROGRAM_BUCKETS.map((bucket) => {
       const matchLower = bucket.match.toLowerCase();
 
@@ -172,8 +187,26 @@ export default function TodaysRatesTab({
       }
 
       const best = matching.reduce((bestSoFar, current) => {
-        const bestRate = getInterestRate(bestSoFar.rateData);
-        const currentRate = getInterestRate(current.rateData);
+        const bestRateData = bestSoFar.rateData || {};
+        const currentRateData = current.rateData || {};
+
+        const bestEp = getExecutionPrice(bestRateData);
+        const currentEp = getExecutionPrice(currentRateData);
+
+        // If one has executionPrice and the other doesn't, prefer the one with executionPrice.
+        if (bestEp === undefined && currentEp !== undefined) return current;
+        if (bestEp !== undefined && currentEp === undefined) return bestSoFar;
+
+        if (bestEp !== undefined && currentEp !== undefined) {
+          const bestDiff = Math.abs(bestEp - 100);
+          const currentDiff = Math.abs(currentEp - 100);
+          if (currentDiff < bestDiff) return current;
+          if (currentDiff > bestDiff) return bestSoFar;
+          // Tie‑breaker: lower note rate.
+        }
+
+        const bestRate = getInterestRate(bestRateData);
+        const currentRate = getInterestRate(currentRateData);
         return currentRate < bestRate ? current : bestSoFar;
       });
 
@@ -218,11 +251,10 @@ export default function TodaysRatesTab({
                     : 0),
               0,
             )
-          : typeof rate.fees === 'number' && !Number.isNaN(rate.fees)
-            ? rate.fees
-            : 0;
-      const points =
-        typeof rate.points === 'number' && !Number.isNaN(rate.points) ? rate.points : 0;
+            : typeof rate.fees === 'number' && !Number.isNaN(rate.fees)
+              ? rate.fees
+              : 0;
+      const points = getParPoints(rate);
       const credits =
         typeof rate.credits === 'number' && !Number.isNaN(rate.credits)
           ? rate.credits
@@ -241,6 +273,7 @@ export default function TodaysRatesTab({
         loanTerm,
         interestRate: Number.isFinite(interestRate) ? interestRate : 0,
         apr,
+        executionPrice: getExecutionPrice(rate),
         monthlyPayment,
         fees: totalFees,
         points,

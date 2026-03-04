@@ -51,22 +51,18 @@ async function refreshSelectedRateRows(
     await Promise.all(
       batch.map(async (row) => {
         const rate = (row.rateData as Record<string, unknown>) || {};
-        const search = (rate.searchParams as Record<string, unknown>) || {};
 
-        // Default: $550k loan, 20% down => purchase price $687,500 (Today's Rates standard)
-        const DEFAULT_PURCHASE_PRICE = 687500;
-        const DEFAULT_LOAN_AMOUNT = 550000;
-        const appraisedvalue =
-          typeof search.purchasePrice === 'number' && !Number.isNaN(search.purchasePrice)
-            ? search.purchasePrice
-            : DEFAULT_PURCHASE_PRICE;
-        const loan_amount =
-          typeof search.loanAmount === 'number' && !Number.isNaN(search.loanAmount)
-            ? search.loanAmount
-            : DEFAULT_LOAN_AMOUNT;
-        const fico = parseFico(search.creditScore);
-        const loanpurpose =
-          search.loanPurpose === 'Refinance' ? 'Refinance' : 'Purchase';
+        // Fixed Today's Rates scenario for all refreshed selected rates:
+        // - Purchase price: $687,500
+        // - Loan amount:   $550,000
+        // - Credit score:  800
+        // - Purpose:       Purchase
+        // - Property:      CA / 95825 / Single Family / Primary
+        // - Lock:          30 days
+        const appraisedvalue = 687500;
+        const loan_amount = 550000;
+        const fico = 800;
+        const loanpurpose = 'Purchase';
         const lockDays = '30';
 
         const productId = rate.productId ?? rate.id;
@@ -124,12 +120,22 @@ async function refreshSelectedRateRows(
             0,
           );
 
+          const hasExecutionPrice =
+            typeof quote.executionPrice === 'number' &&
+            Number.isFinite(quote.executionPrice) &&
+            quote.executionPrice > 0;
+
+          const computedPoints =
+            hasExecutionPrice
+              ? Number((100 - quote.executionPrice!).toFixed(3))
+              : quote.points;
+
           const updatedRateData = {
             ...rate,
             interestRate: quote.rate,
             apr: quote.apr,
             monthlyPayment: quote.monthlyPayment,
-            points: quote.points,
+            points: computedPoints,
             lockPeriod: quote.lockTerm,
             executionPrice: quote.executionPrice,
             // Store detailed fee breakdown and numeric summary for DB-backed views.

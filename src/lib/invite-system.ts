@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -135,7 +136,7 @@ export async function sendCompanyAdminInvite(
           company_name: companyName,
           role: 'company_admin'
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/invite?company=${companyData.id}`
+        redirectTo: `${getAppBaseUrl()}/auth/invite?company=${companyData.id}`
       }
     );
 
@@ -239,7 +240,7 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
           company_name: company.name,
           role: 'company_admin'
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/invite?company=${company.id}`
+        redirectTo: `${getAppBaseUrl()}/auth/invite?company=${company.id}`
       }
     );
 

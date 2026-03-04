@@ -96,7 +96,7 @@ export async function seedSelectedRatesForOfficer(
     propertyZip: '95825',
     appraisedvalue: 687500,
     loan_amount: 550000,
-    fico: 740,
+    fico: 800,
     loanpurpose: 'Purchase' as const,
     proptype: 'Single Family' as const,
     occupancy: 'Primary' as const,
@@ -152,7 +152,7 @@ export async function seedSelectedRatesForOfficer(
     purchasePrice: standardScenario.appraisedvalue,
     downPayment: standardScenario.appraisedvalue - standardScenario.loan_amount,
     loanAmount: standardScenario.loan_amount,
-    creditScore: '740+',
+    creditScore: '800+',
     loanPurpose: standardScenario.loanpurpose,
   } as const;
 

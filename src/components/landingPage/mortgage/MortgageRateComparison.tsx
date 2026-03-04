@@ -841,6 +841,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
             loanTerm: parseInt(rate.loanTerm) || 30,
             interestRate: rate.interestRate || 0,
             apr: rate.apr || 0,
+            executionPrice: typeof rate.executionPrice === 'number' ? rate.executionPrice : undefined,
             monthlyPayment: rate.monthlyPayment || 0,
             fees: totalFees,
             points: rate.points || 0,

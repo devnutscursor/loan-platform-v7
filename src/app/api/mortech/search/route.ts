@@ -648,41 +648,55 @@ export async function POST(request: NextRequest) {
         ? pickThreeQuotesByPrice(response.quotes).map(({ quote, quoteType }) => ({ quote, quoteType }))
         : (response.quotes ?? []).map(quote => ({ quote }));
 
-    const transformOne = (quote: MortechQuote, quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate') => ({
-      id: quote.productId,
-      lenderName: quote.vendorName,
-      productName: quote.vendorProductCode || quote.vendorProductName,
-      loanProgram: quote.productDesc,
-      loanType: quote.termType,
-      loanTerm: quote.productTerm,
-      interestRate: quote.rate,
-      apr: quote.apr,
-      monthlyPayment: quote.monthlyPayment,
-      // Execution price (Marksman-style 0–100 scale) for debugging / analytics.
-      ...(typeof quote.executionPrice === 'number' && Number.isFinite(quote.executionPrice) && quote.executionPrice > 0
-        ? { executionPrice: quote.executionPrice }
-        : {}),
-      points: quote.points,
-      originationFee: quote.originationFee,
-      upfrontFee: quote.upfrontFee,
-      monthlyPremium: quote.monthlyPremium,
-      downPayment: quote.downPayment,
-      loanAmount: quote.loanAmount,
-      lockTerm: quote.lockTerm,
-      pricingStatus: quote.pricingStatus,
-      lastUpdate: quote.lastUpdate,
-      fees: quote.fees.map(fee => ({
-        description: fee.description,
-        amount: fee.feeamount,
-        section: fee.section,
-        paymentType: fee.paymenttype,
-        prepaid: fee.prepaid
-      })),
-      eligibility: quote.eligibility,
-      credits: 0,
-      lockPeriod: quote.lockTerm,
-      ...(quoteType && { quoteType }),
-    });
+    const transformOne = (quote: MortechQuote, quoteType?: 'Lowest Rate' | 'PAR' | 'Higher Rate') => {
+      const hasExecutionPrice =
+        typeof quote.executionPrice === 'number' &&
+        Number.isFinite(quote.executionPrice) &&
+        quote.executionPrice > 0;
+
+      // Compute borrower points from execution price relative to PAR (100).
+      // Positive => borrower pays discount points; negative => lender credit.
+      const computedPoints =
+        hasExecutionPrice
+          ? Number((100 - quote.executionPrice!).toFixed(3))
+          : quote.points;
+
+      return {
+        id: quote.productId,
+        lenderName: quote.vendorName,
+        productName: quote.vendorProductCode || quote.vendorProductName,
+        loanProgram: quote.productDesc,
+        loanType: quote.termType,
+        loanTerm: quote.productTerm,
+        interestRate: quote.rate,
+        apr: quote.apr,
+        monthlyPayment: quote.monthlyPayment,
+        // Execution price (Marksman-style 0–100 scale) for debugging / analytics.
+        ...(hasExecutionPrice
+          ? { executionPrice: quote.executionPrice }
+          : {}),
+        points: computedPoints,
+        originationFee: quote.originationFee,
+        upfrontFee: quote.upfrontFee,
+        monthlyPremium: quote.monthlyPremium,
+        downPayment: quote.downPayment,
+        loanAmount: quote.loanAmount,
+        lockTerm: quote.lockTerm,
+        pricingStatus: quote.pricingStatus,
+        lastUpdate: quote.lastUpdate,
+        fees: quote.fees.map(fee => ({
+          description: fee.description,
+          amount: fee.feeamount,
+          section: fee.section,
+          paymentType: fee.paymenttype,
+          prepaid: fee.prepaid
+        })),
+        eligibility: quote.eligibility,
+        credits: 0,
+        lockPeriod: quote.lockTerm,
+        ...(quoteType && { quoteType }),
+      };
+    };
 
     const transformedRates = quotesToTransform.map(({ quote, quoteType }) => transformOne(quote, quoteType));
 

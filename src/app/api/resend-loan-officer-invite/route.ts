@@ -4,6 +4,7 @@ import { users, userCompanies } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { getAppBaseUrl } from '@/lib/app-url';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     const { data: inviteResult, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       officerData.email,
       {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/invite?officer=true&company=${officerData.companyId}`,
+        redirectTo: `${getAppBaseUrl()}/auth/invite?officer=true&company=${officerData.companyId}`,
         data: {
           first_name: officerData.firstName,
           last_name: officerData.lastName,

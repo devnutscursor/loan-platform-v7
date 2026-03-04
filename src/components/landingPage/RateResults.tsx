@@ -25,6 +25,8 @@ interface RateProduct {
   loanTerm: number;
   interestRate: number;
   apr: number;
+  /** Mortech execution price (ratesheet_price, 0–100 scale). */
+  executionPrice?: number;
   monthlyPayment: number;
   /**
    * Total of all upfront fees for summary display.
@@ -314,6 +316,11 @@ function RateResults({
     return `${rate.toFixed(3)}%`;
   };
 
+  const formatExecutionPrice = (price?: number) => {
+    if (typeof price !== 'number' || !Number.isFinite(price)) return '—';
+    return price.toFixed(3);
+  };
+
   const formatPoints = (points: number) => {
     if (points > 0) {
       return `${points.toFixed(3)} Points`;
@@ -508,6 +515,12 @@ function RateResults({
                       className="px-4 py-4 text-left text-sm font-semibold"
                       style={{ color: colors.primary }}
                     >
+                      Price
+                    </th>
+                    <th 
+                      className="px-4 py-4 text-left text-sm font-semibold"
+                      style={{ color: colors.primary }}
+                    >
                       Points
                     </th>
                     <th 
@@ -560,6 +573,12 @@ function RateResults({
                           <span className="text-sm"
                                 style={{ color: colors.textSecondary }}>
                             {formatRate(product.apr)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm"
+                                style={{ color: colors.textSecondary }}>
+                            {formatExecutionPrice(product.executionPrice)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
