@@ -30,6 +30,7 @@ interface PublicProfileContentProps {
       email?: string;
       license_number?: string;
       company_nmls_number?: string;
+      has_mortech_subscription?: boolean;
       company_social_media?: {
         facebook?: string;
         twitter?: string;
@@ -167,6 +168,13 @@ export default function PublicProfileContent({
       setActiveTab(templateActiveTab as TabId);
     }
   }, [templateData, profileData?.template, isPreview, enabledTabs]);
+
+  // When company has no Mortech subscription, switch away from Get Custom Rate tab
+  useEffect(() => {
+    if (profileData?.company?.has_mortech_subscription === false && activeTab === 'get-custom-rate') {
+      setActiveTab('todays-rates');
+    }
+  }, [profileData?.company?.has_mortech_subscription, activeTab]);
 
   // Debug: Log force mobile viewport state
   console.log('🔍 PublicProfileContent: forceMobileViewport =', forceMobileViewport);
@@ -390,10 +398,10 @@ export default function PublicProfileContent({
                                   { id: 'neighborhood-reports', label: 'Neighborhood Reports', icon: 'location' }
                                 ];
 
-                                // Filter to only show enabled tabs
-                                // Use the enabledTabs variable computed at the top of the component
+                                // Filter to only show enabled tabs; hide Get Custom Rate for non–Mortech companies
+                                const hideGetCustomRate = profileData?.company?.has_mortech_subscription === false;
                                 const navigationTabs = allTabs.filter(
-                                  tab => enabledTabs.includes(tab.id)
+                                  tab => enabledTabs.includes(tab.id) && !(tab.id === 'get-custom-rate' && hideGetCustomRate)
                                 );
 
                                 return navigationTabs.map((tab) => (
@@ -455,6 +463,7 @@ export default function PublicProfileContent({
                           templateCustomization={profileData.template}
                           userId={profileData.user.id}
                           companyId={profileData.company.id}
+                          hasMortechSubscription={profileData.company.has_mortech_subscription}
                           hideTabNavigation={true}
                           forceMobileView={forceMobileViewport}
                           initialProductCategoryOptions={initialProductCategoryOptions}
@@ -481,6 +490,7 @@ export default function PublicProfileContent({
                           templateCustomization={profileData.template}
                           userId={profileData.user.id}
                           companyId={profileData.company.id}
+                        hasMortechSubscription={profileData.company.has_mortech_subscription}
                           forceMobileView={forceMobileViewport}
                           initialProductCategoryOptions={initialProductCategoryOptions}
                         />

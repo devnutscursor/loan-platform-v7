@@ -5,6 +5,7 @@ import { spacing, borderRadius, shadows, typography, colors } from '@/theme/them
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import SmartDropdown, { type SmartDropdownOption } from '@/components/ui/SmartDropdown';
 import { useAuth } from '@/hooks/use-auth';
+import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
 
 interface SearchFormData {
   zipCode: string;
@@ -127,9 +128,14 @@ function MortgageSearchForm({
   };
 
   const [productCategoryOptions, setProductCategoryOptions] = useState<SmartDropdownOption[]>(
-    initialProductCategoryOptions ?? []
+    initialProductCategoryOptions && initialProductCategoryOptions.length
+      ? initialProductCategoryOptions
+      : PROGRAM_BUCKETS.map((bucket) => ({
+          value: bucket.id,
+          label: bucket.label,
+        }))
   );
-  const [productCategoryLoading, setProductCategoryLoading] = useState(!initialProductCategoryOptions?.length);
+  const [productCategoryLoading, setProductCategoryLoading] = useState(false);
   const [productCategoryError, setProductCategoryError] = useState<string | null>(null);
 
   const creditScoreOptions = useMemo<SmartDropdownOption[]>(() => [
@@ -178,51 +184,24 @@ function MortgageSearchForm({
     { value: 'Yes', label: 'Yes' }
   ], []);
 
-  // Load Product Category options only when not provided by SSR
+  // Initialize / sync Product Category options.
+  // When SSR provides initial options, use them; otherwise fall back to the 8 Today’s Rates buckets.
   useEffect(() => {
-    if (initialProductCategoryOptions?.length) return;
-    let cancelled = false;
-
-    const loadProductCategories = async () => {
-      try {
-        setProductCategoryLoading(true);
-        setProductCategoryError(null);
-
-        const response = await fetch('/api/mortech/catalog/products');
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.error || 'Failed to load product catalog');
-        }
-
-        if (cancelled) return;
-
-        // Show only product name (after dash), not "Investor – Product"
-        const options: SmartDropdownOption[] = (result.products || []).map((p: any) => ({
-          value: p.id as string,
-          label: (p.productName ?? String(p.id)) as string,
-        }));
-
-        setProductCategoryOptions(options);
-      } catch (error) {
-        if (!cancelled) {
-          const message =
-            error instanceof Error ? error.message : 'Failed to load product catalog';
-          setProductCategoryError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setProductCategoryLoading(false);
-        }
-      }
-    };
-
-    loadProductCategories();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialProductCategoryOptions?.length]);
+    if (initialProductCategoryOptions && initialProductCategoryOptions.length) {
+      setProductCategoryOptions(initialProductCategoryOptions);
+      setProductCategoryError(null);
+      setProductCategoryLoading(false);
+    } else {
+      setProductCategoryOptions(
+        PROGRAM_BUCKETS.map((bucket) => ({
+          value: bucket.id,
+          label: bucket.label,
+        })),
+      );
+      setProductCategoryError(null);
+      setProductCategoryLoading(false);
+    }
+  }, [initialProductCategoryOptions]);
 
   // Format currency for display in inputs (e.g. "550000" -> "$550,000")
   const formatCurrencyForInput = useCallback((value: string): string => {
@@ -246,9 +225,9 @@ function MortgageSearchForm({
   
   const defaultFormData: SearchFormData = {
     zipCode: '95825',
-    salesPrice: '225000',
-    downPayment: '75000',
-    downPaymentPercent: '33.33',
+    salesPrice: '687500',
+    downPayment: '137500',
+    downPaymentPercent: '20',
     creditScore: '800+',
     propertyType: 'SingleFamily',
     occupancy: 'PrimaryResidence',
@@ -295,21 +274,11 @@ function MortgageSearchForm({
     ...initialValues
   });
 
-  // Filter Product Category options based on selected loan term (e.g. show only 15 Yr products when 15-year term is selected)
+  // Product Category options: for now, always expose the full set of 8 buckets.
+  // (If we ever want term-specific filtering, we can derive it from the bucket id.)
   const filteredProductCategoryOptions = useMemo<SmartDropdownOption[]>(() => {
-    // If no loan term selected yet, show all options
-    if (!formData.loanTerm) return productCategoryOptions;
-
-    // Our loanTermOptions use numeric years as value ('15', '30', etc.)
-    const termYears = formData.loanTerm; // e.g. '15'
-    const termSubstring = `${termYears} Yr`; // e.g. '15 Yr'
-
-    return productCategoryOptions.filter(
-      (opt) =>
-        typeof opt.label === 'string' &&
-        opt.label.includes(termSubstring)
-    );
-  }, [formData.loanTerm, productCategoryOptions]);
+    return productCategoryOptions;
+  }, [productCategoryOptions]);
 
   // When loan term changes and the previously selected Product Category no longer matches,
   // clear the selection to avoid an invalid combination.
@@ -693,7 +662,7 @@ function MortgageSearchForm({
                   color: templateColors.text,
                   backgroundColor: templateColors.background
                 }}
-                placeholder="$225,000"
+                placeholder="$687,500"
               />
             </div>
           )}
@@ -731,7 +700,7 @@ function MortgageSearchForm({
                       height: '100%',
                       boxSizing: 'border-box'
                     }}
-                    placeholder="$75,000"
+                    placeholder="$137,500"
                   />
                   <div style={{ 
                     display: 'flex',

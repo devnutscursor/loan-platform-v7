@@ -14,6 +14,7 @@ interface TodaysRatesTabProps {
   publicTemplateData?: any;
   userId?: string;
   companyId?: string;
+  hasMortechSubscription?: boolean;
 }
 
 interface SelectedRate {
@@ -33,7 +34,8 @@ export default function TodaysRatesTab({
   isPublic = false,
   publicTemplateData,
   userId,
-  companyId
+  companyId,
+  hasMortechSubscription
 }: TodaysRatesTabProps) {
   const { getTemplateSync } = useEfficientTemplates();
   
@@ -60,6 +62,8 @@ export default function TodaysRatesTab({
   const [selectedRates, setSelectedRates] = useState<SelectedRate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const resolvedHasMortechSubscription = hasMortechSubscription !== false;
 
   const PUBLIC_SELECTED_RATES_PREFIX = 'lo:selected-rates:public:';
   const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -110,7 +114,10 @@ export default function TodaysRatesTab({
           setError(null);
         }
 
-        const response = await fetch(`/api/officers/selected-rates?officerId=${userId}`, {
+        const endpoint = resolvedHasMortechSubscription
+          ? `/api/officers/selected-rates?officerId=${userId}`
+          : `/api/officers/manual-rates?officerId=${userId}`;
+        const response = await fetch(endpoint, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -142,7 +149,7 @@ export default function TodaysRatesTab({
     };
 
     fetchSelectedRates(!!stored);
-  }, [userId]);
+  }, [userId, resolvedHasMortechSubscription]);
 
   // Transform selected rates to RateResults format
   const transformRatesToRateResults = () => {
@@ -167,19 +174,95 @@ export default function TodaysRatesTab({
       return Number(diff.toFixed(3));
     };
 
+    const mapRateToProduct = (selectedRate: SelectedRate) => {
+      const rate = selectedRate.rateData || {};
+      const rawLoanTerm = rate.loanTerm ?? rate.productTerm ?? 30;
+      const loanTerm =
+        typeof rawLoanTerm === 'number'
+          ? rawLoanTerm
+          : parseInt(String(rawLoanTerm), 10) || 30;
+      const interestRate = getInterestRate(rate);
+      const apr =
+        typeof rate.apr === 'number' && !Number.isNaN(rate.apr) ? rate.apr : 0;
+      const monthlyPayment =
+        typeof rate.monthlyPayment === 'number' && !Number.isNaN(rate.monthlyPayment)
+          ? rate.monthlyPayment
+          : 0;
+      const feeItems = Array.isArray(rate.feeItems)
+        ? rate.feeItems
+        : Array.isArray(rate.fees)
+          ? rate.fees
+          : [];
+      const totalFees =
+        feeItems.length > 0
+          ? feeItems.reduce(
+              (sum: number, f: any) =>
+                sum +
+                (Number.isFinite(f.amount)
+                  ? f.amount
+                  : Number.isFinite(f.feeamount)
+                    ? f.feeamount
+                    : 0),
+              0,
+            )
+          : typeof rate.fees === 'number' && !Number.isNaN(rate.fees)
+            ? rate.fees
+            : 0;
+      const points =
+        typeof rate.points === 'number' && !Number.isNaN(rate.points)
+          ? rate.points
+          : getParPoints(rate);
+      const credits =
+        typeof rate.credits === 'number' && !Number.isNaN(rate.credits)
+          ? rate.credits
+          : 0;
+      const lockPeriodRaw = rate.lockPeriod ?? rate.lockTerm ?? 30;
+      const lockPeriod =
+        typeof lockPeriodRaw === 'number'
+          ? lockPeriodRaw
+          : parseInt(String(lockPeriodRaw), 10) || 30;
+
+      return {
+        id: rate.id || rate.productId || selectedRate.id,
+        lenderName: rate.lenderName || 'Manual Rate',
+        loanProgram: rate.loanProgram || 'Loan Program',
+        loanType: rate.loanType || rate.termType || 'Fixed',
+        loanTerm,
+        interestRate: Number.isFinite(interestRate) ? interestRate : 0,
+        apr,
+        executionPrice: getExecutionPrice(rate),
+        monthlyPayment,
+        fees: totalFees,
+        points,
+        credits,
+        lockPeriod,
+        searchParams: rate.searchParams,
+        feeItems,
+      };
+    };
+
+    if (!resolvedHasMortechSubscription) {
+      return selectedRates.map(mapRateToProduct);
+    }
+
     // For each defined program bucket, find all matching selected rates and
     // pick the one whose executionPrice is closest to PAR (100).
     const bucketBestRates = PROGRAM_BUCKETS.map((bucket) => {
       const matchLower = bucket.match.toLowerCase();
+      const labelLower = bucket.label.toLowerCase();
 
       const matching = selectedRates.filter((selectedRate) => {
         const rate = selectedRate.rateData || {};
+        // Prefer explicit bucketId so each seeded row is always shown under the correct bucket.
+        if (rate.bucketId != null && String(rate.bucketId) === bucket.id) {
+          return true;
+        }
         const program = (rate.loanProgram || '').toLowerCase();
         const productDesc = (rate.productDesc || '').toLowerCase();
         const vendorName = (rate.vendorProductName || '').toLowerCase();
         const vendorCode = (rate.vendorProductCode || '').toLowerCase();
         const combined = `${program} ${productDesc} ${vendorName} ${vendorCode}`;
-        return combined.includes(matchLower);
+        return combined.includes(matchLower) || combined.includes(labelLower);
       });
 
       if (matching.length === 0) {
@@ -407,7 +490,7 @@ export default function TodaysRatesTab({
           publicTemplateData={publicTemplateData}
           userId={userId}
           companyId={companyId}
-          showTodaysRatesOnly={true}
+          showTodaysRatesOnly={resolvedHasMortechSubscription}
         />
       )}
 

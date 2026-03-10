@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { db, selectedRates, userCompanies } from '@/lib/db';
+import { db, selectedRates, userCompanies, companies, manualRates } from '@/lib/db';
 import { seedSelectedRatesForOfficer } from '@/lib/mortech/seedSelectedRates';
 import { eq, and } from 'drizzle-orm';
 
@@ -50,24 +50,32 @@ export async function GET(request: NextRequest) {
       }
       companyId = (ucRows[0] as any).company_id;
 
-      // PUBLIC MODE:
-      // For public profile requests (officerId query param), ensure that
-      // all 8 program buckets are seeded using the shared seeding helper.
-      // This guarantees Today’s Rates can always show the lowest rate
-      // for each client-specified bucket.
-      const { rates } = await seedSelectedRatesForOfficer(officerId, companyId);
+      const companyRows = await db
+        .select({ hasMortechSubscription: companies.hasMortechSubscription })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
 
-      const res = NextResponse.json({
-        success: true as const,
-        rates: rates.map((row) => ({
-          id: row.id,
-          rateData: row.rateData,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        })),
-      });
-      res.headers.set('Cache-Control', 'public, max-age=60');
-      return res;
+      if (companyRows[0]?.hasMortechSubscription === false) {
+        const manualRows = await db
+          .select()
+          .from(manualRates)
+          .where(and(eq(manualRates.officerId, officerId), eq(manualRates.companyId, companyId)))
+          .orderBy(manualRates.createdAt);
+
+        const res = NextResponse.json({
+          success: true as const,
+          rates: manualRows.map((row) => ({
+            id: row.id,
+            rateData: row.rateData,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          })),
+        });
+        res.headers.set('Cache-Control', 'public, max-age=60');
+        return res;
+      }
+
     } else {
       const authHeader = request.headers.get('authorization');
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -114,6 +122,35 @@ export async function GET(request: NextRequest) {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // New Mortech officers: seed the fixed 8 categories once so every user sees updated rates.
+        if ((rows ?? []).length === 0) {
+          const [companyRow] = await db
+            .select({ hasMortechSubscription: companies.hasMortechSubscription })
+            .from(companies)
+            .where(eq(companies.id, companyId))
+            .limit(1);
+          if (companyRow?.hasMortechSubscription !== false) {
+            try {
+              const { rates } = await seedSelectedRatesForOfficer(officerId, companyId);
+              const payload = {
+                success: true as const,
+                rates: rates.map((r) => ({
+                  id: r.id,
+                  rateData: r.rateData,
+                  createdAt: r.createdAt,
+                  updatedAt: r.updatedAt,
+                })),
+              };
+              selectedRatesCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
+              selectedRatesFetchPromises.delete(cacheKey);
+              return payload;
+            } catch (seedErr) {
+              console.warn('[selected-rates] seed for new officer failed:', seedErr);
+            }
+          }
+        }
+
         const payload = { success: true as const, rates: (rows ?? []).map(mapRateRow) };
         selectedRatesCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
         selectedRatesFetchPromises.delete(cacheKey);

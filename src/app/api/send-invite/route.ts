@@ -7,14 +7,21 @@ const sendInviteSchema = z.object({
   adminEmail: z.string().email('Valid email is required'),
   website: z.string().optional(),
   includeDefaultContent: z.boolean().optional(),
+  hasMortechSubscription: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { companyName, adminEmail, website, includeDefaultContent } = sendInviteSchema.parse(body);
+    const { companyName, adminEmail, website, includeDefaultContent, hasMortechSubscription } = sendInviteSchema.parse(body);
 
-    const result = await sendCompanyAdminInvite(companyName, adminEmail, website, includeDefaultContent);
+    const result = await sendCompanyAdminInvite(
+      companyName,
+      adminEmail,
+      website,
+      includeDefaultContent,
+      hasMortechSubscription
+    );
 
     return NextResponse.json(result);
   } catch (error) {

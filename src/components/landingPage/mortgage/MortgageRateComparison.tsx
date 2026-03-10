@@ -550,8 +550,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     // Map credit score to exact dropdown value
     const mappedCreditScore = mapCreditScoreToDropdown(creditScore);
     
-    // Default sales price
-    const defaultSalesPrice = 225000;
+    // Default sales price (Today's Rates / backend standard)
+    const defaultSalesPrice = 687500;
     
     // Calculate down payment amount from percentage if provided
     let downPayment: string | undefined = undefined;
@@ -574,8 +574,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     const formDataPartial: Partial<SearchFormData> = {
       zipCode: '95825',
       salesPrice: loanPurpose === 'Purchase' ? defaultSalesPrice.toString() : undefined,
-      downPayment: downPayment || (loanPurpose === 'Purchase' ? '75000' : undefined),
-      downPaymentPercent: downPaymentPercent || (loanPurpose === 'Purchase' ? '33.33' : undefined),
+      downPayment: downPayment || (loanPurpose === 'Purchase' ? '137500' : undefined),
+      downPaymentPercent: downPaymentPercent || (loanPurpose === 'Purchase' ? '20' : undefined),
       creditScore: mappedCreditScore, // Use mapped value
       propertyType: 'SingleFamily',
       occupancy: 'PrimaryResidence',
@@ -618,9 +618,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     // Create full form data for search
     const formData: SearchFormData = {
       zipCode: formDataPartial.zipCode || '95825',
-      salesPrice: formDataPartial.salesPrice || '225000',
-      downPayment: formDataPartial.downPayment || '75000',
-      downPaymentPercent: formDataPartial.downPaymentPercent || '33.33',
+      salesPrice: formDataPartial.salesPrice || '687500',
+      downPayment: formDataPartial.downPayment || '137500',
+      downPaymentPercent: formDataPartial.downPaymentPercent || '20',
       creditScore: formDataPartial.creditScore || '740-759',
       propertyType: formDataPartial.propertyType || 'SingleFamily',
       occupancy: formDataPartial.occupancy || 'PrimaryResidence',

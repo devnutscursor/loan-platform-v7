@@ -104,7 +104,7 @@ export async function getPublicProfileData(slug: string): Promise<{ success: tru
           .maybeSingle(),
         supabase
           .from('companies')
-          .select('id, name, logo, website, address, phone, email, license_number, company_nmls_number, company_social_media')
+          .select('id, name, logo, website, address, phone, email, license_number, company_nmls_number, company_social_media, has_mortech_subscription')
           .eq('id', link.company_id)
           .limit(1)
           .maybeSingle(),

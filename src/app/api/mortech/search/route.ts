@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createMortechAPI, type MortechQuote } from '@/lib/mortech/api';
+import { BUCKET_PRODUCT_IDS } from '@/lib/mortech/programBuckets';
 import { checkRateLimit, recordApiCall } from '@/lib/mortech/rate-limit';
 import { checkEmailRateLimit, recordEmailApiCall } from '@/lib/mortech/email-rate-limit';
 import { db, userCompanies } from '@/lib/db';
@@ -548,12 +549,23 @@ export async function POST(request: NextRequest) {
     const mortechAPI = createMortechAPI();
 
     // Prepare request - matching test script format EXACTLY
-    // Derive productList from productCategory, if provided (value is `${parent_id}:${product_id}`)
+    // Derive productList from productCategory, if provided.
+    // For Custom Rates / Today's Rates we now send a bucket id (ProgramBucketId) and
+    // look up its candidate productIds via BUCKET_PRODUCT_IDS. For backward compatibility,
+    // if the value is not a known bucket id we treat it as a raw product id.
     let productList: string | undefined;
     if (typeof productCategory === 'string' && productCategory.trim() !== '') {
-      const parts = productCategory.split(':');
-      if (parts.length === 2 && parts[1].trim() !== '') {
-        productList = parts[1].trim();
+      const trimmed = productCategory.trim();
+      const bucketIds = Object.keys(BUCKET_PRODUCT_IDS) as (keyof typeof BUCKET_PRODUCT_IDS)[];
+      if (bucketIds.includes(trimmed as keyof typeof BUCKET_PRODUCT_IDS)) {
+        const ids = BUCKET_PRODUCT_IDS[trimmed as keyof typeof BUCKET_PRODUCT_IDS];
+        if (Array.isArray(ids) && ids.length > 0) {
+          productList = ids.join(',');
+        }
+      }
+      // Fallback: treat as a single product id (legacy format).
+      if (!productList) {
+        productList = trimmed;
       }
     }
 

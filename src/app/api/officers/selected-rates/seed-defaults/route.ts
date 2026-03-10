@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq } from 'drizzle-orm';
 import { createMortechAPI } from '@/lib/mortech/api';
-import { db, selectedRates, userCompanies } from '@/lib/db';
+import { db, selectedRates, userCompanies, companies } from '@/lib/db';
 import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
 import { seedSelectedRatesForOfficer } from '@/lib/mortech/seedSelectedRates';
 
@@ -57,6 +57,24 @@ export async function POST(request: NextRequest) {
     }
 
     const companyId = userCompanyResult[0].companyId;
+
+    const companyRows = await db
+      .select({ hasMortechSubscription: companies.hasMortechSubscription })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+
+    if (companyRows[0]?.hasMortechSubscription === false) {
+      return NextResponse.json(
+        {
+          success: true,
+          seeded: false,
+          message: 'Mortech subscription disabled. Manual rates are used instead.',
+          rates: [],
+        },
+        { status: 200 },
+      );
+    }
 
     const { rates, seeded } = await seedSelectedRatesForOfficer(user.id, companyId);
 

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPublicProfileData } from '@/lib/public-profile';
-import { getMortechCatalogProducts } from '@/lib/mortech/catalog';
+import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
 import PublicProfileClient from './PublicProfileClient';
 import type { PublicProfileData, PublicTemplateData } from './PublicProfileClient';
 
@@ -35,10 +35,10 @@ export default async function PublicProfilePage({
     throw err;
   }
 
-  const catalog = await getMortechCatalogProducts().catch(() => []);
-  const initialProductCategoryOptions = catalog.map((p) => ({
-    value: p.id,
-    label: p.productName,
+  // Use the 8 standard Today’s Rates buckets as Product Category options on public profile as well.
+  const initialProductCategoryOptions = PROGRAM_BUCKETS.map((bucket) => ({
+    value: bucket.id,
+    label: bucket.label,
   }));
 
   return (

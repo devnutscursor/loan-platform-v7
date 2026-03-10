@@ -62,6 +62,13 @@ interface SelectedRate {
   updatedAt: string;
 }
 
+interface ManualRate {
+  id: string;
+  rateData: Rate;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface SearchFormData {
   zipCode: string;
   salesPrice: string;
@@ -133,13 +140,33 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
     spacing: 16
   };
 
+  useEffect(() => {
+    if (!companyId) return;
+    const loadCompanyAccess = async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('has_mortech_subscription')
+        .eq('id', companyId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setHasMortechSubscription(data.has_mortech_subscription !== false);
+      }
+    };
+    loadCompanyAccess();
+  }, [companyId]);
+
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [loading, setLoading] = useState(false);
   const [loadingSelectedRates, setLoadingSelectedRates] = useState(false);
+  const [loadingManualRates, setLoadingManualRates] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rates, setRates] = useState<Rate[]>([]);
   const [selectedRates, setSelectedRates] = useState<SelectedRate[]>([]);
+  const [manualRates, setManualRates] = useState<ManualRate[]>([]);
   const [rateLimit, setRateLimit] = useState<{ remaining: number; resetAt: Date; used: number } | null>(null);
+  const [hasMortechSubscription, setHasMortechSubscription] = useState(true);
   
   // Current search parameters state
   const [currentSearchParams, setCurrentSearchParams] = useState<{
@@ -154,10 +181,28 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
   const [showSelectConfirm, setShowSelectConfirm] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showManualRateModal, setShowManualRateModal] = useState(false);
   const [rateToSelect, setRateToSelect] = useState<Rate | null>(null);
   const [rateToRemove, setRateToRemove] = useState<SelectedRate | null>(null);
   const [rateToView, setRateToView] = useState<Rate | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSavingManualRate, setIsSavingManualRate] = useState(false);
+
+  const [manualRateForm, setManualRateForm] = useState({
+    lenderName: '',
+    loanProgram: '',
+    loanType: '',
+    loanTerm: '',
+    interestRate: '',
+    apr: '',
+    executionPrice: '',
+    monthlyPayment: '',
+    fees: '',
+    points: '',
+    credits: '',
+    lockPeriod: '',
+  });
+  const [manualFeeItems, setManualFeeItems] = useState<RateFeeItem[]>([]);
 
   const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -166,6 +211,49 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  }, []);
+
+  const updateManualField = useCallback(
+    (field: keyof typeof manualRateForm) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        setManualRateForm((prev) => ({ ...prev, [field]: event.target.value }));
+      },
+    [],
+  );
+
+  const addFeeItem = useCallback(() => {
+    setManualFeeItems((prev) => [
+      ...prev,
+      { description: '', amount: 0, section: '', paymentType: '', prepaid: false },
+    ]);
+  }, []);
+
+  const updateFeeItem = useCallback(
+    (index: number, field: keyof RateFeeItem, value: string | boolean) => {
+      setManualFeeItems((prev) => {
+        const next = [...prev];
+        const item = { ...next[index] };
+        if (field === 'amount') {
+          const parsed = parseFloat(String(value));
+          item.amount = Number.isFinite(parsed) ? parsed : 0;
+        } else if (field === 'prepaid') {
+          item.prepaid = Boolean(value);
+        } else if (field === 'description') {
+          item.description = String(value);
+        } else if (field === 'section') {
+          item.section = String(value);
+        } else if (field === 'paymentType') {
+          item.paymentType = String(value);
+        }
+        next[index] = item;
+        return next;
+      });
+    },
+    [],
+  );
+
+  const removeFeeItem = useCallback((index: number) => {
+    setManualFeeItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   // Map property type from form to Mortech format
@@ -211,30 +299,11 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
   const SELECTED_RATES_STORAGE_PREFIX = 'lo:selected-rates:';
   const SELECTED_RATES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-  const seedDefaultSelectedRates = useCallback(
-    async (accessToken: string) => {
-      try {
-        const response = await fetch('/api/officers/selected-rates/seed-defaults', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success && Array.isArray(result.rates)) {
-          const list = result.rates as SelectedRate[];
-          setSelectedRates(list);
-          setStoredSelectedRates(list);
-        }
-      } catch (err) {
-        console.error('Error seeding default selected rates:', err);
-      }
-    },
-    [setSelectedRates],
-  );
+  useEffect(() => {
+    if (!hasMortechSubscription) {
+      setActiveTab('selected');
+    }
+  }, [hasMortechSubscription]);
 
   const getStoredSelectedRates = (): SelectedRate[] | null => {
     if (typeof window === 'undefined' || !user?.id) return null;
@@ -290,12 +359,6 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
             const list = (result.rates || []) as SelectedRate[];
             setSelectedRates(list);
             setStoredSelectedRates(list);
-
-            // Always attempt to seed missing default buckets on non-silent load.
-            // The seed endpoint is idempotent per bucket and will skip ones that already exist.
-            if (!silent) {
-              await seedDefaultSelectedRates(session.access_token);
-            }
           }
         }
       } catch (err) {
@@ -304,7 +367,40 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
         if (!silent) setLoadingSelectedRates(false);
       }
     },
-    [user?.id, seedDefaultSelectedRates],
+    [user?.id],
+  );
+
+  const fetchManualRates = useCallback(
+    async () => {
+      if (!user?.id || hasMortechSubscription) return;
+      setLoadingManualRates(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          setLoadingManualRates(false);
+          return;
+        }
+
+        const response = await fetch('/api/officers/manual-rates', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setManualRates(result.rates || []);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching manual rates:', err);
+      } finally {
+        setLoadingManualRates(false);
+      }
+    },
+    [hasMortechSubscription, user?.id],
   );
 
   // Fetch selected rates on mount and when tab changes; hydrate from cache first
@@ -317,8 +413,16 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
       setLoadingSelectedRates(false);
     }
 
-    fetchSelectedRates(!!stored);
-  }, [activeTab, fetchSelectedRates, user?.id]);
+    if (hasMortechSubscription) {
+      fetchSelectedRates(!!stored);
+    }
+  }, [activeTab, fetchSelectedRates, hasMortechSubscription, user?.id]);
+
+  useEffect(() => {
+    if (!hasMortechSubscription) {
+      fetchManualRates();
+    }
+  }, [fetchManualRates, hasMortechSubscription]);
 
   // Handle search form updates
   const handleSearchFormUpdate = useCallback(async (formData: SearchFormData, email?: string) => {
@@ -634,6 +738,193 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
     }
   }, [user?.id, rateToRemove, fetchSelectedRates, showNotification]);
 
+  const handleSaveManualRate = useCallback(async () => {
+    if (!user?.id) return;
+
+    const requiredFields = [
+      'lenderName',
+      'loanProgram',
+      'loanType',
+      'loanTerm',
+      'interestRate',
+      'apr',
+      'monthlyPayment',
+      'fees',
+      'points',
+      'credits',
+      'lockPeriod',
+    ];
+
+    for (const field of requiredFields) {
+      if (!manualRateForm[field as keyof typeof manualRateForm]) {
+        showNotification({
+          type: 'error',
+          title: 'Missing field',
+          message: `Please fill ${field}`,
+        });
+        return;
+      }
+    }
+
+    const toNumber = (value: string) => {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    };
+
+    const ratePayload: Rate = {
+      id: crypto.randomUUID(),
+      lenderName: manualRateForm.lenderName.trim(),
+      loanProgram: manualRateForm.loanProgram.trim(),
+      loanType: manualRateForm.loanType.trim(),
+      loanTerm: Number(manualRateForm.loanTerm),
+      interestRate: toNumber(manualRateForm.interestRate),
+      apr: toNumber(manualRateForm.apr),
+      executionPrice: manualRateForm.executionPrice ? toNumber(manualRateForm.executionPrice) : undefined,
+      monthlyPayment: toNumber(manualRateForm.monthlyPayment),
+      fees: toNumber(manualRateForm.fees),
+      points: toNumber(manualRateForm.points),
+      credits: toNumber(manualRateForm.credits),
+      lockPeriod: Number(manualRateForm.lockPeriod),
+      feeItems: manualFeeItems,
+    };
+
+    if (!Number.isFinite(ratePayload.loanTerm) || !Number.isFinite(ratePayload.lockPeriod)) {
+      showNotification({
+        type: 'error',
+        title: 'Invalid number',
+        message: 'Loan term and lock period must be valid numbers',
+      });
+      return;
+    }
+
+    const numericFields: Array<[string, number | undefined]> = [
+      ['interestRate', ratePayload.interestRate],
+      ['apr', ratePayload.apr],
+      ['monthlyPayment', ratePayload.monthlyPayment],
+      ['fees', ratePayload.fees],
+      ['points', ratePayload.points],
+      ['credits', ratePayload.credits],
+    ];
+    for (const [label, value] of numericFields) {
+      if (!Number.isFinite(value)) {
+        showNotification({
+          type: 'error',
+          title: 'Invalid number',
+          message: `${label} must be a valid number`,
+        });
+        return;
+      }
+    }
+
+    setIsSavingManualRate(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Not authenticated',
+        });
+        return;
+      }
+
+      const response = await fetch('/api/officers/manual-rates', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rateData: ratePayload }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        showNotification({
+          type: 'success',
+          title: 'Saved',
+          message: 'Manual rate added successfully',
+        });
+        setManualRateForm({
+          lenderName: '',
+          loanProgram: '',
+          loanType: '',
+          loanTerm: '',
+          interestRate: '',
+          apr: '',
+          executionPrice: '',
+          monthlyPayment: '',
+          fees: '',
+          points: '',
+          credits: '',
+          lockPeriod: '',
+        });
+        setManualFeeItems([]);
+        setShowManualRateModal(false);
+        fetchManualRates();
+      } else {
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: result.error || 'Failed to save manual rate',
+        });
+      }
+    } catch (err) {
+      console.error('Error saving manual rate:', err);
+      showNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to save manual rate',
+      });
+    } finally {
+      setIsSavingManualRate(false);
+    }
+  }, [fetchManualRates, manualFeeItems, manualRateForm, showNotification, user?.id]);
+
+  const handleDeleteManualRate = useCallback(async (rateId: string) => {
+    if (!user?.id) return;
+    const confirmed = window.confirm('Delete this manual rate?');
+    if (!confirmed) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Not authenticated',
+        });
+        return;
+      }
+
+      const response = await fetch('/api/officers/manual-rates', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: rateId }),
+      });
+
+      if (response.ok) {
+        fetchManualRates();
+      } else {
+        const result = await response.json();
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: result.error || 'Failed to delete manual rate',
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting manual rate:', err);
+      showNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to delete manual rate',
+      });
+    }
+  }, [fetchManualRates, showNotification, user?.id]);
+
   // Check if a rate is already selected
   const isRateSelected = useCallback((rate: Rate): boolean => {
     if (!selectedRates.length) return false;
@@ -710,7 +1001,9 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
               Today's Rates Management
             </h1>
             <p className="text-gray-600">
-              Search for rates and select which ones to display on your public profile
+              {hasMortechSubscription
+                ? 'Search for rates and select which ones to display on your public profile'
+                : 'Add manual rates to display on your public profile'}
             </p>
           </div>
 
@@ -723,19 +1016,21 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
               width: 'fit-content'
             }}
           >
-            <button
-              type="button"
-              onClick={() => setActiveTab('search')}
-              className={`relative z-10 px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                activeTab === 'search' ? 'text-white' : 'text-gray-600'
-              }`}
-              style={{
-                borderRadius: `${templateLayout.borderRadius}px`,
-                backgroundColor: activeTab === 'search' ? '#005b7c' : 'transparent'
-              }}
-            >
-              Search Rates
-            </button>
+            {hasMortechSubscription && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('search')}
+                className={`relative z-10 px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'search' ? 'text-white' : 'text-gray-600'
+                }`}
+                style={{
+                  borderRadius: `${templateLayout.borderRadius}px`,
+                  backgroundColor: activeTab === 'search' ? '#005b7c' : 'transparent'
+                }}
+              >
+                Search Rates
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab('selected')}
@@ -747,12 +1042,12 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
                 backgroundColor: activeTab === 'selected' ? '#005b7c' : 'transparent'
               }}
             >
-              Selected Rates
+              {hasMortechSubscription ? 'Selected Rates' : 'Manual Rates'}
             </button>
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'search' && (
+          {activeTab === 'search' && hasMortechSubscription && (
             <div className="space-y-6">
 
               {/* Error Message */}
@@ -867,8 +1162,82 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
 
           {activeTab === 'selected' && (
             <div className="space-y-4">
+              {!hasMortechSubscription && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Manual Rates</h3>
+                    <p className="text-sm text-gray-600">Add rates manually for your public profile.</p>
+                  </div>
+                  <Button variant="primary" onClick={() => setShowManualRateModal(true)}>
+                    Add Rates
+                  </Button>
+                </div>
+              )}
+
+              {!hasMortechSubscription && loadingManualRates && (
+                <SpotlightCard variant="default" className="p-6 text-center">
+                  <p className="text-gray-500">Loading manual rates...</p>
+                </SpotlightCard>
+              )}
+
+              {!hasMortechSubscription && !loadingManualRates && manualRates.length === 0 && (
+                <SpotlightCard variant="default" className="p-8 text-center">
+                  <p className="text-gray-500">No manual rates yet. Click “Add Rates” to create one.</p>
+                </SpotlightCard>
+              )}
+
+              {!hasMortechSubscription && !loadingManualRates && manualRates.length > 0 && (
+                <div className="space-y-4">
+                  {manualRates.map((manualRate) => {
+                    const rate = manualRate.rateData;
+                    return (
+                      <SpotlightCard key={manualRate.id} variant="default" className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                              <div>
+                                <p className="text-xs text-gray-500">Loan Program</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.loanProgram}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Interest Rate</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.interestRate.toFixed(3)}%</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">APR</p>
+                                <p className="text-sm font-medium dark:text-gray-900">{rate.apr.toFixed(3)}%</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">P&I</p>
+                                <p className="text-sm font-medium dark:text-gray-900">${rate.monthlyPayment.toLocaleString()}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2 sm:min-w-0">
+                            <Button
+                              variant="secondary"
+                              onClick={() => handleViewDetailsClick(rate as Rate)}
+                              className="w-full sm:w-auto sm:min-w-[110px]"
+                            >
+                              Details
+                            </Button>
+                            <Button
+                              variant="danger"
+                              onClick={() => handleDeleteManualRate(manualRate.id)}
+                              className="w-full sm:w-auto sm:min-w-[110px]"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      </SpotlightCard>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Loading Skeleton for Selected Rates */}
-              {loadingSelectedRates && (
+              {hasMortechSubscription && loadingSelectedRates && (
                 <div className="space-y-4">
                   {[1, 2, 3].map((index) => (
                     <SpotlightCard key={`skeleton-${index}`} variant="default" className="p-4">
@@ -901,14 +1270,14 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
               )}
 
               {/* Empty State */}
-              {!loadingSelectedRates && selectedRates.length === 0 && (
+              {hasMortechSubscription && !loadingSelectedRates && selectedRates.length === 0 && (
                 <SpotlightCard variant="default" className="p-8 text-center">
                   <p className="text-gray-500">No rates selected yet. Search for rates and select them to display on your public profile.</p>
                 </SpotlightCard>
               )}
 
               {/* Selected Rates List */}
-              {!loadingSelectedRates && selectedRates.length > 0 && (
+              {hasMortechSubscription && !loadingSelectedRates && selectedRates.length > 0 && (
                 <div className="space-y-4">
                   {selectedRates.map((selectedRate) => {
                     const rate = selectedRate.rateData;
@@ -1005,6 +1374,217 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
           )}
         </div>
       </DashboardLayout>
+
+      {/* Manual Rate Modal */}
+      <Modal
+        isOpen={showManualRateModal}
+        onClose={() => {
+          if (!isSavingManualRate) {
+            setShowManualRateModal(false);
+          }
+        }}
+        title="Add Manual Rate"
+        className="max-w-4xl"
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-600">Lender Name</label>
+              <input
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.lenderName}
+                onChange={updateManualField('lenderName')}
+                placeholder="Lender"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Loan Program</label>
+              <input
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.loanProgram}
+                onChange={updateManualField('loanProgram')}
+                placeholder="30 Year Fixed"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Loan Type</label>
+              <input
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.loanType}
+                onChange={updateManualField('loanType')}
+                placeholder="Conventional"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Loan Term (years)</label>
+              <input
+                type="number"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.loanTerm}
+                onChange={updateManualField('loanTerm')}
+                placeholder="30"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Interest Rate (%)</label>
+              <input
+                type="number"
+                step="0.001"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.interestRate}
+                onChange={updateManualField('interestRate')}
+                placeholder="6.125"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">APR (%)</label>
+              <input
+                type="number"
+                step="0.001"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.apr}
+                onChange={updateManualField('apr')}
+                placeholder="6.250"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Execution Price</label>
+              <input
+                type="number"
+                step="0.001"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.executionPrice}
+                onChange={updateManualField('executionPrice')}
+                placeholder="100.000"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Monthly Payment (P&I)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.monthlyPayment}
+                onChange={updateManualField('monthlyPayment')}
+                placeholder="2150"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Total Fees</label>
+              <input
+                type="number"
+                step="0.01"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.fees}
+                onChange={updateManualField('fees')}
+                placeholder="2200"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Points</label>
+              <input
+                type="number"
+                step="0.001"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.points}
+                onChange={updateManualField('points')}
+                placeholder="0.000"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Credits</label>
+              <input
+                type="number"
+                step="0.01"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.credits}
+                onChange={updateManualField('credits')}
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Lock Period (days)</label>
+              <input
+                type="number"
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                value={manualRateForm.lockPeriod}
+                onChange={updateManualField('lockPeriod')}
+                placeholder="30"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-gray-900">Itemized Fees</h4>
+              <Button variant="secondary" onClick={addFeeItem}>
+                Add Fee Item
+              </Button>
+            </div>
+            {manualFeeItems.length === 0 && (
+              <p className="text-sm text-gray-500">No fee items added.</p>
+            )}
+            {manualFeeItems.map((fee, index) => (
+              <div key={`fee-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="text-xs text-gray-600">Description</label>
+                  <input
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                    value={fee.description}
+                    onChange={(e) => updateFeeItem(index, 'description', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600">Section</label>
+                  <input
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                    value={fee.section}
+                    onChange={(e) => updateFeeItem(index, 'section', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600">Payment Type</label>
+                  <input
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                    value={fee.paymentType}
+                    onChange={(e) => updateFeeItem(index, 'paymentType', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600">Amount</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                    value={fee.amount}
+                    onChange={(e) => updateFeeItem(index, 'amount', e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-600">Prepaid</label>
+                  <input
+                    type="checkbox"
+                    checked={fee.prepaid}
+                    onChange={(e) => updateFeeItem(index, 'prepaid', e.target.checked)}
+                  />
+                  <Button variant="danger" onClick={() => removeFeeItem(index)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowManualRateModal(false)} disabled={isSavingManualRate}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSaveManualRate} disabled={isSavingManualRate}>
+              {isSavingManualRate ? 'Saving...' : 'Save Rate'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Select Rate Confirmation Modal */}
       <Modal

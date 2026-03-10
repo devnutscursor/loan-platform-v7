@@ -32,7 +32,8 @@ export async function sendCompanyAdminInvite(
   companyName: string,
   adminEmail: string,
   website?: string,
-  includeDefaultContent?: boolean
+  includeDefaultContent?: boolean,
+  hasMortechSubscription?: boolean
 ): Promise<InviteResult> {
   try {
     // Validate email format
@@ -83,6 +84,7 @@ export async function sendCompanyAdminInvite(
           is_active: false,
           deactivated: false, // Reset deactivation status
           has_default_content_access: includeDefaultContent || false,
+          has_mortech_subscription: hasMortechSubscription !== false,
         })
         .eq('id', existingCompany.id)
         .select()
@@ -106,6 +108,7 @@ export async function sendCompanyAdminInvite(
           invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
           is_active: false, // Company is inactive until invite is accepted
           has_default_content_access: includeDefaultContent || false,
+          has_mortech_subscription: hasMortechSubscription !== false,
         })
         .select()
         .single();

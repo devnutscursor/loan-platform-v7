@@ -28,6 +28,7 @@ export interface PublicProfileData {
     email?: string;
     license_number?: string;
     company_nmls_number?: string;
+    has_mortech_subscription?: boolean;
     company_social_media?: {
       facebook?: string;
       twitter?: string;

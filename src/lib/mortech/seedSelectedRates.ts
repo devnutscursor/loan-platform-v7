@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { createMortechAPI } from '@/lib/mortech/api';
-import { db, selectedRates, userCompanies } from '@/lib/db';
+import { db, selectedRates, userCompanies, companies } from '@/lib/db';
 import { BUCKET_PRODUCT_IDS, PROGRAM_BUCKETS, ProgramBucket } from '@/lib/mortech/programBuckets';
 
 export type SeededSelectedRateRow = {
@@ -43,6 +43,16 @@ export async function seedSelectedRatesForOfficer(
       throw new Error('Company not found for officer');
     }
     resolvedCompanyId = userCompanyResult[0].companyId;
+  }
+
+  const companyRows = await db
+    .select({ hasMortechSubscription: companies.hasMortechSubscription })
+    .from(companies)
+    .where(eq(companies.id, resolvedCompanyId))
+    .limit(1);
+
+  if (companyRows[0]?.hasMortechSubscription === false) {
+    return { rates: [], seeded: false };
   }
 
   // Read existing selected rates via Drizzle
@@ -106,29 +116,59 @@ export async function seedSelectedRatesForOfficer(
   const bucketBestQuotes = (
     await Promise.all(
       bucketsToSeed.map(async (bucket: ProgramBucket) => {
-        const productIds = BUCKET_PRODUCT_IDS[bucket.id] || [];
-        if (!productIds.length) {
+        try {
+          const productIds = BUCKET_PRODUCT_IDS[bucket.id] || [];
+          if (!productIds.length) {
+            console.warn(`[seed] ${bucket.id}: no product IDs`);
+            return null;
+          }
+
+          const productList = productIds.join(',');
+
+          const response = await mortechAPI.getRates({
+            ...standardScenario,
+            productList,
+          });
+
+          if (!response.success || !response.quotes || response.quotes.length === 0) {
+            console.warn(`[seed] ${bucket.id}: no quotes (success=${response.success}, count=${response.quotes?.length ?? 0})`);
+            return null;
+          }
+
+          // Pick the PAR quote for this bucket: executionPrice (ratesheet_price)
+          // closest to 100. Fallback to lowest note rate if executionPrice is
+          // missing on all quotes.
+          let parQuote = response.quotes[0];
+          let bestDiff = Number.POSITIVE_INFINITY;
+          let foundExecutionPrice = false;
+
+          for (const q of response.quotes) {
+            const ep = q.executionPrice;
+            if (typeof ep === 'number' && Number.isFinite(ep) && ep > 0) {
+              const diff = Math.abs(ep - 100);
+              if (diff < bestDiff) {
+                bestDiff = diff;
+                parQuote = q;
+                foundExecutionPrice = true;
+              }
+            }
+          }
+
+          // If no executionPrice was available on any quote, fall back to the
+          // lowest note rate as before.
+          if (!foundExecutionPrice) {
+            parQuote = response.quotes.reduce((bestSoFar, current) => {
+              const bestRate = bestSoFar.rate ?? Number.POSITIVE_INFINITY;
+              const currentRate = current.rate ?? Number.POSITIVE_INFINITY;
+              return currentRate < bestRate ? current : bestSoFar;
+            });
+          }
+
+          return { bucket, quote: parQuote };
+        } catch (err) {
+          console.warn(`[seed] ${bucket.id}: error`, err);
           return null;
         }
-
-        const productList = productIds.join(',');
-
-        const response = await mortechAPI.getRates({
-          ...standardScenario,
-          productList,
-        });
-
-        if (!response.success || !response.quotes || response.quotes.length === 0) {
-          return null;
-        }
-
-        const best = response.quotes.reduce((bestSoFar, current) => {
-          const bestRate = bestSoFar.rate ?? Number.POSITIVE_INFINITY;
-          const currentRate = current.rate ?? Number.POSITIVE_INFINITY;
-          return currentRate < bestRate ? current : bestSoFar;
-        });
-
-        return { bucket, quote: best };
       }),
     )
   ).filter(
@@ -171,11 +211,21 @@ export async function seedSelectedRatesForOfficer(
       0,
     );
 
+    const hasExecutionPrice =
+      typeof quote.executionPrice === 'number' &&
+      Number.isFinite(quote.executionPrice) &&
+      quote.executionPrice > 0;
+    const points = hasExecutionPrice
+      ? Number((100 - quote.executionPrice).toFixed(3))
+      : quote.points ?? 0;
+
     return {
       officerId,
       companyId: resolvedCompanyId,
       rateData: {
         id: quote.productId,
+        productId: quote.productId,
+        bucketId: bucket.id,
         lenderName: quote.vendorName,
         loanProgram: bucket.label,
         productDesc: quote.productDesc,
@@ -186,9 +236,10 @@ export async function seedSelectedRatesForOfficer(
         monthlyPayment: quote.monthlyPayment,
         fees: totalFees,
         feeItems,
-        points: quote.points,
+        points,
         credits: 0,
         lockPeriod: quote.lockTerm,
+        executionPrice: hasExecutionPrice ? quote.executionPrice : undefined,
         searchParams: defaultSearchParams,
       },
     };

@@ -72,6 +72,7 @@ interface LandingPageTabsProps {
   // User context props for lead submission
   userId?: string;
   companyId?: string;
+  hasMortechSubscription?: boolean;
   // Layout props
   hideTabNavigation?: boolean; // Hide the tab navigation (for sidebar layout)
   // Force mobile view (for customizer mobile preview)
@@ -155,6 +156,7 @@ export default function LandingPageTabs({
   // User context props
   userId,
   companyId,
+  hasMortechSubscription,
   // Layout props
   hideTabNavigation = false,
   // Force mobile view
@@ -176,7 +178,10 @@ export default function LandingPageTabs({
                                   templateData?.template?.body_modifications ||
                                   {};
   const enabledTabs = bodyModsForEnabledTabs?.enabledTabs || bodyModsForEnabledTabs?.enabled_tabs || tabs.map(tab => tab.id);
-  const filteredTabs = tabs.filter(tab => enabledTabs.includes(tab.id));
+  // Hide "Get My Custom Rate" for non–Mortech companies (public profile)
+  const filteredTabs = tabs
+    .filter(tab => enabledTabs.includes(tab.id))
+    .filter(tab => !(tab.id === 'get-custom-rate' && hasMortechSubscription === false));
   const navigationTabs = filteredTabs.filter(tab => tab.id !== 'apply-now');
   
   // Get active tab - use template customization's activeTab on initial load
@@ -268,9 +273,23 @@ export default function LandingPageTabs({
           publicTemplateData={publicTemplateData}
           userId={userId}
           companyId={companyId}
+          hasMortechSubscription={hasMortechSubscription}
         />;
       
       case 'get-custom-rate':
+        // Non–Mortech companies: do not show this tab (fallback to Today's Rates)
+        if (hasMortechSubscription === false) {
+          return (
+            <TodaysRatesTab
+              selectedTemplate={selectedTemplate}
+              isPublic={isPublic}
+              publicTemplateData={publicTemplateData}
+              userId={userId}
+              companyId={companyId}
+              hasMortechSubscription={hasMortechSubscription}
+            />
+          );
+        }
         return (
           <Suspense fallback={<TabLoadingSkeleton selectedTemplate={selectedTemplate} />}>
             <MortgageRateComparison 
@@ -352,6 +371,7 @@ export default function LandingPageTabs({
           publicTemplateData={publicTemplateData}
           userId={userId}
           companyId={companyId}
+          hasMortechSubscription={hasMortechSubscription}
         />;
     }
   };

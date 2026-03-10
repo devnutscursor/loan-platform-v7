@@ -14,6 +14,7 @@
     "db:run-migration": "tsx scripts/run-migration.ts",
     "db:baseline": "tsx scripts/baseline-migrations.ts",
     "sync-mortech-catalog": "tsx scripts/sync-mortech-catalog.ts",
+    "reseed:selected-rates": "tsx scripts/reseed-selected-rates.ts",
     "type-check": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",
     "seed:auth": "tsx scripts/seed-auth.ts",

@@ -99,6 +99,9 @@ export const companies = pgTable('companies', {
   // Default content access
   hasDefaultContentAccess: boolean('has_default_content_access').default(false), // Whether company has access to default FAQs, guides, and videos
   
+  // Mortech subscription access
+  hasMortechSubscription: boolean('has_mortech_subscription').default(true),
+  
   // Timestamps
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -414,6 +417,19 @@ export const selectedRates = pgTable('selected_rates', {
   companyIdx: index('selected_rates_company_idx').on(table.companyId),
 }));
 
+// Manual Rates table - Stores manually entered rates for non-Mortech companies
+export const manualRates = pgTable('manual_rates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  companyId: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  rateData: jsonb('rate_data').notNull(), // Full rate object from manual entry
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  officerIdx: index('manual_rates_officer_idx').on(table.officerId),
+  companyIdx: index('manual_rates_company_idx').on(table.companyId),
+}));
+
 // Mortech API Calls table - Tracks API calls for rate limiting
 export const mortechApiCalls = pgTable('mortech_api_calls', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -518,6 +534,8 @@ export type OfficerContentGuide = typeof officerContentGuides.$inferSelect;
 export type NewOfficerContentGuide = typeof officerContentGuides.$inferInsert;
 export type SelectedRate = typeof selectedRates.$inferSelect;
 export type NewSelectedRate = typeof selectedRates.$inferInsert;
+export type ManualRate = typeof manualRates.$inferSelect;
+export type NewManualRate = typeof manualRates.$inferInsert;
 export type MortechApiCall = typeof mortechApiCalls.$inferSelect;
 export type NewMortechApiCall = typeof mortechApiCalls.$inferInsert;
 export type EmailVerification = typeof emailVerifications.$inferSelect;
