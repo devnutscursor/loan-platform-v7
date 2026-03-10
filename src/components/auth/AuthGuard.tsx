@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -49,7 +50,14 @@ export function AuthGuard({ children, requiredRole, fallback }: AuthGuardProps) 
         <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/logo.jpeg"
+                  alt="RateCaddy"
+                  width={40}
+                  height={40}
+                  className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                />
                 <span className="text-2xl md:text-3xl font-bold tracking-tight">
                   <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
                     RateCaddy

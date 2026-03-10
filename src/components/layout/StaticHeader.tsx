@@ -228,7 +228,14 @@ const StaticHeader = memo(function StaticHeader() {
       <nav style={dashboard.nav}>
         <div style={dashboard.navContent}>
           <div style={dashboard.navInner}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Image
+                src="/logo.jpeg"
+                alt="RateCaddy"
+                width={40}
+                height={40}
+                className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+              />
               <div style={{ flexShrink: 0 }}>
                 <span className="text-2xl md:text-3xl font-bold tracking-tight">
                     <span className="bg-white bg-clip-text text-transparent">
@@ -321,6 +328,9 @@ const StaticHeader = memo(function StaticHeader() {
                     cursor: 'pointer',
                     padding: '0',
                     transition: 'opacity 0.2s ease-in-out',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.opacity = '0.8';
@@ -329,6 +339,13 @@ const StaticHeader = memo(function StaticHeader() {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
+                  <Image
+                    src="/logo.jpeg"
+                    alt="RateCaddy"
+                    width={40}
+                    height={40}
+                    className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                  />
                   <span className="text-2xl md:text-3xl font-bold tracking-tight">
                     <span className="bg-white bg-clip-text text-transparent">
                       RateCaddy

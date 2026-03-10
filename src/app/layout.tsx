@@ -7,6 +7,13 @@ import { UnifiedTemplateProvider } from "@/contexts/UnifiedTemplateContext";
 export const metadata: Metadata = {
   title: "Loan Officer Platform",
   description: "Professional loan management platform",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
