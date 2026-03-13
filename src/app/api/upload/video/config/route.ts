@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET_VIDEO || process.env.CLOUDINARY_UPLOAD_PRESET;
-
 /**
  * GET /api/upload/video/config
  * Returns Cloudinary config for direct (browser) upload. Avoids sending large
  * video through our API and prevents "Failed to parse body as FormData" / body size limits.
  */
 export async function GET() {
+  // Read env variables at runtime so changes in hosting env
+  // (e.g. Amplify environment variables) are picked up without
+  // needing to rebuild the bundle.
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const uploadPreset =
+    process.env.CLOUDINARY_UPLOAD_PRESET_VIDEO || process.env.CLOUDINARY_UPLOAD_PRESET;
+
   if (!cloudName || !uploadPreset) {
     return NextResponse.json(
       {
