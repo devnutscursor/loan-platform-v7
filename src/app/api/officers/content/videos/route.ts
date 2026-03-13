@@ -88,6 +88,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const thumbnailUrlResolved =
+      thumbnail_url ||
+      (cloudName
+        ? `https://res.cloudinary.com/${cloudName}/video/upload/so_1,w_1280,h_720,c_limit,f_jpg/${cloudinary_public_id}`
+        : null);
+
     // Insert video
     const newVideo = {
       officerId: user.id,
@@ -95,7 +102,7 @@ export async function POST(request: NextRequest) {
       description: description || null,
       category,
       videoUrl: video_url,
-      thumbnailUrl: thumbnail_url || null,
+      thumbnailUrl: thumbnailUrlResolved,
       duration,
       cloudinaryPublicId: cloudinary_public_id,
       createdAt: new Date(),

@@ -595,7 +595,8 @@ export const dashboard = {
   navInner: {
     display: 'flex',
     justifyContent: 'space-between',
-    height: '64px',
+    alignItems: 'center',
+    height: '80px',
   },
   navLinks: {
     display: 'flex',

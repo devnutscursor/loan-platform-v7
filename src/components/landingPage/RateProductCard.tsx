@@ -79,7 +79,7 @@ export default function RateProductCard({
               </span>
             </div>
             <span className="text-sm font-medium" style={{ color: colors.text }}>
-              {product.loanTerm}-Year Fixed
+              {product.loanProgram || `${product.loanTerm}-Year Fixed`}
             </span>
           </div>
 

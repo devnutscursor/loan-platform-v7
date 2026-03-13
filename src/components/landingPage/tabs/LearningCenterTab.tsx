@@ -14,6 +14,9 @@ interface Video {
   duration: string;
   thumbnail: string;
   category: string;
+  // Optional fields for external videos (e.g. Loom)
+  externalUrl?: string;
+  embedUrl?: string;
 }
 
 interface FAQ {
@@ -167,43 +170,191 @@ button: {
   const [videos, setVideos] = useState<Video[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [guides, setGuides] = useState<any[]>([]);
-  const [videoDataMap, setVideoDataMap] = useState<Map<string, any>>(new Map()); // Store full video data with URLs
+  const [videoDataMap, setVideoDataMap] = useState<Map<string, any>>(new Map()); // Store full video data with URLs / embeds
   const [loadingContent, setLoadingContent] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-  // Mock data as fallback
+  // Mock data as fallback (global Learning Center defaults)
   const mockVideos: Video[] = [
     {
-      id: '1',
-      title: 'Understanding Mortgage Rates',
-      description: 'Learn how mortgage rates are determined and what affects them',
-      duration: '8:45',
-      thumbnail: '/api/placeholder/300/200',
-      category: 'mortgage-basics'
+      id: 'heloc',
+      title: 'HELOC',
+      description: 'Overview of Home Equity Line of Credit (HELOC).',
+      duration: '',
+      thumbnail: '',
+      category: 'heloc',
+      externalUrl: 'https://www.loom.com/share/cf22106d15254413aed16821beb45633',
+      embedUrl: 'https://www.loom.com/embed/cf22106d15254413aed16821beb45633'
     },
     {
-      id: '2',
-      title: 'First-Time Home Buyer Guide',
-      description: 'Complete guide for first-time home buyers',
-      duration: '12:30',
-      thumbnail: '/api/placeholder/300/200',
-      category: 'first-time-buyer'
+      id: 'fha',
+      title: 'FHA Loans',
+      description: 'Learn about FHA loan requirements and benefits.',
+      duration: '',
+      thumbnail: '',
+      category: 'fha-loan',
+      externalUrl: 'https://www.loom.com/share/30d9765a7e4b49a69fd158f74c48b6b0',
+      embedUrl: 'https://www.loom.com/embed/30d9765a7e4b49a69fd158f74c48b6b0'
     },
     {
-      id: '3',
-      title: 'Credit Score Improvement',
-      description: 'Tips to improve your credit score for better rates',
-      duration: '6:15',
-      thumbnail: '/api/placeholder/300/200',
-      category: 'credit'
+      id: 'va-loan',
+      title: 'Loan Type - VA',
+      description: 'VA loan overview for eligible veterans and service members.',
+      duration: '',
+      thumbnail: '',
+      category: 'va-loan',
+      externalUrl: 'https://www.loom.com/share/ea6f48ee50f64fd1a0c8d3bab60358c5',
+      embedUrl: 'https://www.loom.com/embed/ea6f48ee50f64fd1a0c8d3bab60358c5'
     },
     {
-      id: '4',
-      title: 'Down Payment Strategies',
-      description: 'Different ways to save for your down payment',
-      duration: '9:20',
-      thumbnail: '/api/placeholder/300/200',
-      category: 'financing'
+      id: 'bank-statement',
+      title: 'Loan Type – Bank Statement',
+      description: 'Bank statement loans for self-employed borrowers.',
+      duration: '',
+      thumbnail: '',
+      category: 'bank-statement',
+      externalUrl: 'https://www.loom.com/share/d0b9c15f012447d782cf40746b12d712',
+      embedUrl: 'https://www.loom.com/embed/d0b9c15f012447d782cf40746b12d712'
+    },
+    {
+      id: 'usda',
+      title: 'Loan Type - USDA',
+      description: 'USDA loans for eligible rural and suburban homebuyers.',
+      duration: '',
+      thumbnail: '',
+      category: 'usda-loan',
+      externalUrl: 'https://www.loom.com/share/5ee2eefdd5ae4ad0bf6b0e762dd6789e',
+      embedUrl: 'https://www.loom.com/embed/5ee2eefdd5ae4ad0bf6b0e762dd6789e'
+    },
+    {
+      id: '1099',
+      title: 'Loan Type - 1099',
+      description: '1099 income loans for independent contractors.',
+      duration: '',
+      thumbnail: '',
+      category: '1099-loans',
+      externalUrl: 'https://www.loom.com/share/08a55a3508ae443b894a82a30bdf42ee',
+      embedUrl: 'https://www.loom.com/embed/08a55a3508ae443b894a82a30bdf42ee'
+    },
+    {
+      id: 'jumbo',
+      title: 'Loan Type - Jumbo',
+      description: 'Jumbo loans for high-value properties.',
+      duration: '',
+      thumbnail: '',
+      category: 'jumbo-loan',
+      externalUrl: 'https://www.loom.com/share/3bdd22dd54464ca98f63d03d009c5f3d',
+      embedUrl: 'https://www.loom.com/embed/3bdd22dd54464ca98f63d03d009c5f3d'
+    },
+    {
+      id: 'down-payment-assistance',
+      title: 'Loan Type – Down Payment Assistance',
+      description: 'Down payment assistance programs overview.',
+      duration: '',
+      thumbnail: '',
+      category: 'down-payment-assistance-loan',
+      externalUrl: 'https://www.loom.com/share/fa264d056bdf47a3ac907614610fd62a',
+      embedUrl: 'https://www.loom.com/embed/fa264d056bdf47a3ac907614610fd62a'
+    },
+    {
+      id: 'conventional',
+      title: 'Loan Type - Conventional',
+      description: 'Standard conventional loan programs.',
+      duration: '',
+      thumbnail: '',
+      category: 'conventional',
+      externalUrl: 'https://www.loom.com/share/21d5ba0ba49741ae8b221d3c19c9b50d',
+      embedUrl: 'https://www.loom.com/embed/21d5ba0ba49741ae8b221d3c19c9b50d'
+    },
+    {
+      id: 'construction',
+      title: 'Loan Type - Construction',
+      description: 'Construction loans for building your home.',
+      duration: '',
+      thumbnail: '',
+      category: 'construction-loan',
+      externalUrl: 'https://www.loom.com/share/e6b0868ead5444edbdc7d0ea38ff05e4',
+      embedUrl: 'https://www.loom.com/embed/e6b0868ead5444edbdc7d0ea38ff05e4'
+    },
+    {
+      id: 'va-irrrl',
+      title: 'Loan Type – VA IRRRL',
+      description: 'VA Interest Rate Reduction Refinance Loan (IRRRL).',
+      duration: '',
+      thumbnail: '',
+      category: 'va-irrrl',
+      externalUrl: 'https://www.loom.com/share/191300ee926143308fbb7cb2919ac31d',
+      embedUrl: 'https://www.loom.com/embed/191300ee926143308fbb7cb2919ac31d'
+    },
+    {
+      id: 'dscr',
+      title: 'Loan Type - DSCR',
+      description: 'Debt Service Coverage Ratio (DSCR) investment loans.',
+      duration: '',
+      thumbnail: '',
+      category: 'dscr-loans',
+      externalUrl: 'https://www.loom.com/share/7764ef7a4d974ae3b27ae80af37505f0',
+      embedUrl: 'https://www.loom.com/embed/7764ef7a4d974ae3b27ae80af37505f0'
+    },
+    {
+      id: 'bridge',
+      title: 'Loan Type – Bridge Loans',
+      description: 'Bridge loans to help you buy before you sell.',
+      duration: '',
+      thumbnail: '',
+      category: 'bridge-loans',
+      externalUrl: 'https://www.loom.com/share/f2065c9905064f38af80924aca8eea67',
+      embedUrl: 'https://www.loom.com/embed/f2065c9905064f38af80924aca8eea67'
+    },
+    {
+      id: 'rate-term-refinance',
+      title: 'Loan Type – Rate and Term Refinance',
+      description: 'Refinancing to adjust rate and term only.',
+      duration: '',
+      thumbnail: '',
+      category: 'rate-term-refinance',
+      externalUrl: 'https://www.loom.com/share/54e9e9e8ed1e4c67a0f83bb56581cdaa',
+      embedUrl: 'https://www.loom.com/embed/54e9e9e8ed1e4c67a0f83bb56581cdaa'
+    },
+    {
+      id: 'cashout-refinance',
+      title: 'Loan Type – Cashout Refinance',
+      description: 'Using home equity with a cash-out refinance.',
+      duration: '',
+      thumbnail: '',
+      category: 'cash-out',
+      externalUrl: 'https://www.loom.com/share/598ef4cb6e6940d48a5fd90b5ccec886',
+      embedUrl: 'https://www.loom.com/embed/598ef4cb6e6940d48a5fd90b5ccec886'
+    },
+    {
+      id: 'asset-depletion',
+      title: 'Loan Type – Asset Depletion Loan',
+      description: 'Loans qualified based on assets instead of income.',
+      duration: '',
+      thumbnail: '',
+      category: 'asset-depletion-loans',
+      externalUrl: 'https://www.loom.com/share/88e7b080348e49bba7e3ae00284c30e5',
+      embedUrl: 'https://www.loom.com/embed/88e7b080348e49bba7e3ae00284c30e5'
+    },
+    {
+      id: 'fha-streamline',
+      title: 'Loan Type – FHA Streamline Refinance',
+      description: 'Streamlined refinancing options for FHA loans.',
+      duration: '',
+      thumbnail: '',
+      category: 'streamline',
+      externalUrl: 'https://www.loom.com/share/d2c45e8eabe84dcfaa0674673d67cfef',
+      embedUrl: 'https://www.loom.com/embed/d2c45e8eabe84dcfaa0674673d67cfef'
+    },
+    {
+      id: 'pre-approval',
+      title: 'Loan Type – Pre-Approval',
+      description: 'Understanding the mortgage pre-approval process.',
+      duration: '',
+      thumbnail: '',
+      category: 'pre-approval',
+      externalUrl: 'https://www.loom.com/share/ff5dd539dd324998a8ecceb7c6869340',
+      embedUrl: 'https://www.loom.com/embed/ff5dd539dd324998a8ecceb7c6869340'
     }
   ];
 
@@ -259,7 +410,8 @@ button: {
         { id: 'usda-loan', name: 'USDA Loan' },
         { id: '2nd-mortgage', name: '2nd Mortgage' },
         { id: 'construction-loan', name: 'Construction Loan' },
-        { id: 'down-payment-assistance-loan', name: 'Down Payment Assistance Loan' }
+        { id: 'down-payment-assistance-loan', name: 'Down Payment Assistance Loan' },
+        { id: 'pre-approval', name: 'Pre-Approval' }
       ]
     },
     'refinance-loans': {
@@ -270,7 +422,8 @@ button: {
         { id: 'streamline', name: 'Streamline' },
         { id: 'va-irrrl', name: 'VA IRRRL' },
         { id: 'heloc', name: 'HELOC' },
-        { id: 'cash-out', name: 'Cash-Out' }
+        { id: 'cash-out', name: 'Cash-Out' },
+        { id: 'rate-term-refinance', name: 'Rate & Term Refinance' }
       ]
     },
     'non-qm-loans': {
@@ -279,9 +432,10 @@ button: {
       subCategories: [
         { id: 'all', name: 'All Non-QM Loans' },
         { id: '1099-loans', name: '1099 Loans' },
-        { id: 'va-irrrl', name: 'VA IRRRL' },
-        { id: 'heloc', name: 'HELOC' },
-        { id: 'cash-out', name: 'Cash-Out' }
+        { id: 'dscr-loans', name: 'DSCR Loans' },
+        { id: 'bank-statement', name: 'Bank Statement' },
+        { id: 'asset-depletion-loans', name: 'Asset Depletion Loans' },
+        { id: 'bridge-loans', name: 'Bridge Loans' }
       ]
     }
   };
@@ -297,6 +451,9 @@ button: {
           // Use mock data if no officer ID
           setVideos(mockVideos);
           setFaqs(mockFAQs);
+          const mockMap = new Map();
+          mockVideos.forEach((v) => mockMap.set(v.id, v));
+          setVideoDataMap(mockMap);
           setLoadingContent(false);
           return;
         }
@@ -307,8 +464,9 @@ button: {
           if (response.ok) {
             const data = await response.json();
             if (data.success) {
-              // Transform API data to component format
-              const videosList = (data.data.videos || []).map((v: any) => ({
+              // Transform officer-specific API data to component format
+              const officerVideosRaw = data.data.videos || [];
+              const officerVideosList = officerVideosRaw.map((v: any) => ({
                 id: v.id,
                 title: v.title,
                 description: v.description || '',
@@ -316,10 +474,17 @@ button: {
                 thumbnail: v.thumbnailUrl || '',
                 category: v.category
               }));
-              setVideos(videosList);
-              // Store full video data for URL access
+
+              // Combine officer videos with global Learning Center videos (Loom list)
+              const combinedVideos = [...officerVideosList, ...mockVideos];
+              setVideos(combinedVideos);
+
+              // Store full video data for URL / embed access
               const videoMap = new Map();
-              (data.data.videos || []).forEach((v: any) => {
+              officerVideosRaw.forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              mockVideos.forEach((v) => {
                 videoMap.set(v.id, v);
               });
               setVideoDataMap(videoMap);
@@ -339,6 +504,9 @@ button: {
             // Use mock data if no auth token
             setVideos(mockVideos);
             setFaqs(mockFAQs);
+            const mockMap = new Map();
+            mockVideos.forEach((v) => mockMap.set(v.id, v));
+            setVideoDataMap(mockMap);
             setLoadingContent(false);
             return;
           }
@@ -358,7 +526,8 @@ button: {
           if (videosRes.ok) {
             const videosData = await videosRes.json();
             if (videosData.success) {
-              const videosList = (videosData.data || []).map((v: any) => ({
+              const officerVideosRaw = videosData.data || [];
+              const officerVideosList = officerVideosRaw.map((v: any) => ({
                 id: v.id,
                 title: v.title,
                 description: v.description || '',
@@ -366,10 +535,17 @@ button: {
                 thumbnail: v.thumbnailUrl || '',
                 category: v.category
               }));
-              setVideos(videosList);
-              // Store full video data for URL access
+
+              // Combine officer videos with global Learning Center videos (Loom list)
+              const combinedVideos = [...officerVideosList, ...mockVideos];
+              setVideos(combinedVideos);
+
+              // Store full video data for URL / embed access
               const videoMap = new Map();
-              (videosData.data || []).forEach((v: any) => {
+              officerVideosRaw.forEach((v: any) => {
+                videoMap.set(v.id, v);
+              });
+              mockVideos.forEach((v) => {
                 videoMap.set(v.id, v);
               });
               setVideoDataMap(videoMap);
@@ -398,8 +574,11 @@ button: {
       } catch (error) {
         console.error('Error fetching content:', error);
         // Fallback to mock data on error
-        setVideos(mockVideos);
-        setFaqs(mockFAQs);
+      setVideos(mockVideos);
+      setFaqs(mockFAQs);
+      const mockMap = new Map();
+      mockVideos.forEach((v) => mockMap.set(v.id, v));
+      setVideoDataMap(mockMap);
       } finally {
         setLoadingContent(false);
       }
@@ -847,6 +1026,9 @@ button: {
               {(() => {
                 const videoData = videoDataMap.get(selectedVideo.id);
                 const videoUrl = videoData?.videoUrl || videoData?.video_url;
+                const embedUrl = videoData?.embedUrl || selectedVideo.embedUrl;
+
+                // Prefer HTML5 video when we have a direct URL (Cloudinary / uploaded videos)
                 if (videoUrl) {
                   return (
                     <video
@@ -862,6 +1044,21 @@ button: {
                     </video>
                   );
                 }
+
+                // Fallback for external videos (e.g. Loom) using iframe embed
+                if (embedUrl) {
+                  return (
+                    <div className="w-full h-full max-h-[70vh]" style={{ position: 'relative', paddingBottom: '56.25%' }}>
+                      <iframe
+                        src={embedUrl}
+                        frameBorder="0"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-lg"
+                      />
+                    </div>
+                  );
+                }
+
                 return (
                   <p className="text-white">Video URL not available</p>
                 );

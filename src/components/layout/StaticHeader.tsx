@@ -222,28 +222,30 @@ const StaticHeader = memo(function StaticHeader() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMobileMenuOpen]);
 
+  const headerNavStyle = {
+    ...dashboard.nav,
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderBottom: '1px solid rgba(247, 241, 233, 0.3)',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    backdropFilter: 'blur(12px)',
+  };
+
   // Don't render if auth is still loading OR if user role is not yet determined
   if (authLoading || roleLoading || profileLoading || !user || !userRole) {
     return (
-      <nav style={dashboard.nav}>
+      <nav style={headerNavStyle}>
         <div style={dashboard.navContent}>
           <div style={dashboard.navInner}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <Image
-                src="/logo.jpeg"
+                src="/logonobg.png"
                 alt="RateCaddy"
+                unoptimized
                 width={40}
                 height={40}
-                className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                className="flex-shrink-0 h-10 w-auto md:h-12"
+                priority
               />
-              <div style={{ flexShrink: 0 }}>
-                <span className="text-2xl md:text-3xl font-bold tracking-tight">
-                    <span className="bg-white bg-clip-text text-transparent">
-                      RateCaddy
-                    </span>
-                    <p className="text-sm text-gray-200">By Syncly360 CRM</p>
-                </span>
-              </div>
             </div>
             <div style={dashboard.userInfo}>
               <div style={{ 
@@ -314,7 +316,7 @@ const StaticHeader = memo(function StaticHeader() {
 
   return (
     <>
-      <nav style={dashboard.nav}>
+      <nav style={headerNavStyle}>
         <div style={dashboard.navContent}>
           <div style={dashboard.navInner}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -330,7 +332,6 @@ const StaticHeader = memo(function StaticHeader() {
                     transition: 'opacity 0.2s ease-in-out',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.opacity = '0.8';
@@ -340,18 +341,14 @@ const StaticHeader = memo(function StaticHeader() {
                   }}
                 >
                   <Image
-                    src="/logo.jpeg"
+                    src="/logonobg.png"
                     alt="RateCaddy"
-                    width={40}
-                    height={40}
-                    className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                    unoptimized
+                    width={260}
+                    height={80}
+                    className="flex-shrink-0 h-10 w-auto md:h-12"
+                    priority
                   />
-                  <span className="text-2xl md:text-3xl font-bold tracking-tight">
-                    <span className="bg-white bg-clip-text text-transparent">
-                      RateCaddy
-                    </span>
-                    <p className="text-sm text-gray-200 mr-2 md:mr-9">By Syncly360 CRM</p>
-                  </span>
                 </button>
               </div>
               
@@ -382,12 +379,12 @@ const StaticHeader = memo(function StaticHeader() {
                   }}
                 >
                   <div style={dashboard.userDetails}>
-                    <p style={dashboard.userEmail}>
+                    <p style={{ ...dashboard.userEmail, color: '#111827' }}>
                       {stableUserData.fullName || stableUserData.email}
                     </p>
-                    <p style={dashboard.userRole}>{roleDisplayName}</p>
+                    <p style={{ ...dashboard.userRole, color: '#6b7280' }}>{roleDisplayName}</p>
                   </div>
-                  <div style={dashboard.userAvatar}>
+                  <div style={{ ...dashboard.userAvatar, backgroundColor: '#e5e7eb' }}>
                     {stableUserData.avatar ? (
                       <Image
                         src={stableUserData.avatar}
@@ -402,7 +399,7 @@ const StaticHeader = memo(function StaticHeader() {
                         }}
                       />
                     ) : (
-                      <span style={dashboard.userAvatarText}>
+                      <span style={{ ...dashboard.userAvatarText, color: '#374151' }}>
                         {stableUserData.initial}
                       </span>
                     )}
@@ -448,7 +445,7 @@ const StaticHeader = memo(function StaticHeader() {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '0.5rem',
-                  color: 'white',
+                  color: '#005b7c',
                   transition: 'opacity 0.2s ease'
                 }}
                 aria-label="Toggle menu"

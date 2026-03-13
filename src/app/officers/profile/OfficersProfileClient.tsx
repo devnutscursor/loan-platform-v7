@@ -146,6 +146,10 @@ export default function OfficersProfileClient({
   const [publicLinkLoading, setPublicLinkLoading] = useState(false);
   const [publicLinkCreating, setPublicLinkCreating] = useState(false);
   const [publicLinkError, setPublicLinkError] = useState<string | null>(null);
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [slugEditValue, setSlugEditValue] = useState('');
+  const [slugSaveError, setSlugSaveError] = useState<string | null>(null);
+  const [slugSaving, setSlugSaving] = useState(false);
   
   // Company data state
   const [companyData, setCompanyData] = useState<any>(null);
@@ -412,7 +416,8 @@ export default function OfficersProfileClient({
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
       : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    return `${baseUrl}/public/profile/${publicLink.publicSlug}`;
+    // Display / copy a clean root-level URL (no /public/profile prefix)
+    return `${baseUrl}/${publicLink.publicSlug}`;
   };
 
   const copyPublicLink = () => {
@@ -420,6 +425,46 @@ export default function OfficersProfileClient({
       const publicUrl = getPublicUrl();
       navigator.clipboard.writeText(publicUrl);
       console.log('Copied public URL:', publicUrl);
+    }
+  };
+
+  const startEditingSlug = () => {
+    setSlugEditValue(publicLink?.publicSlug ?? '');
+    setSlugSaveError(null);
+    setIsEditingSlug(true);
+  };
+
+  const cancelEditingSlug = () => {
+    setIsEditingSlug(false);
+    setSlugSaveError(null);
+  };
+
+  const saveSlug = async () => {
+    if (!publicLink) return;
+    const trimmed = slugEditValue.trim().toLowerCase();
+    if (!trimmed) {
+      setSlugSaveError('Please enter a URL slug.');
+      return;
+    }
+    setSlugSaving(true);
+    setSlugSaveError(null);
+    try {
+      const response = await fetch('/api/public-links', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId: publicLink.id, publicSlug: trimmed }),
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        setPublicLink({ ...publicLink, publicSlug: result.data.publicSlug });
+        setIsEditingSlug(false);
+      } else {
+        setSlugSaveError(result.message || 'Failed to update URL slug.');
+      }
+    } catch (e) {
+      setSlugSaveError('Failed to update URL slug.');
+    } finally {
+      setSlugSaving(false);
     }
   };
 
@@ -733,9 +778,48 @@ export default function OfficersProfileClient({
                     <div className="grid grid-cols-1 gap-3 md:gap-4 text-xs md:text-sm">
                       <div className="min-w-0">
                         <span className="font-medium text-gray-700">Public URL:</span>
-                        <p className="text-gray-600 break-all overflow-wrap-anywhere mt-1">
-                          {getPublicUrl()}
-                        </p>
+                        {isEditingSlug ? (
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-gray-500">
+                                {typeof window !== 'undefined' ? `${window.location.origin}/` : ''}
+                              </span>
+                              <input
+                                type="text"
+                                value={slugEditValue}
+                                onChange={(e) => setSlugEditValue(e.target.value)}
+                                placeholder="johnd"
+                                className="flex-1 min-w-[120px] px-2 py-1.5 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-[#01bcc6] focus:border-[#01bcc6]"
+                                disabled={slugSaving}
+                              />
+                            </div>
+                            <p className="text-gray-500">Use only lowercase letters and numbers (e.g. firstname + last initial).</p>
+                            {slugSaveError && <p className="text-red-600">{slugSaveError}</p>}
+                            <div className="flex gap-2">
+                              <Button onClick={saveSlug} disabled={slugSaving} variant="primary" size="sm">
+                                {slugSaving ? 'Saving...' : 'Save'}
+                              </Button>
+                              <Button onClick={cancelEditingSlug} variant="secondary" size="sm" disabled={slugSaving}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-gray-600 break-all overflow-wrap-anywhere mt-1">
+                              {getPublicUrl()}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="mt-2 text-xs"
+                              onClick={startEditingSlug}
+                            >
+                              Edit URL slug
+                            </Button>
+                          </>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>

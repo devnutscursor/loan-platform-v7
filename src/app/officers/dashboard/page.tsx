@@ -610,7 +610,7 @@ export default function OfficersDashboardPage() {
                             Active Public Link
                           </p>
                           <p className="text-xs sm:text-sm text-gray-500 break-all">
-                            {typeof window !== 'undefined' ? `${window.location.origin}/public/profile/${publicLink.public_slug}` : ''}
+                            {typeof window !== 'undefined' ? `${window.location.origin}/${publicLink.public_slug}` : ''}
                           </p>
                         </div>
                       </div>
@@ -624,7 +624,7 @@ export default function OfficersDashboardPage() {
                         </Button>
                         <Button
                           variant="primary"
-                          onClick={() => typeof window !== 'undefined' && window.open(`${window.location.origin}/public/profile/${publicLink.public_slug}`, '_blank')}
+                          onClick={() => typeof window !== 'undefined' && window.open(`${window.location.origin}/${publicLink.public_slug}`, '_blank')}
                           className="btn-primary-solid w-full sm:w-auto min-w-[80px] sm:min-w-[100px] px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gradient-to-r from-[#10b981] to-[#059669]"
                         >
                           Open Link

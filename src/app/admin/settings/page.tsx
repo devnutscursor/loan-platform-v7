@@ -616,7 +616,7 @@ export default function AdminSettingsPage() {
     try {
       setSaving(true);
       
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage (bucket must exist: Storage → New bucket → name: company-logos, Public)
       const fileExt = companyLogoFile.name.split('.').pop();
       const fileName = `${companyProfile.id}.${fileExt}`;
       const filePath = `${companyProfile.id}/${fileName}`;
@@ -628,7 +628,13 @@ export default function AdminSettingsPage() {
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        const msg = uploadError.message || '';
+        const isBucketMissing = msg.toLowerCase().includes('bucket') && msg.toLowerCase().includes('not found');
+        throw new Error(isBucketMissing
+          ? "Storage bucket 'company-logos' does not exist. Create it in Supabase: Storage → New bucket → name: company-logos, Public: ON."
+          : msg);
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -1092,7 +1098,7 @@ export default function AdminSettingsPage() {
                             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                           />
                           <p className="mt-1 text-xs text-gray-500">
-                            Upload a company logo (JPG, PNG, GIF, WebP - Max 5MB)
+                            Upload a company logo (JPG, PNG, GIF, WebP - Max 10MB)
                           </p>
                         </div>
 

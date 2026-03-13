@@ -61,21 +61,16 @@ export function RouteGuard({ children, allowedRoles, fallback }: RouteGuardProps
         {/* Header */}
         <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-center py-2">
+              <div className="flex items-center">
                 <Image
-                  src="/logo.jpeg"
+                  src="/logonobg.png"
                   alt="RateCaddy"
                   width={40}
                   height={40}
-                  className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                  className="flex-shrink-0 h-10 w-auto md:h-12"
+                  priority
                 />
-                <span className="text-2xl md:text-3xl font-bold tracking-tight">
-                  <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
-                    RateCaddy
-                  </span>
-                  <p className="text-sm text-gray-500">By Syncly360 CRM</p>
-                </span>
               </div>
               <div className="flex items-center space-x-4">
                 <button
@@ -123,21 +118,16 @@ export function RouteGuard({ children, allowedRoles, fallback }: RouteGuardProps
         {/* Header */}
         <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-center py-2">
+              <div className="flex items-center">
                 <Image
-                  src="/logo.jpeg"
+                  src="/logonobg.png"
                   alt="RateCaddy"
-                  width={40}
-                  height={40}
-                  className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10"
+                  width={260}
+                  height={80}
+                  className="flex-shrink-0 h-10 w-auto md:h-12"
+                  priority
                 />
-                <span className="text-2xl md:text-3xl font-bold tracking-tight">
-                  <span className="bg-gradient-to-r from-[#2A608C] via-[#3A7BA8] to-[#40B0C0] bg-clip-text text-transparent">
-                    RateCaddy
-                  </span>
-                  <p className="text-sm text-gray-500">By Syncly360 CRM</p>
-                </span>
               </div>
               <div className="flex items-center space-x-4">
                 <button

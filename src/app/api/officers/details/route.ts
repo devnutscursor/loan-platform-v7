@@ -161,7 +161,7 @@ export async function GET(req: NextRequest) {
 
     const hasPublicLink = publicLinkData && publicLinkData.is_active;
     const publicLinkUrl = hasPublicLink ? 
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/public/profile/${publicLinkData.public_slug}` : 
+      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/${publicLinkData.public_slug}` : 
       undefined;
 
     // Get selected template

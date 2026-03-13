@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseService } from '@/lib/supabase/service';
 import { z } from 'zod';
+import { generateBaseSlug, isValidSlug, normalizeSlug } from '@/lib/public-profile-slug';
 
 const createPublicLinkSchema = z.object({
   expiresAt: z.string().optional(),
@@ -118,7 +119,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           data: mapRow(updated),
-          publicUrl: `${baseUrl}/public/profile/${updated.public_slug}`,
+          // For external sharing, use root-level slug (no /public/profile prefix)
+          publicUrl: `${baseUrl}/${updated.public_slug}`,
           message: 'Public link reactivated',
         });
       }
@@ -127,12 +129,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: mapRow(existing),
-        publicUrl: `${baseUrl}/public/profile/${existing.public_slug}`,
+        // For external sharing, use root-level slug (no /public/profile prefix)
+        publicUrl: `${baseUrl}/${existing.public_slug}`,
         message: 'Public link already exists',
       });
     }
 
-    const publicSlug = `${userId.slice(0, 8)}-${Date.now().toString(36)}`;
+    // Fetch user name for name-based slug (firstname-lastname)
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const firstName = userRow?.first_name ?? null;
+    const lastName = userRow?.last_name ?? null;
+    const baseSlug = generateBaseSlug(firstName, lastName, userId);
+
+    // Ensure unique slug: baseSlug-1, baseSlug-2, baseSlug-3, ... (e.g. rabi-uddin-1, rabi-uddin-2)
+    const { data: existingSlugs } = await supabase
+      .from('loan_officer_public_links')
+      .select('public_slug')
+      .like('public_slug', `${baseSlug}%`);
+
+    const taken = new Set((existingSlugs ?? []).map((r: { public_slug: string }) => r.public_slug));
+    let publicSlug = `${baseSlug}-1`;
+    let n = 2;
+    while (taken.has(publicSlug)) {
+      publicSlug = `${baseSlug}-${n}`;
+      n += 1;
+    }
     const { data: inserted, error: insertError } = await supabase
       .from('loan_officer_public_links')
       .insert({
@@ -158,7 +184,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: mapRow(inserted),
-      publicUrl: `${baseUrl}/public/profile/${inserted.public_slug}`,
+      // For external sharing, use root-level slug (no /public/profile prefix)
+      publicUrl: `${baseUrl}/${inserted.public_slug}`,
     });
   } catch (error) {
     console.error('Error creating public link:', error);
@@ -172,7 +199,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { linkId, isActive, expiresAt, maxUses } = body;
+    const { linkId, isActive, expiresAt, maxUses, publicSlug: bodySlug } = body;
 
     if (!linkId) {
       return NextResponse.json(
@@ -189,6 +216,30 @@ export async function PUT(request: NextRequest) {
     if (validatedData.expiresAt !== undefined) updates.expires_at = validatedData.expiresAt;
     if (validatedData.maxUses !== undefined) updates.max_uses = validatedData.maxUses;
 
+    // Optional slug update with uniqueness check
+    if (bodySlug !== undefined && bodySlug !== null && String(bodySlug).trim() !== '') {
+      const normalized = normalizeSlug(String(bodySlug));
+      if (!isValidSlug(normalized)) {
+        return NextResponse.json(
+          { success: false, message: 'Slug must be 2–50 characters, lowercase letters and numbers only (hyphens allowed in the middle).' },
+          { status: 400 }
+        );
+      }
+      const { data: existingBySlug } = await supabase
+        .from('loan_officer_public_links')
+        .select('id')
+        .eq('public_slug', normalized)
+        .neq('id', linkId)
+        .maybeSingle();
+      if (existingBySlug) {
+        return NextResponse.json(
+          { success: false, message: 'This URL slug is already taken. Choose another.' },
+          { status: 409 }
+        );
+      }
+      updates.public_slug = normalized;
+    }
+
     const { data: updated, error } = await supabase
       .from('loan_officer_public_links')
       .update(updates)
@@ -203,9 +254,12 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.json({
       success: true,
       data: mapRow(updated),
+      // For external sharing, use root-level slug (no /public/profile prefix)
+      publicUrl: `${baseUrl}/${updated.public_slug}`,
     });
   } catch (error) {
     console.error('Error updating public link:', error);

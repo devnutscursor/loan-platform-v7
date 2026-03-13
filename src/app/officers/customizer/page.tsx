@@ -763,7 +763,7 @@ export default function CustomizerPage() {
     if (typeof window !== 'undefined') {
       if (publicLink?.publicSlug) {
         const baseUrl = window.location.origin;
-        const publicUrl = `${baseUrl}/public/profile/${publicLink.publicSlug}`;
+        const publicUrl = `${baseUrl}/${publicLink.publicSlug}`;
         window.open(publicUrl, '_blank');
       } else {
         // Fallback: show message that public link needs to be created
@@ -1546,10 +1546,10 @@ function AvatarUploadComponent({ currentAvatar, onChange, onSave, setIsDeletingA
       return;
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      setUploadError('File too large. Maximum size is 5MB.');
+      setUploadError('File too large. Maximum size is 10MB.');
       return;
     }
 

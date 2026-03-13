@@ -584,31 +584,61 @@ export default function ContentManagementPage() {
       const token = await getAuthToken();
       if (!token) throw new Error('No authentication token');
 
-      // Upload video
-      const formData = new FormData();
-      formData.append('video', videoForm.videoFile!);
-      if (videoForm.thumbnailFile) {
-        formData.append('thumbnail', videoForm.thumbnailFile);
+      // Get direct-upload config (avoids large body through our API / FormData parse limit)
+      const configRes = await fetch('/api/upload/video/config');
+      const configData = await configRes.json();
+      if (!configData.success || !configData.cloudName || !configData.uploadPreset) {
+        throw new Error(configData.error || 'Video upload not configured');
       }
 
-      const uploadRes = await fetch('/api/upload/video', {
-        method: 'POST',
-        body: formData
-      });
+      const formData = new FormData();
+      formData.append('file', videoForm.videoFile!);
+      formData.append('upload_preset', configData.uploadPreset);
+      formData.append('folder', 'officer-content/videos');
+
+      setVideoUploadProgress(20);
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${configData.cloudName}/video/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      if (!uploadRes.ok) {
+        const errBody = await uploadRes.text();
+        let errMsg = 'Cloudinary upload failed';
+        try {
+          const j = JSON.parse(errBody);
+          errMsg = j.error?.message || j.error || errMsg;
+        } catch (_) {
+          if (errBody) errMsg = errBody.slice(0, 200);
+        }
+        if (errMsg.toLowerCase().includes('preset') && errMsg.toLowerCase().includes('not found')) {
+          errMsg += ` (Preset "${configData.uploadPreset}" must exist in cloud "${configData.cloudName}". Check Cloudinary Dashboard → same account as CLOUDINARY_CLOUD_NAME.)`;
+        }
+        throw new Error(errMsg);
+      }
 
       const uploadData = await uploadRes.json();
-      if (!uploadData.success) {
-        throw new Error(uploadData.error || 'Failed to upload video');
-      }
+      const secureUrl = uploadData.secure_url;
+      const publicId = uploadData.public_id;
+      const durationSec = Number(uploadData.duration) || 0;
+      const formatDuration = (s: number): string => {
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = Math.floor(s % 60);
+        if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        return `${m}:${sec.toString().padStart(2, '0')}`;
+      };
+      const duration = formatDuration(durationSec);
+      const thumbnailUrl = uploadData.thumbnail_url || null;
 
       setVideoUploadProgress(100);
       setVideoPreview({
-        url: uploadData.data.video_url,
-        thumbnail: uploadData.data.thumbnail_url,
-        duration: uploadData.data.duration
+        url: secureUrl,
+        thumbnail: thumbnailUrl || `https://res.cloudinary.com/${configData.cloudName}/video/upload/so_1,w_1280,h_720,c_limit,f_jpg/${publicId}`,
+        duration
       });
 
-      // Save video to database
+      // Save video to database (thumbnail_url optional; backend can derive from public_id)
       const saveRes = await fetch('/api/officers/content/videos', {
         method: 'POST',
         headers: {
@@ -619,10 +649,10 @@ export default function ContentManagementPage() {
           title: videoForm.title,
           description: videoForm.description,
           category: videoForm.category,
-          video_url: uploadData.data.video_url,
-          thumbnail_url: uploadData.data.thumbnail_url,
-          duration: uploadData.data.duration,
-          cloudinary_public_id: uploadData.data.public_id
+          video_url: secureUrl,
+          thumbnail_url: thumbnailUrl,
+          duration,
+          cloudinary_public_id: publicId
         })
       });
 
@@ -1352,7 +1382,7 @@ export default function ContentManagementPage() {
               <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Add Guide</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">File * (PDF, DOC, DOCX, TXT, RTF - Max 5MB)</label>
+                  <label className="block text-sm font-medium mb-1">File * (PDF, DOC, DOCX, TXT, RTF - Max 10MB)</label>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.txt,.rtf"

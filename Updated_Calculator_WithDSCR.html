@@ -1925,42 +1925,5 @@ function calculateLoans() {
 updateDefaults();
 </script>
 
-<!-- Iframe height sync for embedding in RateCaddy -->
-<script>
-(function() {
-    function postHeight() {
-        try {
-            var h = Math.max(
-                document.documentElement.scrollHeight,
-                document.body.scrollHeight,
-                document.documentElement.offsetHeight,
-                document.body.offsetHeight,
-                document.documentElement.clientHeight
-            );
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'SYNC_MCALC_HEIGHT', height: h }, '*');
-            }
-        } catch (e) {}
-    }
-    function onLoad() {
-        postHeight();
-        setTimeout(postHeight, 200);
-        setTimeout(postHeight, 800);
-    }
-    window.addEventListener('load', onLoad);
-    window.addEventListener('resize', postHeight);
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', postHeight);
-    } else {
-        postHeight();
-    }
-    if ('ResizeObserver' in window) {
-        var ro = new ResizeObserver(postHeight);
-        ro.observe(document.body);
-        ro.observe(document.documentElement);
-    }
-})();
-</script>
-
 </body>
 </html>

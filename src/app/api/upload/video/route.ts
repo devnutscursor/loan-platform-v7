@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      const maxThumbnailSize = 5 * 1024 * 1024; // 5MB
+      const maxThumbnailSize = 10 * 1024 * 1024; // 10MB
       if (thumbnailFile.size > maxThumbnailSize) {
         return NextResponse.json(
-          { success: false, error: 'Thumbnail too large. Maximum size is 5MB.' },
+          { success: false, error: 'Thumbnail too large. Maximum size is 10MB.' },
           { status: 400 }
         );
       }
