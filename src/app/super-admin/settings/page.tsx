@@ -282,8 +282,9 @@ export default function SuperAdminSettingsPage() {
       setSaving(true);
       
       // Upload to Supabase Storage (using dedicated user-avatars bucket)
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${user.id}.${fileExt}`;
+      const fileExt = avatarFile.name.split('.').pop() || 'jpg';
+      const timestamp = Date.now();
+      const fileName = `${user.id}-${timestamp}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('user-avatars')

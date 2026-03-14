@@ -561,8 +561,9 @@ export default function AdminSettingsPage() {
       setSaving(true);
       
       // Upload to Supabase Storage (using dedicated user-avatars bucket)
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${user.id}.${fileExt}`;
+      const fileExt = avatarFile.name.split('.').pop() || 'jpg';
+      const timestamp = Date.now();
+      const fileName = `${user.id}-${timestamp}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('user-avatars')
@@ -617,8 +618,9 @@ export default function AdminSettingsPage() {
       setSaving(true);
       
       // Upload to Supabase Storage (bucket must exist: Storage → New bucket → name: company-logos, Public)
-      const fileExt = companyLogoFile.name.split('.').pop();
-      const fileName = `${companyProfile.id}.${fileExt}`;
+      const fileExt = companyLogoFile.name.split('.').pop() || 'jpg';
+      const timestamp = Date.now();
+      const fileName = `${companyProfile.id}-${timestamp}.${fileExt}`;
       const filePath = `${companyProfile.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
