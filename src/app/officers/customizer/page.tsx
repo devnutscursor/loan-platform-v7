@@ -1557,45 +1557,48 @@ function AvatarUploadComponent({ currentAvatar, onChange, onSave, setIsDeletingA
     setUploadError(null);
 
     try {
-      // Create preview URL
+      // Create preview URL for immediate feedback
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
 
-      // Get auth token
+      // Get auth session (to identify user for file naming)
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No authentication token found');
+      if (!session?.user?.id) {
+        throw new Error('No authenticated user found');
       }
 
-      // Upload file
-      const formData = new FormData();
-      formData.append('avatar', file);
+      // Upload directly to Supabase Storage (same pattern as profile avatars)
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const timestamp = Date.now();
+      const fileName = `${session.user.id}-template-${timestamp}.${fileExt}`;
+      const filePath = `template-avatars/${fileName}`;
 
-      const response = await fetch('/api/upload/avatar', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: formData,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('Upload failed:', response.status, text);
-        throw new Error(`Upload failed: ${response.status}`);
+      if (uploadError) {
+        console.error('Upload to Supabase failed:', uploadError);
+        throw new Error(uploadError.message || 'Upload failed');
       }
 
-      const result = await response.json();
+      // Get public URL from Supabase
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-avatars')
+        .getPublicUrl(filePath);
 
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
+      if (!publicUrl) {
+        throw new Error('Failed to get public URL for uploaded image');
       }
 
-      // Update the avatar URL
-      onChange(result.data.url);
-      // Also update previewUrl to the Cloudinary URL (not the blob URL)
-      setPreviewUrl(result.data.url);
-      console.log('✅ Avatar uploaded successfully:', result.data.url);
+      // Update the avatar URL in template state
+      onChange(publicUrl);
+      // Update preview to the final public URL
+      setPreviewUrl(publicUrl);
+      console.log('✅ Avatar uploaded successfully to Supabase:', publicUrl);
 
       // Auto-save the template after uploading
       if (onSave) {
