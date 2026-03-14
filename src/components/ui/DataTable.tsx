@@ -368,6 +368,8 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
   const renderCompanyCard = (record: any) => {
     const status = record.invite_status || 'pending';
     const isDeactivated = record.deactivated === true;
+    // Same as desktop: active when invite accepted or is_active/isActive true (API uses snake_case)
+    const isActiveCompany = status === 'accepted' || record?.isActive === true || record?.is_active === true;
     const expiresAt = record.invite_expires_at;
     const companyEmail = record.admin_email || record.email;
     const createdDate = record.created_at || record.createdAt;
@@ -390,7 +392,7 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             <div className="text-md font-medium text-gray-900">
               {record.name}
             </div>
-            {record.isActive && !isDeactivated && (
+            {isActiveCompany && !isDeactivated && (
               <div className="text-xs text-green-600 font-medium flex items-center justify-center mt-1">
                 <Icon name="checkCircle" className="w-3 h-3 mr-1" />
                 Active Company
@@ -509,7 +511,7 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               </button>
             )}
             
-            {onResend && !record.isActive && !isDeactivated && (status === 'sent' || status === 'expired' || status === 'pending') && (
+            {onResend && !isActiveCompany && !isDeactivated && (status === 'sent' || status === 'expired' || status === 'pending') && (
               <ResendButton
                 role="super_admin"
                 onClick={() => onResend(record)}
@@ -517,7 +519,7 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               />
             )}
             
-            {onDeactivate && record.isActive && !isDeactivated && (
+            {onDeactivate && isActiveCompany && !isDeactivated && (
               <DeactivateButton
                 role="super_admin"
                 onClick={() => onDeactivate(record)}
@@ -532,13 +534,15 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
                 className="text-xs px-2 py-1.5 h-auto"
               />
             )}
-            
-            {onDelete && (
-              <DeleteButton
-                role="super_admin"
-                onClick={() => onDelete(record)}
-                className="text-xs px-2 py-1.5 h-auto"
-              />
+            {/* Delete only for pending/sent/expired or inactive (same as desktop) - never for accepted+active */}
+            {onDelete && !isDeactivated && (
+              (status === 'pending' || status === 'sent' || status === 'expired' || !isActiveCompany) && (
+                <DeleteButton
+                  role="super_admin"
+                  onClick={() => onDelete(record)}
+                  className="text-xs px-2 py-1.5 h-auto"
+                />
+              )
             )}
           </div>
         </div>

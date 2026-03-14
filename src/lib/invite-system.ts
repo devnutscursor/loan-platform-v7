@@ -278,14 +278,16 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
 }
 
 /**
- * Delete company and cancel invite
+ * Delete company and cancel invite.
+ * Only allowed for companies whose invite was NOT accepted (pending/sent/expired).
+ * Accepted companies must be deactivated first, not deleted.
  */
 export async function deleteCompanyAndCancelInvite(companyId: string): Promise<InviteResult> {
   try {
-    // Get company details
+    // Get company details (need invite_status to enforce rule)
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('admin_user_id')
+      .select('admin_user_id, invite_status')
       .eq('id', companyId)
       .single();
 
@@ -296,12 +298,20 @@ export async function deleteCompanyAndCancelInvite(companyId: string): Promise<I
       };
     }
 
+    // Block delete for accepted companies - they must be deactivated only
+    if (company.invite_status === 'accepted') {
+      return {
+        success: false,
+        message: 'Cannot delete a company whose invite was accepted. Deactivate the company instead.'
+      };
+    }
+
     // Delete user from Supabase Auth if exists
     if (company.admin_user_id) {
       await supabase.auth.admin.deleteUser(company.admin_user_id);
     }
 
-    // Delete company from database
+    // Delete company from database (single row by id)
     await supabase.from('companies').delete().eq('id', companyId);
 
     return {
