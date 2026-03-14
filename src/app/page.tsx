@@ -43,11 +43,6 @@ export default function HomePage() {
                   Sign In
                 </Button>
               </Link>
-              <Link href="/auth">
-                <Button className="bg-gradient-to-r from-[#01bcc6] to-[#008eab] hover:from-[#008eab] hover:to-[#005b7c] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                  Get Started
-                </Button>
-              </Link>
             </div>
           </div>
         </div>

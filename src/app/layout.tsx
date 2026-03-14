@@ -5,8 +5,13 @@ import { NotificationProvider } from "@/components/ui/Notification";
 import { UnifiedTemplateProvider } from "@/contexts/UnifiedTemplateContext";
 
 export const metadata: Metadata = {
-  title: "Loan Officer Platform",
-  description: "Professional loan management platform",
+  title: "RateCaddy",
+  description: "RateCaddy – Build stunning landing pages for loan officers and realtors.",
+  openGraph: {
+    title: "RateCaddy",
+    description: "Build stunning landing pages for loan officers and realtors with RateCaddy.",
+    siteName: "RateCaddy",
+  },
   icons: {
     icon: [
       { url: "/favicon.png", type: "image/png", sizes: "32x32" },
