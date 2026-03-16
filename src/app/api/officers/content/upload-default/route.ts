@@ -31,26 +31,18 @@ export async function POST(request: NextRequest) {
 
     // Server-side: only upload default content if at least one
     // active company linked to this officer has default content access enabled.
-    const { data: companyLinks, error: companyLinksError } = await supabase
+    // Do this in two simple queries to avoid relying on Supabase relationship metadata.
+    const { data: userCompanies, error: userCompaniesError } = await supabase
       .from('user_companies')
-      .select(
-        `
-          company_id,
-          is_active,
-          role,
-          companies!inner(
-            has_default_content_access
-          )
-        `
-      )
+      .select('company_id, is_active, role')
       .eq('user_id', user.id)
       .eq('role', 'employee')
       .eq('is_active', true);
 
-    if (companyLinksError) {
+    if (userCompaniesError) {
       console.error(
-        '❌ Error fetching user companies for default content check:',
-        companyLinksError
+        '❌ Error fetching user_companies for default content check:',
+        userCompaniesError
       );
       return NextResponse.json(
         {
@@ -61,10 +53,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hasDefaultAccess = (companyLinks || []).some(
-      (link: any) =>
-        (link.companies as any)?.has_default_content_access === true
+    const companyIds = Array.from(
+      new Set((userCompanies || []).map((uc: any) => uc.company_id).filter(Boolean))
     );
+
+    let hasDefaultAccess = false;
+
+    if (companyIds.length > 0) {
+      const { data: companies, error: companiesError } = await supabase
+        .from('companies')
+        .select('id, has_default_content_access')
+        .in('id', companyIds);
+
+      if (companiesError) {
+        console.error(
+          '❌ Error fetching companies for default content check:',
+          companiesError
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to verify company default content access',
+          },
+          { status: 500 }
+        );
+      }
+
+      hasDefaultAccess = (companies || []).some(
+        (c: any) => c.has_default_content_access === true
+      );
+    }
 
     if (!hasDefaultAccess) {
       return NextResponse.json({
