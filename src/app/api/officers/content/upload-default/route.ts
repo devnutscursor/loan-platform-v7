@@ -17,13 +17,66 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Invalid or expired token' },
         { status: 401 }
       );
+    }
+
+    // Server-side: only upload default content if at least one
+    // active company linked to this officer has default content access enabled.
+    const { data: companyLinks, error: companyLinksError } = await supabase
+      .from('user_companies')
+      .select(
+        `
+          company_id,
+          is_active,
+          role,
+          companies!inner(
+            has_default_content_access
+          )
+        `
+      )
+      .eq('user_id', user.id)
+      .eq('role', 'employee')
+      .eq('is_active', true);
+
+    if (companyLinksError) {
+      console.error(
+        '❌ Error fetching user companies for default content check:',
+        companyLinksError
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to verify company default content access',
+        },
+        { status: 500 }
+      );
+    }
+
+    const hasDefaultAccess = (companyLinks || []).some(
+      (link: any) =>
+        (link.companies as any)?.has_default_content_access === true
+    );
+
+    if (!hasDefaultAccess) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          faqsCount: 0,
+          guidesCount: 0,
+          videosCount: 0,
+        },
+        error:
+          'Company does not have default content access enabled. Skipping upload.',
+      });
     }
 
     const result = await uploadDefaultContentForOfficer(user.id);
@@ -33,18 +86,17 @@ export async function POST(request: NextRequest) {
       data: {
         faqsCount: result.faqsCount,
         guidesCount: result.guidesCount,
-        videosCount: result.videosCount
+        videosCount: result.videosCount,
       },
-      error: result.error
+      error: result.error,
     });
-
   } catch (error) {
     console.error('❌ Error in upload-default endpoint:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to upload default content',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
