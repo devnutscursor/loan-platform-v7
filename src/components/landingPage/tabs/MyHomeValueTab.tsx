@@ -161,7 +161,7 @@ button: {
     }
   };
   // CloudCMA Widget URL - read from template bodyModifications or use fallback
-  const fallbackUrl = 'http://app.cloudcma.com/api_widget/8b8c909dd5012044c05bc689000879ee/show?post_url=https://app.cloudcma.com&source_url=ua';
+  const fallbackUrl = 'https://app.cloudcma.com/api_widget/8b8c909dd5012044c05bc689000879ee/show?post_url=https://app.cloudcma.com&source_url=ua';
   const cloudCmaWidgetUrl = templateData?.template?.bodyModifications?.homeValueWidgetUrl || fallbackUrl;
   
   // Check if URL is valid (not empty, null, or undefined)
