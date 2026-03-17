@@ -203,6 +203,9 @@ button: {
 
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
   const [customIframeLoaded, setCustomIframeLoaded] = useState(false);
+  // When user clicks a result/link inside the IDX widget script, we capture the URL
+  // and show it in an overlay iframe inside this same rectangle instead of a new tab.
+  const [detailsUrl, setDetailsUrl] = useState<string | null>(null);
   const widgetIframeRef = React.useRef<HTMLIFrameElement>(null);
   const idxWidgetLoadedRef = React.useRef(false);
   const idxWidgetContainerRef = React.useRef<HTMLDivElement>(null);
@@ -325,39 +328,53 @@ button: {
     if (hasValidCustomUrl) setCustomIframeLoaded(false);
   }, [findMyHomeWidgetUrl, hasValidCustomUrl]);
 
-  // Keep search results in same tab: override window.open and target="_blank" while this tab is active
+  // Ref so the window.open override can read the latest detailsUrl without re-creating the effect
+  const detailsUrlRef = React.useRef(detailsUrl);
+  useEffect(() => { detailsUrlRef.current = detailsUrl; }, [detailsUrl]);
+
+  // Intercept ALL navigation attempts from the IDX script widget:
+  // 1) window.open()      → load URL in overlay iframe
+  // 2) anchor clicks      → load URL in overlay iframe
+  // 3) target="_blank"    → load URL in overlay iframe
+  // This runs only while FindMyHomeTab is mounted.
   useEffect(() => {
+    if (!isIdxWidgetScriptUrl) return;
+
     const originalOpen = window.open;
+
     window.open = function (
       url?: string | URL,
       _target?: string,
-      _features?: string
+      _features?: string,
     ): Window | null {
-      if (url != null && String(url).trim() !== '') {
-        window.location.href = typeof url === 'string' ? url : url.toString();
+      if (detailsUrlRef.current) return null;
+      const urlStr = url != null ? String(url).trim() : '';
+      if (urlStr !== '') {
+        setDetailsUrl(urlStr);
       }
       return null;
     };
 
-    const onCaptureClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+    const handleClickCapture = (event: MouseEvent) => {
+      if (detailsUrlRef.current) return;
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
       const anchor = target.closest('a');
-      if (anchor && (anchor.target === '_blank' || anchor.getAttribute('target') === '_blank')) {
-        const href = anchor.getAttribute('href');
-        if (href && href.startsWith('http')) {
-          e.preventDefault();
-          e.stopPropagation();
-          window.location.href = href;
-        }
-      }
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setDetailsUrl(href);
     };
-    document.addEventListener('click', onCaptureClick, true);
+
+    document.addEventListener('click', handleClickCapture, true);
 
     return () => {
       window.open = originalOpen;
-      document.removeEventListener('click', onCaptureClick, true);
+      document.removeEventListener('click', handleClickCapture, true);
     };
-  }, []);
+  }, [isIdxWidgetScriptUrl]);
 
   // IDX widget script: inject <script id="idxwidgetsrc-{id}" src={url}> so the script runs and renders the widget in-page.
   // Customizer preview can remount rapidly; clean old global nodes first to avoid duplicate widgets.
@@ -380,14 +397,12 @@ button: {
     script.type = 'text/javascript';
     script.async = false;
     const dedupeRenderedWidgets = () => {
-      // Keep only the first rendered idx-ai-smart-search widget in this container
       const renderedWidgets = Array.from(container.querySelectorAll('idx-ai-smart-search'));
       if (renderedWidgets.length > 1) {
         renderedWidgets.slice(1).forEach((node) => node.remove());
       }
     };
     script.onload = () => {
-      // Widget script can render asynchronously; dedupe once shortly after load
       setTimeout(dedupeRenderedWidgets, 200);
       setCustomIframeLoaded(true);
     };
@@ -398,6 +413,7 @@ button: {
       dedupeRenderedWidgets();
       setCustomIframeLoaded(true);
     }, 8000);
+
     return () => {
       clearTimeout(timeout);
       injectedIdxWidgetIds.delete(scriptId);
@@ -443,17 +459,21 @@ button: {
         <div
           className="w-full mt-6 relative"
           style={{
-            minHeight: '600px',
+            height: 'calc(100vh - 160px)',
+            minHeight: '700px',
             borderRadius: `${layout.borderRadius}px`,
-            overflow: 'auto',
+            overflow: 'hidden',
             backgroundColor: colors.background,
-            border: `1px solid ${colors.border}`
+            border: `1px solid ${colors.border}`,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          {!customIframeLoaded && (
+          {/* Loading overlay while initial widget/script is loading */}
+          {!customIframeLoaded && !detailsUrl && (
             <div
               className="flex items-center justify-center py-12 absolute inset-0"
-              style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}
+              style={{ zIndex: 1, backgroundColor: colors.background }}
             >
               <div className="text-center">
                 <div
@@ -464,29 +484,55 @@ button: {
               </div>
             </div>
           )}
-          {isIdxWidgetScriptUrl ? (
+          {/* When a details URL is selected, show it in an overlay iframe inside this rectangle */}
+          {detailsUrl ? (
+            <div className="w-full flex-1 flex flex-col relative z-10" style={{ overflow: 'hidden' }}>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                <span className="text-sm" style={{ color: colors.textSecondary }}>
+                  Viewing listing
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDetailsUrl(null)}
+                  className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                  style={{ color: colors.text }}
+                >
+                  ← Back to Search
+                </button>
+              </div>
+              <iframe
+                src={detailsUrl}
+                title="Property Details"
+                className="w-full border-0 flex-1"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                }}
+                sandbox="allow-scripts allow-same-origin allow-forms"
+              />
+            </div>
+          ) : isIdxWidgetScriptUrl ? (
             <div
               ref={idxWidgetContainerRef}
-              className="w-full min-h-[600px]"
+              className="w-full flex-1"
               style={{
+                overflowY: 'auto',
                 opacity: customIframeLoaded ? 1 : 0,
                 transition: 'opacity 0.3s ease-in-out',
-                pointerEvents: customIframeLoaded ? 'auto' : 'none'
+                pointerEvents: customIframeLoaded ? 'auto' : 'none',
               }}
             />
           ) : (
             <iframe
               src={trimmedFindMyHomeUrl}
               title="Home AI Search Widget"
-              className="w-full border-0"
+              className="w-full border-0 flex-1"
               style={{
-                minHeight: '600px',
                 width: '100%',
                 border: 'none',
-                overflow: 'auto',
                 opacity: customIframeLoaded ? 1 : 0,
                 transition: 'opacity 0.3s ease-in-out',
-                pointerEvents: customIframeLoaded ? 'auto' : 'none'
+                pointerEvents: customIframeLoaded ? 'auto' : 'none',
               }}
               scrolling="yes"
               sandbox="allow-scripts allow-same-origin allow-forms"
@@ -508,15 +554,18 @@ button: {
       <div
         className="w-full mt-6 relative"
         style={{
-          minHeight: '600px',
+          height: 'calc(100vh - 160px)',
+          minHeight: '700px',
           borderRadius: `${layout.borderRadius}px`,
           overflow: 'hidden',
           backgroundColor: colors.background,
-          border: `1px solid ${colors.border}`
+          border: `1px solid ${colors.border}`,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {!idxWidgetLoaded && (
-          <div className="flex items-center justify-center py-12 absolute inset-0" style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}>
+          <div className="flex items-center justify-center py-12 absolute inset-0" style={{ zIndex: 1, backgroundColor: colors.background }}>
             <div className="text-center">
               <div
                 className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"
@@ -533,7 +582,7 @@ button: {
           title="IDX Property Search Widget"
           className="w-full border-0"
           style={{
-            minHeight: '600px',
+            flex: 1,
             width: '100%',
             opacity: idxWidgetLoaded ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',

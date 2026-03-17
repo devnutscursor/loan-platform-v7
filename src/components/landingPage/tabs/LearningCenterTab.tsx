@@ -1004,12 +1004,12 @@ button: {
           onClick={() => setSelectedVideo(null)}
         >
           <div 
-            className="relative bg-black rounded-lg w-full max-h-[90vh] flex flex-col"
+            className="relative bg-black rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
             style={{ borderRadius: `${layout.borderRadius}px` }}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
               <h3 className={`${classes.heading.h5}`} style={{ color: colors.background }}>
                 {selectedVideo.title}
               </h3>
@@ -1022,33 +1022,45 @@ button: {
             </div>
             
             {/* Video Player */}
-            <div className="relative flex-1 flex items-center justify-center p-4">
+            <div className="w-full p-4">
               {(() => {
                 const videoData = videoDataMap.get(selectedVideo.id);
-                const videoUrl = videoData?.videoUrl || videoData?.video_url;
+                const rawVideoUrl = videoData?.videoUrl || videoData?.video_url;
                 const embedUrl = videoData?.embedUrl || selectedVideo.embedUrl;
 
-                // Prefer HTML5 video when we have a direct URL (Cloudinary / uploaded videos)
-                if (videoUrl) {
+                // Force H.264 transcoding for Cloudinary videos so all browsers can render frames
+                const getPlaybackUrl = (url: string): string => {
+                  if (!url) return url;
+                  const match = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(v\d+\/.+)$/);
+                  if (match) {
+                    return `${match[1]}f_mp4,vc_h264/${match[2]}`;
+                  }
+                  return url;
+                };
+
+                if (rawVideoUrl) {
+                  const playbackUrl = getPlaybackUrl(rawVideoUrl);
                   return (
-                    <video
-                      controls
-                      autoPlay
-                      className="w-full h-full max-h-[70vh]"
-                      style={{ borderRadius: `${layout.borderRadius}px` }}
-                    >
-                      <source src={videoUrl} type="video/mp4" />
-                      <source src={videoUrl} type="video/webm" />
-                      <source src={videoUrl} type="video/quicktime" />
-                      Your browser does not support the video tag.
-                    </video>
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <video
+                        controls
+                        autoPlay
+                        playsInline
+                        src={playbackUrl}
+                        className="absolute inset-0 w-full h-full"
+                        style={{
+                          objectFit: 'contain',
+                          borderRadius: `${layout.borderRadius}px`,
+                          backgroundColor: '#000',
+                        }}
+                      />
+                    </div>
                   );
                 }
 
-                // Fallback for external videos (e.g. Loom) using iframe embed
                 if (embedUrl) {
                   return (
-                    <div className="w-full h-full max-h-[70vh]" style={{ position: 'relative', paddingBottom: '56.25%' }}>
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                       <iframe
                         src={embedUrl}
                         frameBorder="0"
@@ -1060,14 +1072,14 @@ button: {
                 }
 
                 return (
-                  <p className="text-white">Video URL not available</p>
+                  <p className="text-white text-center">Video URL not available</p>
                 );
               })()}
             </div>
             
             {/* Video Description */}
             {selectedVideo.description && (
-              <div className="p-4 border-t border-gray-700">
+              <div className="p-4 border-t border-gray-700 flex-shrink-0">
                 <p className={`${classes.body.small}`} style={{ color: colors.textSecondary }}>
                   {selectedVideo.description}
                 </p>

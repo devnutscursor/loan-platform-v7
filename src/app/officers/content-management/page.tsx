@@ -622,11 +622,12 @@ export default function ContentManagementPage() {
         throw new Error(configData.error || 'Video upload not configured');
       }
 
-      // 1) Upload video directly to Cloudinary
+      // 1) Upload video directly to Cloudinary (with eager H.264 transcoding for web playback)
       const videoFormData = new FormData();
       videoFormData.append('file', videoForm.videoFile!);
       videoFormData.append('upload_preset', configData.uploadPreset);
       videoFormData.append('folder', 'officer-content/videos');
+      videoFormData.append('eager', 'f_mp4,vc_h264');
 
       setVideoUploadProgress(20);
       const videoRes = await fetch(
