@@ -622,20 +622,21 @@ export default function ContentManagementPage() {
         throw new Error(configData.error || 'Video upload not configured');
       }
 
-      const formData = new FormData();
-      formData.append('file', videoForm.videoFile!);
-      formData.append('upload_preset', configData.uploadPreset);
-      formData.append('folder', 'officer-content/videos');
+      // 1) Upload video directly to Cloudinary
+      const videoFormData = new FormData();
+      videoFormData.append('file', videoForm.videoFile!);
+      videoFormData.append('upload_preset', configData.uploadPreset);
+      videoFormData.append('folder', 'officer-content/videos');
 
       setVideoUploadProgress(20);
-      const uploadRes = await fetch(
+      const videoRes = await fetch(
         `https://api.cloudinary.com/v1_1/${configData.cloudName}/video/upload`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: videoFormData }
       );
 
-      if (!uploadRes.ok) {
-        const errBody = await uploadRes.text();
-        let errMsg = 'Cloudinary upload failed';
+      if (!videoRes.ok) {
+        const errBody = await videoRes.text();
+        let errMsg = 'Cloudinary video upload failed';
         try {
           const j = JSON.parse(errBody);
           errMsg = j.error?.message || j.error || errMsg;
@@ -648,10 +649,11 @@ export default function ContentManagementPage() {
         throw new Error(errMsg);
       }
 
-      const uploadData = await uploadRes.json();
-      const secureUrl = uploadData.secure_url;
-      const publicId = uploadData.public_id;
-      const durationSec = Number(uploadData.duration) || 0;
+      const videoData = await videoRes.json();
+      const secureUrl = videoData.secure_url as string;
+      const publicId = videoData.public_id as string;
+      const durationSec = Number(videoData.duration) || 0;
+
       const formatDuration = (s: number): string => {
         const h = Math.floor(s / 3600);
         const m = Math.floor((s % 3600) / 60);
@@ -660,21 +662,54 @@ export default function ContentManagementPage() {
         return `${m}:${sec.toString().padStart(2, '0')}`;
       };
       const duration = formatDuration(durationSec);
-      const thumbnailUrl = uploadData.thumbnail_url || null;
+
+      // 2) Upload custom thumbnail (optional) to Cloudinary image endpoint
+      let thumbnailUrl: string | null = null;
+      if (videoForm.thumbnailFile) {
+        const thumbFormData = new FormData();
+        thumbFormData.append('file', videoForm.thumbnailFile);
+        thumbFormData.append('upload_preset', configData.uploadPreset);
+        thumbFormData.append('folder', 'officer-content/videos/thumbnails');
+
+        const thumbRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${configData.cloudName}/image/upload`,
+          { method: 'POST', body: thumbFormData }
+        );
+
+        if (!thumbRes.ok) {
+          const errBody = await thumbRes.text();
+          let errMsg = 'Cloudinary thumbnail upload failed';
+          try {
+            const j = JSON.parse(errBody);
+            errMsg = j.error?.message || j.error || errMsg;
+          } catch (_) {
+            if (errBody) errMsg = errBody.slice(0, 200);
+          }
+          throw new Error(errMsg);
+        }
+
+        const thumbData = await thumbRes.json();
+        thumbnailUrl = thumbData.secure_url as string;
+      } else {
+        // Fallback: generate thumbnail from video
+        thumbnailUrl =
+          videoData.thumbnail_url ||
+          `https://res.cloudinary.com/${configData.cloudName}/video/upload/so_1,w_1280,h_720,c_limit,f_jpg/${publicId}`;
+      }
 
       setVideoUploadProgress(100);
       setVideoPreview({
         url: secureUrl,
-        thumbnail: thumbnailUrl || `https://res.cloudinary.com/${configData.cloudName}/video/upload/so_1,w_1280,h_720,c_limit,f_jpg/${publicId}`,
-        duration
+        thumbnail: thumbnailUrl || '',
+        duration,
       });
 
-      // Save video to database (thumbnail_url optional; backend can derive from public_id)
+      // 3) Save video + thumbnail to database
       const saveRes = await fetch('/api/officers/content/videos', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           title: videoForm.title,
@@ -683,8 +718,8 @@ export default function ContentManagementPage() {
           video_url: secureUrl,
           thumbnail_url: thumbnailUrl,
           duration,
-          cloudinary_public_id: publicId
-        })
+          cloudinary_public_id: publicId,
+        }),
       });
 
       const saveData = await saveRes.json();
@@ -692,7 +727,7 @@ export default function ContentManagementPage() {
         showNotification({
           type: 'success',
           title: 'Success',
-          message: 'Video uploaded and saved successfully'
+          message: 'Video uploaded and saved successfully',
         });
         setVideoForm({ title: '', description: '', category: '', videoFile: null, thumbnailFile: null });
         setVideoPreview(null);
@@ -706,7 +741,7 @@ export default function ContentManagementPage() {
       showNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to upload video'
+        message: 'Failed to upload video',
       });
       setVideoUploadProgress(0);
     } finally {
