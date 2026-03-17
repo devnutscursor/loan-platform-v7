@@ -325,6 +325,40 @@ button: {
     if (hasValidCustomUrl) setCustomIframeLoaded(false);
   }, [findMyHomeWidgetUrl, hasValidCustomUrl]);
 
+  // Keep search results in same tab: override window.open and target="_blank" while this tab is active
+  useEffect(() => {
+    const originalOpen = window.open;
+    window.open = function (
+      url?: string | URL,
+      _target?: string,
+      _features?: string
+    ): Window | null {
+      if (url != null && String(url).trim() !== '') {
+        window.location.href = typeof url === 'string' ? url : url.toString();
+      }
+      return null;
+    };
+
+    const onCaptureClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (anchor && (anchor.target === '_blank' || anchor.getAttribute('target') === '_blank')) {
+        const href = anchor.getAttribute('href');
+        if (href && href.startsWith('http')) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.location.href = href;
+        }
+      }
+    };
+    document.addEventListener('click', onCaptureClick, true);
+
+    return () => {
+      window.open = originalOpen;
+      document.removeEventListener('click', onCaptureClick, true);
+    };
+  }, []);
+
   // IDX widget script: inject <script id="idxwidgetsrc-{id}" src={url}> so the script runs and renders the widget in-page.
   // Customizer preview can remount rapidly; clean old global nodes first to avoid duplicate widgets.
   useEffect(() => {
@@ -455,6 +489,7 @@ button: {
                 pointerEvents: customIframeLoaded ? 'auto' : 'none'
               }}
               scrolling="yes"
+              sandbox="allow-scripts allow-same-origin allow-forms"
               onLoad={() => setCustomIframeLoaded(true)}
               onError={() => setCustomIframeLoaded(true)}
             />
@@ -504,6 +539,7 @@ button: {
             transition: 'opacity 0.3s ease-in-out',
             pointerEvents: idxWidgetLoaded ? 'auto' : 'none'
           }}
+          sandbox="allow-scripts allow-same-origin allow-forms"
           onLoad={handleIframeLoad}
           onError={handleIframeError}
           allow="clipboard-read; clipboard-write"

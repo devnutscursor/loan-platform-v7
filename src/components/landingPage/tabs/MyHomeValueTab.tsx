@@ -290,6 +290,7 @@ button: {
               transition: 'opacity 0.3s ease-in-out'
             }}
             allow="clipboard-read; clipboard-write"
+            sandbox="allow-scripts allow-same-origin allow-forms"
             onLoad={handleIframeLoad}
             onError={handleIframeError}
           />
