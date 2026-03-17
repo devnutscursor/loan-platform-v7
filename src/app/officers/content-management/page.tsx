@@ -609,6 +609,16 @@ export default function ContentManagementPage() {
       return;
     }
 
+    const MAX_VIDEO_SIZE = 25 * 1024 * 1024;
+    if (videoForm.videoFile && videoForm.videoFile.size > MAX_VIDEO_SIZE) {
+      showNotification({
+        type: 'warning',
+        title: 'File Too Large',
+        message: `Video file must be under 25 MB. Your file is ${(videoForm.videoFile.size / (1024 * 1024)).toFixed(1)} MB.`
+      });
+      return;
+    }
+
     try {
       setUploadingVideo(true);
       setVideoUploadProgress(0);
@@ -622,12 +632,11 @@ export default function ContentManagementPage() {
         throw new Error(configData.error || 'Video upload not configured');
       }
 
-      // 1) Upload video directly to Cloudinary (with eager H.264 transcoding for web playback)
+      // 1) Upload video directly to Cloudinary (H.264 transcoding applied at playback via URL transform)
       const videoFormData = new FormData();
       videoFormData.append('file', videoForm.videoFile!);
       videoFormData.append('upload_preset', configData.uploadPreset);
       videoFormData.append('folder', 'officer-content/videos');
-      videoFormData.append('eager', 'f_mp4,vc_h264');
 
       setVideoUploadProgress(20);
       const videoRes = await fetch(
@@ -1261,7 +1270,7 @@ export default function ContentManagementPage() {
               <h2 className="text-xl font-bold mb-4 dark:text-gray-900">Add Video</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Video File * (Max 100MB)</label>
+                  <label className="block text-sm font-medium mb-1">Video File * (Max 25MB)</label>
                   <input
                     type="file"
                     accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
