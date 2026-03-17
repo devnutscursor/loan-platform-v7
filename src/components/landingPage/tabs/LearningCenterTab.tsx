@@ -181,7 +181,7 @@ button: {
       title: 'HELOC',
       description: 'Overview of Home Equity Line of Credit (HELOC).',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/HELOC_REFNIANCE.png',
       category: 'heloc',
       externalUrl: 'https://www.loom.com/share/cf22106d15254413aed16821beb45633',
       embedUrl: 'https://www.loom.com/embed/cf22106d15254413aed16821beb45633'
@@ -191,7 +191,7 @@ button: {
       title: 'FHA Loans',
       description: 'Learn about FHA loan requirements and benefits.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/FHA_LOAN.png',
       category: 'fha-loan',
       externalUrl: 'https://www.loom.com/share/30d9765a7e4b49a69fd158f74c48b6b0',
       embedUrl: 'https://www.loom.com/embed/30d9765a7e4b49a69fd158f74c48b6b0'
@@ -201,7 +201,7 @@ button: {
       title: 'Loan Type - VA',
       description: 'VA loan overview for eligible veterans and service members.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/VA_LOAN.png',
       category: 'va-loan',
       externalUrl: 'https://www.loom.com/share/ea6f48ee50f64fd1a0c8d3bab60358c5',
       embedUrl: 'https://www.loom.com/embed/ea6f48ee50f64fd1a0c8d3bab60358c5'
@@ -211,7 +211,7 @@ button: {
       title: 'Loan Type – Bank Statement',
       description: 'Bank statement loans for self-employed borrowers.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/BANK_STATEMENT_LOAN.png',
       category: 'bank-statement',
       externalUrl: 'https://www.loom.com/share/d0b9c15f012447d782cf40746b12d712',
       embedUrl: 'https://www.loom.com/embed/d0b9c15f012447d782cf40746b12d712'
@@ -221,7 +221,7 @@ button: {
       title: 'Loan Type - USDA',
       description: 'USDA loans for eligible rural and suburban homebuyers.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/USDA_LOAN.png',
       category: 'usda-loan',
       externalUrl: 'https://www.loom.com/share/5ee2eefdd5ae4ad0bf6b0e762dd6789e',
       embedUrl: 'https://www.loom.com/embed/5ee2eefdd5ae4ad0bf6b0e762dd6789e'
@@ -231,7 +231,7 @@ button: {
       title: 'Loan Type - 1099',
       description: '1099 income loans for independent contractors.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/1099_LOAN.png',
       category: '1099-loans',
       externalUrl: 'https://www.loom.com/share/08a55a3508ae443b894a82a30bdf42ee',
       embedUrl: 'https://www.loom.com/embed/08a55a3508ae443b894a82a30bdf42ee'
@@ -241,7 +241,7 @@ button: {
       title: 'Loan Type - Jumbo',
       description: 'Jumbo loans for high-value properties.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/JUMBO_LOAN.png',
       category: 'jumbo-loan',
       externalUrl: 'https://www.loom.com/share/3bdd22dd54464ca98f63d03d009c5f3d',
       embedUrl: 'https://www.loom.com/embed/3bdd22dd54464ca98f63d03d009c5f3d'
@@ -251,7 +251,7 @@ button: {
       title: 'Loan Type – Down Payment Assistance',
       description: 'Down payment assistance programs overview.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/DOWN_PAYMENT_ASSISTANCE.png',
       category: 'down-payment-assistance-loan',
       externalUrl: 'https://www.loom.com/share/fa264d056bdf47a3ac907614610fd62a',
       embedUrl: 'https://www.loom.com/embed/fa264d056bdf47a3ac907614610fd62a'
@@ -261,7 +261,7 @@ button: {
       title: 'Loan Type - Conventional',
       description: 'Standard conventional loan programs.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/CONVENTIONAL_MORTGAGE.png',
       category: 'conventional',
       externalUrl: 'https://www.loom.com/share/21d5ba0ba49741ae8b221d3c19c9b50d',
       embedUrl: 'https://www.loom.com/embed/21d5ba0ba49741ae8b221d3c19c9b50d'
@@ -271,7 +271,7 @@ button: {
       title: 'Loan Type - Construction',
       description: 'Construction loans for building your home.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/CONSTRUCTION_LOAN.png',
       category: 'construction-loan',
       externalUrl: 'https://www.loom.com/share/e6b0868ead5444edbdc7d0ea38ff05e4',
       embedUrl: 'https://www.loom.com/embed/e6b0868ead5444edbdc7d0ea38ff05e4'
@@ -281,7 +281,7 @@ button: {
       title: 'Loan Type – VA IRRRL',
       description: 'VA Interest Rate Reduction Refinance Loan (IRRRL).',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/VA_IRRRL.png',
       category: 'va-irrrl',
       externalUrl: 'https://www.loom.com/share/191300ee926143308fbb7cb2919ac31d',
       embedUrl: 'https://www.loom.com/embed/191300ee926143308fbb7cb2919ac31d'
@@ -291,7 +291,7 @@ button: {
       title: 'Loan Type - DSCR',
       description: 'Debt Service Coverage Ratio (DSCR) investment loans.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/DSCR_LOAN.png',
       category: 'dscr-loans',
       externalUrl: 'https://www.loom.com/share/7764ef7a4d974ae3b27ae80af37505f0',
       embedUrl: 'https://www.loom.com/embed/7764ef7a4d974ae3b27ae80af37505f0'
@@ -301,7 +301,7 @@ button: {
       title: 'Loan Type – Bridge Loans',
       description: 'Bridge loans to help you buy before you sell.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/BRIDGE_LOAN.png',
       category: 'bridge-loans',
       externalUrl: 'https://www.loom.com/share/f2065c9905064f38af80924aca8eea67',
       embedUrl: 'https://www.loom.com/embed/f2065c9905064f38af80924aca8eea67'
@@ -311,7 +311,7 @@ button: {
       title: 'Loan Type – Rate and Term Refinance',
       description: 'Refinancing to adjust rate and term only.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/RATE_AND_TERM_REFINANCE.png',
       category: 'rate-term-refinance',
       externalUrl: 'https://www.loom.com/share/54e9e9e8ed1e4c67a0f83bb56581cdaa',
       embedUrl: 'https://www.loom.com/embed/54e9e9e8ed1e4c67a0f83bb56581cdaa'
@@ -321,7 +321,7 @@ button: {
       title: 'Loan Type – Cashout Refinance',
       description: 'Using home equity with a cash-out refinance.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/CASH_OUT_REFINANCE.png',
       category: 'cash-out',
       externalUrl: 'https://www.loom.com/share/598ef4cb6e6940d48a5fd90b5ccec886',
       embedUrl: 'https://www.loom.com/embed/598ef4cb6e6940d48a5fd90b5ccec886'
@@ -331,7 +331,7 @@ button: {
       title: 'Loan Type – Asset Depletion Loan',
       description: 'Loans qualified based on assets instead of income.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/ASSET_DEPLETION.png',
       category: 'asset-depletion-loans',
       externalUrl: 'https://www.loom.com/share/88e7b080348e49bba7e3ae00284c30e5',
       embedUrl: 'https://www.loom.com/embed/88e7b080348e49bba7e3ae00284c30e5'
@@ -341,7 +341,7 @@ button: {
       title: 'Loan Type – FHA Streamline Refinance',
       description: 'Streamlined refinancing options for FHA loans.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/STREAMLINE.png',
       category: 'streamline',
       externalUrl: 'https://www.loom.com/share/d2c45e8eabe84dcfaa0674673d67cfef',
       embedUrl: 'https://www.loom.com/embed/d2c45e8eabe84dcfaa0674673d67cfef'
@@ -351,7 +351,7 @@ button: {
       title: 'Loan Type – Pre-Approval',
       description: 'Understanding the mortgage pre-approval process.',
       duration: '',
-      thumbnail: '',
+      thumbnail: '/PREAPPROVAL.png',
       category: 'pre-approval',
       externalUrl: 'https://www.loom.com/share/ff5dd539dd324998a8ecceb7c6869340',
       embedUrl: 'https://www.loom.com/embed/ff5dd539dd324998a8ecceb7c6869340'
