@@ -256,25 +256,49 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
     setManualFeeItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Map property type from form to Mortech format
-  const mapPropertyType = (type: string): string => {
-    const mapping: Record<string, string> = {
-      'SingleFamily': 'Single Family',
-      'Condo': 'Condo',
-      'Townhouse': 'Townhouse',
-      'MultiFamily': 'Multi-Family'
+  // Map property type from form to Mortech numeric proptype code
+  const mapPropertyType = (type: string): number => {
+    const mapping: Record<string, number> = {
+      // 0 = 1 unit
+      SingleFamily: 0,
+      '1Unit': 0,
+      // 1 = 2 unit
+      '2Unit': 1,
+      // 2 = 3 unit
+      '3Unit': 2,
+      // 3 = 4 unit
+      '4Unit': 3,
+      MultiFamily: 3,
+      // 4 = Co-op
+      Coop: 4,
+      // 5 = Manufactured home
+      Manufactured: 5,
+      // 6 = Warrantable condo < 5 stories
+      AttachedCondo: 6,
+      Condo: 6,
+      // 15 = Townhome
+      Townhouse: 15,
+      // 20 = Detached condo
+      DetachedCondo: 20,
     };
-    return mapping[type] || 'Single Family';
+    return mapping[type] ?? 0;
   };
 
-  // Map occupancy from form to Mortech format
-  const mapOccupancy = (occ: string): string => {
-    const mapping: Record<string, string> = {
-      'PrimaryResidence': 'Primary',
-      'Secondary': 'Secondary',
-      'Investment': 'Investment'
+  // Map occupancy from form to Mortech numeric occupancy code
+  const mapOccupancy = (occ: string): number => {
+    let normalized = occ;
+    if (normalized === 'PrimaryResidence') normalized = 'Primary';
+    if (normalized === 'SecondHome') normalized = 'Secondary';
+
+    const mapping: Record<string, number> = {
+      // 0 = Owner occupied (Primary)
+      Primary: 0,
+      // 2 = Second home
+      Secondary: 2,
+      // 1 = Non-owner occupied (Investment)
+      Investment: 1,
     };
-    return mapping[occ] || 'Primary';
+    return mapping[normalized] ?? 0;
   };
 
   // Normalize loan term to Mortech format
@@ -473,6 +497,7 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
         loan_amount: calculatedLoanAmount,
         fico: mapCreditScore(formData.creditScore),
         loanpurpose: formData.loanPurpose as 'Purchase' | 'Refinance',
+        // Numeric codes per Mortech 3rd Party guide
         proptype: mapPropertyType(formData.propertyType),
         occupancy: mapOccupancy(formData.occupancy),
         loanProduct1: normalizeLoanTerm(formData.loanTerm || '30')
@@ -483,8 +508,10 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
       }
       if (formData.militaryVeteran === true) {
         request.militaryVeteran = true;
+        // Pass VA first-time use flag so server can derive vaType/subsequentUse
+        request.vaFirstTimeUse = formData.vaFirstTimeUse;
       }
-      if (formData.lockDays && formData.lockDays !== '30' && formData.lockDays !== '') {
+      if (formData.lockDays && formData.lockDays !== '') {
         request.lockDays = formData.lockDays;
       }
       if (formData.secondMortgageAmount && formData.secondMortgageAmount !== '0' && formData.secondMortgageAmount !== '') {

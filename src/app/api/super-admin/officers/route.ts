@@ -47,12 +47,22 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Process officers data
-    const officers = officersData.map(officerCompany => {
+    // Process officers data.
+    // Some test data / seeds can create duplicate user_company rows for the same
+    // (user_id, company_id) pair; to avoid showing "2 2" rows in the super admin
+    // list, we de‑duplicate by (userId + companyId).
+    const officersMap = new Map<string, any>();
+
+    for (const officerCompany of officersData as any[]) {
       const user = officerCompany.users as any;
       const company = officerCompany.companies as any;
-      
-      return {
+      const key = `${user.id}:${company.id}`;
+
+      if (officersMap.has(key)) {
+        continue;
+      }
+
+      officersMap.set(key, {
         id: officerCompany.id,
         userId: user.id,
         email: user.email,
@@ -70,8 +80,10 @@ export async function GET(request: NextRequest) {
           isActive: company.is_active,
           deactivated: company.deactivated
         }
-      };
-    });
+      });
+    }
+
+    const officers = Array.from(officersMap.values());
 
     // Get unique companies for filtering
     const companies = Array.from(

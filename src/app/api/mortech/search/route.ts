@@ -496,14 +496,16 @@ export async function POST(request: NextRequest) {
       reduceToThree = false,
       // Additional context (non-test-script fields)
       propertyState,
+      vaFirstTimeUse,
     } = body;
     
-    // Use test script format if provided, otherwise fall back to old format
-    const finalLoanAmount = loan_amount || loanAmount;
-    const finalPropertyValue = appraisedvalue || propertyValue;
-    const finalCreditScore = fico || creditScore || 740;
-    const finalLoanPurpose = loanpurpose || loanPurpose || 'Purchase';
-    const finalPropertyType = proptype || propertyType || 'Single Family';
+    // Use test script format if provided, otherwise fall back to old format.
+    // IMPORTANT: use nullish coalescing so numeric 0 values (e.g. proptype=0) are preserved.
+    const finalLoanAmount = loan_amount ?? loanAmount;
+    const finalPropertyValue = appraisedvalue ?? propertyValue;
+    const finalCreditScore = fico ?? creditScore ?? 740;
+    const finalLoanPurpose = (loanpurpose ?? loanPurpose ?? 'Purchase') as 'Purchase' | 'Refinance';
+    const finalPropertyType = proptype ?? propertyType ?? 'Single Family';
     const finalLoanTerm = loanProduct1 || loanTerm || '30 year fixed';
     // TEMP: Default propertyState to 'CA' when not provided, so Mortech productList requests work
     const finalPropertyState = propertyState || 'CA';
@@ -574,6 +576,16 @@ export async function POST(request: NextRequest) {
       derivedProductList: productList,
     });
 
+    // Derive VA type / subsequent use codes when applicable
+    let vaTypeCode: string | undefined;
+    let subsequentUseCode: number | undefined;
+    if (militaryVeteran === true) {
+      // Default to Regular military = 0
+      vaTypeCode = '0';
+      // 0 = First time use, 1 = Subsequent use
+      subsequentUseCode = vaFirstTimeUse === false ? 1 : 0;
+    }
+
     const mortechRequest = {
       ...(finalPropertyState && { propertyState: finalPropertyState }),
       propertyZip,
@@ -584,12 +596,12 @@ export async function POST(request: NextRequest) {
       proptype: finalPropertyType,
       occupancy,
       // Only send loanProduct1 when not forcing a specific product via productList
-      ...( !productList && { loanProduct1: finalLoanTerm } ),
+      ...(!productList && { loanProduct1: finalLoanTerm }),
       ...(productList && { productList }),
       // filterId is optional
       ...(filterId && { filterId }),
       // Always indicate borrower-paid MI by default; pmiCompany is optional
-      ...(includeMI && { 
+      ...(includeMI && {
         pmiCompany: -999, // Best MI company
       }),
       noMI: 0,
@@ -597,7 +609,9 @@ export async function POST(request: NextRequest) {
       ...(waiveEscrow === true && { waiveEscrow: true }),
       ...(militaryVeteran === true && { militaryVeteran: true }),
       lockDays: finalLockDays,
-      ...(safeSecondMortgageAmount > 0 && { secondMortgageAmount: safeSecondMortgageAmount })
+      ...(safeSecondMortgageAmount > 0 && { secondMortgageAmount: safeSecondMortgageAmount }),
+      ...(vaTypeCode && { vaType: vaTypeCode }),
+      ...(subsequentUseCode !== undefined && { subsequentUse: subsequentUseCode }),
     };
 
     console.log('🔎 Final Mortech request payload:', mortechRequest);

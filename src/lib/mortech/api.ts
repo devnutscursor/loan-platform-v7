@@ -22,8 +22,16 @@ export interface MortechRequest {
   loan_amount: number;
   fico: number;
   loanpurpose: 'Purchase' | 'Refinance';
-  proptype: 'Single Family' | 'Condo' | 'Townhouse' | 'Multi-Family';
-  occupancy: 'Primary' | 'Secondary' | 'Investment';
+  /**
+   * Property type: numeric code per Marksman 3rd Party guide,
+   * but we still accept legacy string values for backward compatibility.
+   */
+  proptype: number | 'Single Family' | 'Condo' | 'Townhouse' | 'Multi-Family';
+  /**
+   * Occupancy: numeric code per Marksman 3rd Party guide,
+   * but we still accept legacy string values for backward compatibility.
+   */
+  occupancy: number | 'Primary' | 'Secondary' | 'Investment';
   /**
    * Loan product description (e.g. "30 year fixed", "15 year fixed", "5 year ARM/30 yrs").
    * Optional when using productList (explicit product IDs); in that case Mortech
@@ -192,8 +200,9 @@ export class MortechAPI {
         loan_amount: request.loan_amount.toString(),
         fico: request.fico.toString(),
         loanpurpose: request.loanpurpose,
-        proptype: request.proptype,
-        occupancy: request.occupancy,
+        // proptype / occupancy may be numeric codes or legacy strings; stringify either way.
+        proptype: String(request.proptype),
+        occupancy: String(request.occupancy),
         // Only send loanProduct1 when provided; when using productList,
         // Mortech expects productList instead of loanProduct1.
         ...(request.loanProduct1 && { loanProduct1: request.loanProduct1 }),
@@ -205,9 +214,10 @@ export class MortechAPI {
         ...(request.vaType && { vaType: request.vaType }),
         ...(request.subsequentUse !== undefined && { subsequentUse: request.subsequentUse.toString() }),
         // Additional custom rate parameters - only include if they have meaningful values
-        ...(request.waiveEscrow === true && { waiveEscrow: 'true' }),
+        // Numeric-style controls per guide; keep booleans only as selectors here.
+        ...(request.waiveEscrow === true && { waiveescrow: '1' }),
         ...(request.militaryVeteran === true && { militaryVeteran: 'true' }),
-        ...(request.lockDays && request.lockDays !== '30' && { lockDays: request.lockDays }),
+        ...(request.lockDays && { lockindays: request.lockDays }),
         // Only include secondMortgageAmount if it's a valid positive number
         ...(request.secondMortgageAmount !== undefined && 
             request.secondMortgageAmount !== null &&

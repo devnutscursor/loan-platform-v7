@@ -106,10 +106,13 @@ export async function seedSelectedRatesForOfficer(
     propertyZip: '95825',
     appraisedvalue: 687500,
     loan_amount: 550000,
-    fico: 800,
+    // Seed with FICO 780 per default criteria
+    fico: 780,
     loanpurpose: 'Purchase' as const,
-    proptype: 'Single Family' as const,
-    occupancy: 'Primary' as const,
+    // 0 = 1 unit
+    proptype: 0 as const,
+    // 0 = Owner occupied (Primary)
+    occupancy: 0 as const,
     lockDays: '30',
   };
 
@@ -192,7 +195,8 @@ export async function seedSelectedRatesForOfficer(
     purchasePrice: standardScenario.appraisedvalue,
     downPayment: standardScenario.appraisedvalue - standardScenario.loan_amount,
     loanAmount: standardScenario.loan_amount,
-    creditScore: '800+',
+    // Match UI bucket closest to 780
+    creditScore: '780-799',
     loanPurpose: standardScenario.loanpurpose,
   } as const;
 

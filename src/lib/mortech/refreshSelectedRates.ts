@@ -81,13 +81,13 @@ async function refreshSelectedRateRows(
         // Fixed Today's Rates scenario for all refreshed selected rates:
         // - Purchase price: $687,500
         // - Loan amount:   $550,000
-        // - Credit score:  800
+        // - Credit score:  780
         // - Purpose:       Purchase
         // - Property:      CA / 95825 / Single Family / Primary
         // - Lock:          30 days
         const appraisedvalue = 687500;
         const loan_amount = 550000;
-        const fico = 800;
+        const fico = 780;
         const loanpurpose = 'Purchase';
         const lockDays = '30';
 
@@ -98,8 +98,10 @@ async function refreshSelectedRateRows(
           loan_amount,
           fico,
           loanpurpose,
-          proptype: 'Single Family',
-          occupancy: 'Primary',
+          // 0 = 1 unit
+          proptype: 0,
+          // 0 = Owner occupied (Primary)
+          occupancy: 0,
           lockDays,
         };
 
