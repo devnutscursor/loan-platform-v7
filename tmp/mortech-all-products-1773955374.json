@@ -1,0 +1,6321 @@
+{
+  "generatedAt": "2026-03-19T21:23:04.258Z",
+  "investorsCount": 12,
+  "productsCount": 902,
+  "products": [
+    {
+      "productId": "2",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10023",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20023",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20028",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20038",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30023",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40023",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50023",
+      "parentId": "10910",
+      "investorName": "Click n Close - Nashville",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "124",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "269",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "346",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "969",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "970",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1476",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1477",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1668",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2406",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2407",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2416",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2417",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2418",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2426",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2427",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2481",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 203h 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2482",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 203h 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2483",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 203h 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2485",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA 203h 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2486",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt FHA Jumbo 203h 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2696",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2697",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2698",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2700",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2701",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2702",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2707",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2708",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2709",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10013",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20013",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20101",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 20 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20327",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 10 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20344",
+      "parentId": "2297",
+      "investorName": "Freedom Mortgage Wholesale",
+      "name": "Non Conf 25 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "126",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA 30 Yr UST ARM 7/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "271",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 7/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2656",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2658",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10013",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12656",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12657",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12658",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20013",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 15 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22656",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22657",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22658",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30015",
+      "parentId": "5974",
+      "investorName": "JMAC Broker",
+      "name": "Non Conf 30 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Second 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "33",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Second 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "126",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 30 Yr UST ARM 7/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "271",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 7/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "508",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Second 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "635",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "636",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "969",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "970",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1662",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1734",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Second 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1851",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1857",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt FHA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1946",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1947",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2416",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2417",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2418",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2425",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2426",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2427",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2440",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2580",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2581",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2656",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2658",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2696",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2697",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2698",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2700",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2701",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2702",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2703",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2704",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2705",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2707",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2708",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2709",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2779",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf RefiNow 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10026",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11338",
+      "parentId": "7212",
+      "investorName": "PennyMac Broker",
+      "name": "Govt VA Jumbo 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "37",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Rehab 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "271",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 7/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "635",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "636",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "934",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Streamline 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "969",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "970",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1192",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf HomeStyle Ren 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1193",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf HomeStyle Ren 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1194",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf HomeStyle Ren 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1475",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1476",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1477",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1478",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1479",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1480",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1662",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1663",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1856",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Streamline 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1969",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Rehab 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2005",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 203k Rehab 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2006",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 203k Streamline 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2401",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Streamline 30 Yr ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2402",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA 203k Rehab 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2403",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo HomeStyle Ren 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2404",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo HomeStyle Ren 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2406",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2407",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2416",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2417",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2418",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2426",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2427",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2438",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 203k Rehab 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2439",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 203k Streamline 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2440",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2580",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2581",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2656",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2658",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2696",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2697",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2698",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2700",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2701",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2702",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Home Poss 97% 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2703",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2704",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2705",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2707",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2708",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2709",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2779",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf RefiNow 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2782",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf RefiNow 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2784",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Refi Possible 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2785",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Refi Possible 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2786",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Refi Possible 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2787",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Refi Possible 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2858",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2859",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2860",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2861",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Agency FNMA Jumbo 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2862",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt FHA Jumbo 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2863",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10026",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11338",
+      "parentId": "6354",
+      "investorName": "PennyMac Non-Delegated",
+      "name": "Govt VA Jumbo 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "101",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "344",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "969",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "970",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1662",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1663",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2406",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2407",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2417",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2418",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2426",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2427",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2580",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2581",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2656",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2662",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr SOFR ARM 3 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2669",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 30 Yr SOFR ARM 3 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2676",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 3 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2779",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf RefiNow 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2782",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf RefiNow 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2784",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Refi Possible 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2785",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Refi Possible 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2786",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Refi Possible 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2787",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Refi Possible 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10001",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 10 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10002",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10003",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 20 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10004",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10023",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10040",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Conf 25 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11307",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11308",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11662",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 10 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11681",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12406",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30013",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 15 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30015",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32656",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32657",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32658",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40013",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 15 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40015",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40101",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 20 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40327",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 10 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40344",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 25 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42656",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42657",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42658",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50013",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 15 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50015",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 30 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50101",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 20 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50327",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 10 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50344",
+      "parentId": "10479",
+      "investorName": "Plains Commerce WS",
+      "name": "Non Conf 25 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "37",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203k Rehab 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "101",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "344",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "934",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203k Streamline 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "969",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "970",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1192",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf HomeStyle Ren 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1194",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf HomeStyle Ren 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1709",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr Const/Perm",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2005",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203k Rehab 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2006",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203k Streamline 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2403",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo HomeStyle Ren 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2404",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo HomeStyle Ren 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2417",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2418",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2426",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2427",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2457",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr Const/Perm",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2481",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203h 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2483",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203h 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2485",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203h 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2486",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203h 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2488",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203h 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2490",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203h 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2493",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf Nationwide 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2538",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Renovation 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2539",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Renovation 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2540",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Renovation 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2541",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Renovation 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2542",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Renovation 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2580",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2581",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2607",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt VA Jumbo Renovation 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2785",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Refi Possible 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2786",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Refi Possible 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2790",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf Nationwide 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2798",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf Nationwide 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2799",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf Nationwide 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2867",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Second Home Equity 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2868",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Second Home Equity 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2869",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Second Home Equity 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10023",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11709",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr Const/Perm - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12457",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr Const/Perm - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12481",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203h 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12486",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203h 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20028",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "21709",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Conf 30 Yr Const/Perm - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22457",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr Const/Perm - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22481",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA 203h 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22486",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt FHA Jumbo 203h 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30028",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32657",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32658",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40013",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40015",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42657",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42658",
+      "parentId": "2197",
+      "investorName": "Plaza Home Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1475",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1476",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1477",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1478",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1479",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1480",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 30 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2656",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2658",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2782",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf RefiNow 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2873",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 15 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2874",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 15 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2875",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 15 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2876",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Conf 15 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2877",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt FHA 15 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2878",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt VA 15 Yr Buy Down LF 1-0",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10013",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10028",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10394",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr Fixed I/O - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12657",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12658",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20013",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22657",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22658",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "60013",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 6",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "60015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 6",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "80013",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 15 Yr  Fixed - Tier 8",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "80015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 8",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "82656",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 8",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "82657",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 8",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "82658",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 8",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "90015",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "90101",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 20 Yr  Fixed - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "90344",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 25 Yr  Fixed - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "92656",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "92657",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "92658",
+      "parentId": "5502",
+      "investorName": "PRMG Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 9",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "101",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "124",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "344",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "346",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 30 Yr UST ARM 3/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "635",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "636",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1663",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1851",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1857",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1858",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1946",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1947",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1948",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Govt VA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2407",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2662",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr SOFR ARM 3 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2676",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 3 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2779",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf RefiNow 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2780",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf RefiNow 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2781",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf RefiNow 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2782",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf RefiNow 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2784",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf Refi Possible 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2785",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf Refi Possible 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2786",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf Refi Possible 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2787",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf Refi Possible 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10001",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 10 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10002",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10003",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 20 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10004",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10013",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 15 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10040",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 25 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12656",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12657",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12658",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20001",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 10 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20002",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 15 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20003",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 20 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20004",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20013",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 15 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20015",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20040",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Conf 25 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22656",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22657",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22658",
+      "parentId": "5768",
+      "investorName": "ResiCentral",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1858",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1948",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Govt VA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10004",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10015",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Non Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12420",
+      "parentId": "2677",
+      "investorName": "Rocket Wholesale",
+      "name": "Conf Home Ready 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1475",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2406",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2657",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2858",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Agency FNMA Jumbo 30 Yr Buy Down LF 2-1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10023",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10038",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20023",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "20038",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "30023",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40023",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40038",
+      "parentId": "10895",
+      "investorName": "The Loan Store Broker",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "3",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "4",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "13",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "15",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "23",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "25",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "26",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "28",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt RD (FmHA) 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "38",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "125",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "189",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "209",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "226",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "270",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "418",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "635",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "636",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "971",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1307",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1308",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1311",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1313",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1314",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1338",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1339",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1349",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1350",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 15 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1351",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1352",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1353",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1662",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1663",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1669",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 30 Yr UST ARM 5/1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1681",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1851",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1857",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1858",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1877",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1878",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1946",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 10 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1947",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 20 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "1948",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt VA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2406",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2407",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 25 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2420",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2429",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo Home Ready 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2583",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo Home Poss 97% 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2653",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2654",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2655",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2670",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2671",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2672",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2673",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2674",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2675",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FHLMC Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2677",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 5 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2678",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 7 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2679",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Agency FNMA Jumbo 30 Yr SOFR ARM 10 Yr Fixed/6 Mo",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2783",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf RefiNow 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2788",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf Refi Possible 30 Yr  Fixed",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2864",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 20 Yr ARM I/O 10 Yr",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "2865",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 30 Yr ARM I/O 10 Yr",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "10004",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "11353",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "FHLMC 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12420",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Conf Home Ready 30 Yr  Fixed - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12864",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 20 Yr ARM I/O 10 Yr - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "12865",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 30 Yr ARM I/O 10 Yr - Tier 1",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22864",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 20 Yr ARM I/O 10 Yr - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "22865",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 30 Yr ARM I/O 10 Yr - Tier 2",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32656",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr SOFR ARM 5 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32657",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32658",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32864",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 20 Yr ARM I/O 10 Yr - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "32865",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Second HELOC 30 Yr ARM I/O 10 Yr - Tier 3",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "40023",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Govt FHA 30 Yr  Fixed - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42657",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr SOFR ARM 7 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "42658",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr SOFR ARM 10 Yr Fixed/6 Mo - Tier 4",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "50015",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr  Fixed - Tier 5",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "60015",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr  Fixed - Tier 6",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "70015",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr  Fixed - Tier 7",
+      "vendorProductCode": ""
+    },
+    {
+      "productId": "80015",
+      "parentId": "4004",
+      "investorName": "UWM",
+      "name": "Non Conf 30 Yr  Fixed - Tier 8",
+      "vendorProductCode": ""
+    }
+  ]
+}

@@ -332,6 +332,28 @@ button: {
   const detailsUrlRef = React.useRef(detailsUrl);
   useEffect(() => { detailsUrlRef.current = detailsUrl; }, [detailsUrl]);
 
+  // Hide "Data services provided by IDX Broker" attribution once widget renders
+  useEffect(() => {
+    if (!isIdxWidgetScriptUrl) return;
+    const hide = () => {
+      // The IDX widget injects: <div style="...">Data services provided by <a href="https://www.idxbroker.com/">IDX Broker</a></div>
+      // Search the entire document since it may render outside our container
+      document.querySelectorAll('a[href*="idxbroker.com"]').forEach((anchor) => {
+        const parent = anchor.parentElement;
+        if (parent && parent.textContent && /data\s+services\s+provided\s+by/i.test(parent.textContent)) {
+          parent.style.display = 'none';
+        }
+      });
+    };
+    const interval = setInterval(hide, 1000);
+    const observer = new MutationObserver(hide);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      clearInterval(interval);
+      observer.disconnect();
+    };
+  }, [isIdxWidgetScriptUrl]);
+
   // Intercept ALL navigation attempts from the IDX script widget:
   // 1) window.open()      → load URL in overlay iframe
   // 2) anchor clicks      → load URL in overlay iframe
@@ -459,8 +481,8 @@ button: {
         <div
           className="w-full mt-6 relative"
           style={{
-            height: 'calc(100vh - 160px)',
-            minHeight: '700px',
+            height: 'calc(100vh - 40px)',
+            minHeight: '1100px',
             borderRadius: `${layout.borderRadius}px`,
             overflow: 'hidden',
             backgroundColor: colors.background,
@@ -554,16 +576,16 @@ button: {
       <div
         className="w-full mt-6 relative"
         style={{
-          height: 'calc(100vh - 160px)',
-          minHeight: '700px',
-          borderRadius: `${layout.borderRadius}px`,
-          overflow: 'hidden',
-          backgroundColor: colors.background,
-          border: `1px solid ${colors.border}`,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+            height: 'calc(100vh - 40px)',
+            minHeight: '1100px',
+            borderRadius: `${layout.borderRadius}px`,
+            overflow: 'hidden',
+            backgroundColor: colors.background,
+            border: `1px solid ${colors.border}`,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
         {!idxWidgetLoaded && (
           <div className="flex items-center justify-center py-12 absolute inset-0" style={{ zIndex: 1, backgroundColor: colors.background }}>
             <div className="text-center">

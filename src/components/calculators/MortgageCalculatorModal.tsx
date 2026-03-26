@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 
 interface MortgageCalculatorModalProps {
   isOpen: boolean;
@@ -14,6 +15,28 @@ export default function MortgageCalculatorModal({
 }: MortgageCalculatorModalProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeHeight, setIframeHeight] = useState(900);
+  const { getTemplateSync } = useEfficientTemplates();
+  const templateData = getTemplateSync('template1');
+  const colors = templateData?.template?.colors || {
+    primary: '#ec4899',
+    secondary: '#01bcc6',
+    background: '#ffffff',
+    text: '#111827',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb',
+  };
+
+  const calculatorIframeSrc = useMemo(() => {
+    const q = new URLSearchParams({
+      primary: colors.primary,
+      secondary: colors.secondary,
+      bg: colors.background,
+      text: colors.text,
+      textSecondary: colors.textSecondary,
+      border: colors.border,
+    });
+    return `/calculators/mortgage-calculator.html?${q.toString()}`;
+  }, [colors.primary, colors.secondary, colors.background, colors.text, colors.textSecondary, colors.border]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -87,7 +110,7 @@ export default function MortgageCalculatorModal({
         <div className="flex-1 overflow-auto" style={{ pointerEvents: 'auto' }}>
           <iframe
             ref={iframeRef}
-            src="/calculators/mortgage-calculator.html"
+            src={calculatorIframeSrc}
             title="Mortgage Calculator"
             className="w-full border-0"
             style={{

@@ -20,6 +20,7 @@ import {
   CalculatorsTab,
   ScheduleCallTab
 } from './tabs';
+import LoanFinderWidget from './LoanFinderWidget';
 
 export type TabId = 
   | 'todays-rates'
@@ -198,6 +199,9 @@ export default function LandingPageTabs({
   // The prop will be set by parent components (customizer or PublicProfileContent) 
   // which already handle initialization from template customization
   const effectiveActiveTab = activeTab || templateActiveTab;
+
+  // Today’s Rates tab: left blank space kam karke zyada left par lana
+  const isTodaysRatesTab = effectiveActiveTab === 'todays-rates';
 
   // Debug template customization
   React.useEffect(() => {
@@ -522,6 +526,8 @@ export default function LandingPageTabs({
         className={`w-full mx-auto ${
           forceMobileView
             ? ''
+            : isTodaysRatesTab
+              ? 'md:min-w-[800px] overflow-x-auto lg:ml-0 lg:mx-0 lg:w-full lg:max-w-none'
               : 'md:min-w-[800px] md:max-w-7xl overflow-x-auto'
         }`}
       >
@@ -543,11 +549,26 @@ export default function LandingPageTabs({
           <div 
             className="p-4"
             style={{ 
-              padding: `${layout.padding.medium}px`
+              padding: `${isTodaysRatesTab ? layout.padding.small : layout.padding.medium}px`
             }}
           >
             <div className="space-y-8">
-              {renderTabContent()}
+              {isTodaysRatesTab ? (
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                  <div className="w-full lg:w-[20%] lg:shrink-0">
+                    <LoanFinderWidget
+                      colors={colors}
+                      borderRadiusPx={layout.borderRadius}
+                      fontFamily={typography.fontFamily}
+                    />
+                  </div>
+                  <div className="w-full lg:w-[80%]">
+                    {renderTabContent()}
+                  </div>
+                </div>
+              ) : (
+                renderTabContent()
+              )}
             </div>
           </div>
         </div>

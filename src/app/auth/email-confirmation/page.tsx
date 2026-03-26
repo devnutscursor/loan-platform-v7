@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
 import SpotlightCard from '@/components/ui/SpotlightCard';
 import { useNotification } from '@/components/ui/Notification';
@@ -235,9 +236,14 @@ function EmailConfirmationContent() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#005b7c] to-[#01bcc6] bg-clip-text text-transparent">
-                  Loan Officer Platform
-                </h1>
+                <Image
+                  src="/logonobg.png"
+                  alt="RateCaddy"
+                  width={180}
+                  height={48}
+                  className="h-8 w-auto"
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -270,9 +276,14 @@ function EmailConfirmationContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#005b7c] to-[#01bcc6] bg-clip-text text-transparent">
-                Loan Officer Platform
-              </h1>
+              <Image
+                src="/logonobg.png"
+                alt="RateCaddy"
+                width={180}
+                height={48}
+                className="h-8 w-auto"
+                priority
+              />
             </div>
             <div className="flex items-center space-x-4">
               <button

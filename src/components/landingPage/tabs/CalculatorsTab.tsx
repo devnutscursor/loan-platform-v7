@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import Icon from '@/components/ui/Icon';
 
@@ -55,6 +55,18 @@ export default function CalculatorsTab({
     padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
   };
 
+  const calculatorIframeSrc = useMemo(() => {
+    const q = new URLSearchParams({
+      primary: colors.primary,
+      secondary: colors.secondary,
+      bg: colors.background,
+      text: colors.text,
+      textSecondary: colors.textSecondary,
+      border: colors.border,
+    });
+    return `/calculators/mortgage-calculator.html?${q.toString()}`;
+  }, [colors.primary, colors.secondary, colors.background, colors.text, colors.textSecondary, colors.border]);
+
   // Handle postMessage from iframe for height adjustment
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -102,7 +114,7 @@ export default function CalculatorsTab({
       >
         <iframe
           ref={iframeRef}
-          src="/calculators/mortgage-calculator.html"
+          src={calculatorIframeSrc}
           title="Mortgage Calculator"
           className="w-full border-0"
           style={{

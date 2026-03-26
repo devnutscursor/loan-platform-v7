@@ -62,12 +62,14 @@ export const DataTable = <T extends Record<string, any>>({
   const renderActions = (record: T) => {
     const actions: React.ReactNode[] = [];
 
-    // Determine record status based on common fields
-    const inviteStatus = record?.invite_status || record?.status;
-    
-    // For companies: active when invite_status is 'accepted' (same logic as status display)
-    // For officers: active when isActive is true
-    const isActive = inviteStatus === 'accepted' || record?.isActive === true;
+    // Determine record status based on common fields (snake_case + camelCase from APIs)
+    const inviteStatusNorm = String(
+      record?.invite_status ?? record?.inviteStatus ?? record?.status ?? 'pending'
+    ).toLowerCase();
+
+    // For companies: active when invite is accepted; for officers: accepted or explicit isActive
+    const isActive =
+      inviteStatusNorm === 'accepted' || record?.isActive === true;
     const isDeactivated = record?.deactivated === true;
 
     // Reactivate button for deactivated records
@@ -82,7 +84,14 @@ export const DataTable = <T extends Record<string, any>>({
     }
 
     // Resend button for pending/sent/expired invites (only if not deactivated and not accepted)
-    if (onResend && !isDeactivated && inviteStatus !== 'accepted' && (inviteStatus === 'sent' || inviteStatus === 'expired' || inviteStatus === 'pending')) {
+    if (
+      onResend &&
+      !isDeactivated &&
+      inviteStatusNorm !== 'accepted' &&
+      (inviteStatusNorm === 'sent' ||
+        inviteStatusNorm === 'expired' ||
+        inviteStatusNorm === 'pending')
+    ) {
       actions.push(
         <ResendButton
           key="resend"
@@ -110,12 +119,13 @@ export const DataTable = <T extends Record<string, any>>({
 
     // Delete button for inactive/pending/expired records (only if not deactivated)
     // Only show delete for: pending, sent, expired, or inactive records
-    const shouldShowDelete = !isDeactivated && (
-      inviteStatus === 'pending' ||
-      inviteStatus === 'sent' ||
-      inviteStatus === 'expired' ||
-      !isActive
-    );
+    const shouldShowDelete =
+      !isDeactivated &&
+      inviteStatusNorm !== 'accepted' &&
+      (inviteStatusNorm === 'pending' ||
+        inviteStatusNorm === 'sent' ||
+        inviteStatusNorm === 'expired' ||
+        !isActive);
 
     if (onDelete && shouldShowDelete) {
       actions.push(
@@ -589,7 +599,19 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
   onDelete?: (officer: any) => void;
 }> = (props) => {
   const { onViewLeads, onViewDetails, onResend, onDeactivate, onReactivate, onDelete, ...restProps } = props;
-  
+
+  const officerInviteStatusKey = (record: any) =>
+    String(record?.inviteStatus ?? record?.invite_status ?? 'pending').toLowerCase();
+  /** Invite row can still say "sent" if DB wasn't updated — active employees must not get Delete. */
+  const officerInviteAccepted = (record: any) =>
+    officerInviteStatusKey(record) === 'accepted' || record?.isActive === true;
+  const officerCanResend = (record: any) => {
+    if (record?.deactivated) return false;
+    if (officerInviteAccepted(record)) return false;
+    const s = officerInviteStatusKey(record);
+    return s === 'pending' || s === 'sent' || s === 'expired';
+  };
+
   const officerColumns: TableColumn[] = [
     {
       key: 'officer',
@@ -794,7 +816,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             </button>
           )}
           
-          {onResend && !record.isActive && (
+          {onResend && officerCanResend(record) && (
             <ResendButton
               role="company_admin"
               onClick={() => onResend(record)}
@@ -802,7 +824,10 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             />
           )}
           
-          {onDeactivate && record.isActive && !record.deactivated && (
+          {onDeactivate &&
+            officerInviteAccepted(record) &&
+            record.isActive &&
+            !record.deactivated && (
             <DeactivateButton
               role="company_admin"
               onClick={() => onDeactivate(record)}
@@ -818,7 +843,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             />
           )}
           
-          {onDelete && (
+          {onDelete && !officerInviteAccepted(record) && !record.deactivated && (
             <DeleteButton
               role="company_admin"
               onClick={() => onDelete(record)}
@@ -1010,7 +1035,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               </button>
             )}
             
-            {onResend && !record.isActive && (
+            {onResend && officerCanResend(record) && (
               <ResendButton
                 role="company_admin"
                 onClick={() => onResend(record)}
@@ -1018,7 +1043,10 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               />
             )}
             
-            {onDeactivate && record.isActive && !record.deactivated && (
+            {onDeactivate &&
+              officerInviteAccepted(record) &&
+              record.isActive &&
+              !record.deactivated && (
               <DeactivateButton
                 role="company_admin"
                 onClick={() => onDeactivate(record)}
@@ -1034,7 +1062,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               />
             )}
             
-            {onDelete && (
+            {onDelete && !officerInviteAccepted(record) && !record.deactivated && (
               <DeleteButton
                 role="company_admin"
                 onClick={() => onDelete(record)}

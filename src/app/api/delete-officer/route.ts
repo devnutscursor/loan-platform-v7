@@ -33,6 +33,19 @@ export async function DELETE(request: NextRequest) {
       }, { status: 404 });
     }
 
+    const inviteStatus = (officer[0].inviteStatus || '').toLowerCase();
+    const isActiveUser = officer[0].isActive === true;
+    if (inviteStatus === 'accepted' || isActiveUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'This officer is already active. Deactivate them instead of deleting.',
+        },
+        { status: 400 }
+      );
+    }
+
     // Delete user from Supabase Auth if exists (for pending invites)
     try {
       await supabase.auth.admin.deleteUser(officerId);

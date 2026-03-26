@@ -5,7 +5,16 @@ import { spacing, borderRadius, shadows, typography, colors } from '@/theme/them
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import SmartDropdown, { type SmartDropdownOption } from '@/components/ui/SmartDropdown';
 import { useAuth } from '@/hooks/use-auth';
-import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
+
+const PRODUCT_CATEGORY_OPTIONS: SmartDropdownOption[] = [
+  { value: 'conv_30yr', label: 'Conforming' },
+  { value: 'fha_30yr', label: 'FHA' },
+  { value: 'va_30yr', label: 'VA' },
+  { value: 'jumbo_30yr', label: 'JUMBO' },
+  { value: 'second_home_30yr', label: 'Second Home' },
+  { value: 'home_ready_30yr', label: 'Home Ready Program' },
+  { value: 'home_possible_30yr', label: 'Home Possible Program' },
+];
 
 interface SearchFormData {
   zipCode: string;
@@ -66,7 +75,7 @@ interface MortgageSearchFormProps {
   initialValues?: Partial<SearchFormData>;
   // Verified email from questionnaire (for unauthenticated users)
   verifiedEmail?: string;
-  /** Preloaded Product Category options (SSR). When set, dropdown uses these and does not fetch on mount. */
+  /** Reserved for backward compatibility; ignored because categories are fixed by product requirements. */
   initialProductCategoryOptions?: SmartDropdownOption[];
 }
 
@@ -84,7 +93,6 @@ function MortgageSearchForm({
   initialValues,
   // Verified email from questionnaire
   verifiedEmail: verifiedEmailProp,
-  initialProductCategoryOptions,
 }: MortgageSearchFormProps) {
   const { getTemplateSync } = useEfficientTemplates();
   const { user } = useAuth();
@@ -128,12 +136,7 @@ function MortgageSearchForm({
   };
 
   const [productCategoryOptions, setProductCategoryOptions] = useState<SmartDropdownOption[]>(
-    initialProductCategoryOptions && initialProductCategoryOptions.length
-      ? initialProductCategoryOptions
-      : PROGRAM_BUCKETS.map((bucket) => ({
-          value: bucket.id,
-          label: bucket.label,
-        }))
+    PRODUCT_CATEGORY_OPTIONS,
   );
   const [productCategoryLoading, setProductCategoryLoading] = useState(false);
   const [productCategoryError, setProductCategoryError] = useState<string | null>(null);
@@ -175,7 +178,6 @@ function MortgageSearchForm({
     { value: '30', label: '30 Year Fixed' },
     { value: '25', label: '25 Year Fixed' },
     { value: '20', label: '20 Year Fixed' },
-    { value: '15', label: '15 Year Fixed' },
     { value: '10', label: '10 Year Fixed' }
   ], []);
 
@@ -185,27 +187,17 @@ function MortgageSearchForm({
   ], []);
 
   // Initialize / sync Product Category options.
-  // When SSR provides initial options, use them; otherwise fall back to the 8 Today’s Rates buckets.
+  // Keep this dropdown fixed to the 7 program categories requested by product.
   useEffect(() => {
-    if (initialProductCategoryOptions && initialProductCategoryOptions.length) {
-      setProductCategoryOptions(initialProductCategoryOptions);
-      setProductCategoryError(null);
-      setProductCategoryLoading(false);
-    } else {
-      setProductCategoryOptions(
-        PROGRAM_BUCKETS.map((bucket) => ({
-          value: bucket.id,
-          label: bucket.label,
-        })),
-      );
-      setProductCategoryError(null);
-      setProductCategoryLoading(false);
-    }
-  }, [initialProductCategoryOptions]);
+    setProductCategoryOptions(PRODUCT_CATEGORY_OPTIONS);
+    setProductCategoryError(null);
+    setProductCategoryLoading(false);
+  }, []);
 
   // Format currency for display in inputs (e.g. "550000" -> "$550,000")
-  const formatCurrencyForInput = useCallback((value: string): string => {
-    const digits = value.replace(/\D/g, '');
+  const formatCurrencyForInput = useCallback((value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    const digits = String(value).replace(/\D/g, '');
     if (digits === '') return '';
     const num = parseFloat(digits);
     if (Number.isNaN(num)) return '';
@@ -218,8 +210,9 @@ function MortgageSearchForm({
   }, []);
 
   // Parse currency input to raw digits string for storage (e.g. "$550,000" or "550000" -> "550000")
-  const parseCurrencyFromInput = useCallback((value: string): string => {
-    const digits = value.replace(/\D/g, '');
+  const parseCurrencyFromInput = useCallback((value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    const digits = String(value).replace(/\D/g, '');
     return digits;
   }, []);
   
@@ -228,7 +221,7 @@ function MortgageSearchForm({
     salesPrice: '687500',
     downPayment: '137500',
     downPaymentPercent: '20',
-    creditScore: '800+',
+    creditScore: '780-799',
     propertyType: 'SingleFamily',
     occupancy: 'PrimaryResidence',
     loanType: 'Conventional',
@@ -377,10 +370,10 @@ function MortgageSearchForm({
           grid-template-columns: 1fr 2fr 2fr 1.5fr;
         }
         
-        /* Row 1 - Refinance: Desktop (3 columns) */
+        /* Row 1 - Refinance: Desktop (4 columns) */
         .row1-refinance {
           display: grid;
-          grid-template-columns: 1fr 2fr 1.5fr;
+          grid-template-columns: 1fr 2fr 2fr 1.5fr;
         }
         
         /* Row 1 - Mobile (≤550px): 2 columns */
@@ -724,6 +717,41 @@ function MortgageSearchForm({
             </>
           )}
           
+          {/* Refinance: Purchase Price */}
+          {activeTab === 'refinance' && (
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.medium,
+                color: colors.gray[700],
+                marginBottom: spacing[2]
+              }}>
+                Purchase Price
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatCurrencyForInput(formData.salesPrice)}
+                onChange={(e) => handleInputChange('salesPrice', parseCurrencyFromInput(e.target.value))}
+                style={{
+                  width: '100%',
+                  height: '40px',
+                  padding: `${spacing[2]} ${spacing[3]}`,
+                  border: `1px solid ${colors.gray[300]}`,
+                  borderRadius: `${templateLayout.borderRadius}px`,
+                  fontSize: typography.fontSize.base,
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease-in-out',
+                  boxSizing: 'border-box',
+                  color: templateColors.text,
+                  backgroundColor: templateColors.background
+                }}
+                placeholder="$687,500"
+              />
+            </div>
+          )}
+
           {/* Refinance: Loan Amount */}
           {activeTab === 'refinance' && (
             <div>

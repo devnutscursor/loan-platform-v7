@@ -86,13 +86,6 @@ const mapOccupancy = (occ: string): string => {
   return mapping[occ] || 'Primary';
 };
 
-// Normalize loan term to Mortech format
-const normalizeLoanTerm = (term: string): string => {
-  if (!term) return '30 year fixed';
-  if (term.includes('year fixed')) return term;
-  return `${term} year fixed`;
-};
-
 interface SearchFormData {
   zipCode: string;
   salesPrice: string;
@@ -549,14 +542,14 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     if (creditScore === '780-799') return '780-799';
     if (creditScore === '800+') return '800+';
     // Default fallback
-    return creditScore || '740-759';
+    return creditScore || '780-799';
   };
 
   // Auto-search based on questionnaire answers
   const autoSearchFromQuestionnaire = async (answers: Record<string, any>): Promise<SearchFormData> => {
     // Extract values from questionnaire answers
     let loanType = 'Conventional';
-    let creditScore = '740-759';
+    let creditScore = '780-799';
     let loanPurpose = 'Purchase';
     let vaFirstTimeUse = false;
     let downPaymentPercent: string | undefined = undefined;
@@ -601,7 +594,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       downPayment: downPayment || (loanPurpose === 'Purchase' ? '137500' : undefined),
       downPaymentPercent: downPaymentPercent || (loanPurpose === 'Purchase' ? '20' : undefined),
       creditScore: mappedCreditScore, // Use mapped value
-      propertyType: 'SingleFamily',
+      // Default to 1-unit (Mortech proptype=0); still overridable by questionnaire if we add that question later.
+      propertyType: '1Unit',
       occupancy: 'PrimaryResidence',
       loanType: loanType,
       loanTerm: '30',
@@ -633,7 +627,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       amortizationTypes: ["Fixed", "ARM"],
       armFixedTerms: ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
       loanTerms: ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"],
-      productCategory: ''
+      // Default to 30yr Conventional bucket for Custom Rates tab.
+      productCategory: 'conv_30yr'
     };
 
     // Store questionnaire form data to pass to MortgageSearchForm
@@ -645,8 +640,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       salesPrice: formDataPartial.salesPrice || '687500',
       downPayment: formDataPartial.downPayment || '137500',
       downPaymentPercent: formDataPartial.downPaymentPercent || '20',
-      creditScore: formDataPartial.creditScore || '740-759',
-      propertyType: formDataPartial.propertyType || 'SingleFamily',
+      creditScore: formDataPartial.creditScore || '780-799',
+      propertyType: formDataPartial.propertyType || '1Unit',
       occupancy: formDataPartial.occupancy || 'PrimaryResidence',
       loanType: formDataPartial.loanType || 'Conventional',
       loanTerm: formDataPartial.loanTerm || '30',
@@ -679,7 +674,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       amortizationTypes: formDataPartial.amortizationTypes || ["Fixed", "ARM"],
       armFixedTerms: formDataPartial.armFixedTerms || ["ThreeYear", "FiveYear", "SevenYear", "TenYear"],
       loanTerms: formDataPartial.loanTerms || ["ThirtyYear", "TwentyYear", "TwentyFiveYear", "FifteenYear", "TenYear"],
-      productCategory: formDataPartial.productCategory || ''
+      productCategory: formDataPartial.productCategory || 'conv_30yr'
     };
 
     return formData;
@@ -702,8 +697,12 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         const mortgageBalance = parseFloat(formData.mortgageBalance || '0');
         calculatedLoanAmount = mortgageBalance;
         calculatedDownPayment = undefined; // No down payment for refinance
-        // Property value = loan amount (used for API, but not shown in form)
-        propertyValue = calculatedLoanAmount;
+        // Refinance now exposes Purchase Price field; use it as appraised value when provided.
+        const refinancePurchasePrice = parseFloat(formData.salesPrice || '0');
+        propertyValue =
+          Number.isFinite(refinancePurchasePrice) && refinancePurchasePrice > 0
+            ? refinancePurchasePrice
+            : calculatedLoanAmount;
         
         // Validation for refinance
         if (mortgageBalance <= 0) {
@@ -750,7 +749,9 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         // Numeric codes per Mortech 3rd Party guide
         proptype: mapPropertyTypeToMortech(formData.propertyType),
         occupancy: mapOccupancyToMortech(formData.occupancy),
-        loanProduct1: normalizeLoanTerm(formData.loanTerm || '30')
+        // Internal mapping hint for server-side program+term -> productList.
+        // We intentionally avoid sending loanProduct1 and prefer productList.
+        loanTerm: formData.loanTerm || '30',
       };
       
       // Validate required fields

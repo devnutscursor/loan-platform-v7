@@ -302,12 +302,6 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
   };
 
   // Normalize loan term to Mortech format
-  const normalizeLoanTerm = (term: string): string => {
-    if (!term) return '30 year fixed';
-    if (term.includes('year fixed')) return term;
-    return `${term} year fixed`;
-  };
-
   // Map credit score from form to numeric value
   const mapCreditScore = (creditScore: string): number => {
     if (creditScore.includes('+')) {
@@ -471,7 +465,11 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
       if (formData.loanPurpose === 'Refinance') {
         const mortgageBalance = parseFloat(formData.mortgageBalance || '0');
         calculatedLoanAmount = mortgageBalance;
-        propertyValue = calculatedLoanAmount;
+        const refinancePurchasePrice = parseFloat(formData.salesPrice || '0');
+        propertyValue =
+          Number.isFinite(refinancePurchasePrice) && refinancePurchasePrice > 0
+            ? refinancePurchasePrice
+            : calculatedLoanAmount;
         // For refinance, don't set purchasePrice or downPayment
       } else {
         const salesPrice = parseFloat(formData.salesPrice || '0');
@@ -500,7 +498,9 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
         // Numeric codes per Mortech 3rd Party guide
         proptype: mapPropertyType(formData.propertyType),
         occupancy: mapOccupancy(formData.occupancy),
-        loanProduct1: normalizeLoanTerm(formData.loanTerm || '30')
+        // Internal mapping hint for server-side program+term -> productList.
+        // We intentionally avoid sending loanProduct1 and prefer productList.
+        loanTerm: formData.loanTerm || '30',
       };
 
       if (formData.waiveEscrow === true) {

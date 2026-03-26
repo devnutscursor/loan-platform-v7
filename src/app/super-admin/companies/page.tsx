@@ -51,7 +51,7 @@ export default function CompaniesPage() {
     name: '',
     email: '',
     website: '',
-    includeDefaultContent: false,
+    includeDefaultContent: true,
     hasMortechSubscription: true,
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -165,7 +165,7 @@ export default function CompaniesPage() {
         persistent: true,
       });
 
-      setFormData({ name: '', email: '', website: '', includeDefaultContent: false, hasMortechSubscription: true });
+      setFormData({ name: '', email: '', website: '', includeDefaultContent: true, hasMortechSubscription: true });
       setShowCreateModal(false);
       fetchCompanies();
     } catch (error: unknown) {
@@ -467,7 +467,7 @@ export default function CompaniesPage() {
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
-            setFormData({ name: '', email: '', website: '', includeDefaultContent: false, hasMortechSubscription: true });
+            setFormData({ name: '', email: '', website: '', includeDefaultContent: true, hasMortechSubscription: true });
             setValidationErrors({});
           }}
           title="Create New Company"

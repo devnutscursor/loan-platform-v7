@@ -7,119 +7,122 @@ import { checkEmailRateLimit, recordEmailApiCall } from '@/lib/mortech/email-rat
 import { db, userCompanies } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
 
+const PROGRAM_TERM_PRODUCT_IDS: Record<string, Partial<Record<10 | 20 | 25 | 30, number>>> = {
+  conv: { 10: 1, 20: 3, 25: 40, 30: 4 },
+  fha: { 10: 635, 20: 209, 25: 1877, 30: 23 },
+  va: { 10: 636, 20: 189, 25: 1878, 30: 26 },
+  jumbo: { 10: 1662, 20: 1681, 25: 2406, 30: 1307 },
+  second_home: { 20: 2868, 30: 2869 },
+  home_ready: { 10: 2416, 20: 2418, 30: 2420 },
+  home_possible: { 10: 2440, 20: 970, 30: 971 },
+};
+
+function parseLoanTermYears(rawTerm: unknown): 10 | 20 | 25 | 30 {
+  const asString = String(rawTerm ?? '').toLowerCase().trim();
+  if (asString.includes('10')) return 10;
+  if (asString.includes('20')) return 20;
+  if (asString.includes('25')) return 25;
+  return 30;
+}
+
+function normalizeProgramKey(categoryRaw: string): string | undefined {
+  const c = categoryRaw.toLowerCase().trim();
+  if (!c) return undefined;
+
+  // Existing bucket ids from current app flows
+  if (c.startsWith('conv_') || c === 'conforming' || c === 'conf' || c === 'conventional') return 'conv';
+  if (c.startsWith('fha_') || c === 'fha') return 'fha';
+  if (c.startsWith('va_') || c === 'va') return 'va';
+  if (c.startsWith('jumbo_') || c === 'jumbo') return 'jumbo';
+  if (c.startsWith('second_home_') || c.includes('second home')) return 'second_home';
+  if (c.startsWith('home_ready_') || c.includes('home ready')) return 'home_ready';
+  if (c.startsWith('home_possible_') || c.includes('home possible') || c.includes('home poss')) return 'home_possible';
+
+  return undefined;
+}
+
 /**
- * Custom Quote: 3 options by Mortech execution price.
+ * Custom Quote: 3 options aligned with Today’s Rates PAR logic and Mortech XML order.
  * Mortech XML:
- *   - <ratesheet_price> → we map to quote.executionPrice (0–100 scale; Marksman "Price" column).
- *   - quote_detail.$.price → we map to quote.points (borrower discount points).
+ *   - <ratesheet_price> → quote.executionPrice (0–100 scale).
+ *   - quote_detail.$.price → quote.points (borrower discount points; 0.000 = PAR).
  *
- * Business rule (from client):
- *   - First find PAR = row whose executionPrice is closest to 100.
- *   - Then show exactly 3 rows for the selected product:
- *       • One row just below PAR in the price ladder (lower executionPrice → more discount → usually lower rate)
- *       • PAR row itself (≈ 100)
- *       • One row just above PAR in the price ladder (higher executionPrice → more credit → usually higher rate)
- *   - If there is no exact 99.00, still use “one below and one above” relative to PAR.
- *   - If there are not enough neighbors on one side, fall back to the closest remaining rows.
+ * Rules:
+ *   - PAR: same as Today’s Rates / cron — among rows with price delta ≈ 0.000, pick lowest APR
+ *     (fallback: nearest to zero points, then lowest APR if no exact zero).
+ *   - quotes[] order matches XML `<quote>` order (consecutive ladder).
+ *   - Lowest Rate: first quote **before** PAR in that order that is not skipped.
+ *   - Higher Rate: first quote **after** PAR that is not skipped.
+ *   - Skip “neighbor” rows that repeat PAR: another price≈0.000 line, or same rate+APR as the chosen PAR row
+ *     (so we land on the first distinct previous/next rung).
  *
  * Verify: curl -X POST http://localhost:3000/api/mortech/search -H "Content-Type: application/json" \
  *   -d '{"propertyZip":"95825","appraisedvalue":500000,"loan_amount":400000,"fico":740,"loanpurpose":"Purchase","proptype":"Single Family","occupancy":"Primary","loanProduct1":"30 year fixed","reduceToThree":true}'
- * Response rates[] will have 3 items with quoteType: "Lowest Rate" | "PAR" | "Higher Rate"; each has executionPrice and points.
+ * Response rates[] may be 1–3 items with quoteType: "Lowest Rate" | "PAR" | "Higher Rate".
  */
-const PRICE_LOWEST_TARGET = 99;  // discount / pay points → lowest rate
-const PRICE_PAR_TARGET = 100;   // par; premium ≥100 → higher rate / credit
-
 function pickThreeQuotesByPrice(quotes: MortechQuote[]): { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] {
   if (!quotes.length) return [];
 
-  // Prefer executionPrice (0–100 scale). Fallback to points when executionPrice is missing.
-  const getPrice = (q: MortechQuote) => {
-    const ep = q.executionPrice;
-    if (typeof ep === 'number' && Number.isFinite(ep) && ep > 0) return ep;
-    return q.points;
-  };
+  const EPS = 1e-6;
+  const getPoints = (q: MortechQuote) =>
+    typeof q.points === 'number' && Number.isFinite(q.points) ? q.points : Number.POSITIVE_INFINITY;
+  const getApr = (q: MortechQuote) =>
+    typeof q.apr === 'number' && Number.isFinite(q.apr) ? q.apr : Number.POSITIVE_INFINITY;
 
-  // 1) Sort full ladder by executionPrice (or fallback price) ascending.
-  const sorted = [...quotes].sort((a, b) => getPrice(a) - getPrice(b));
+  const isParRow = (q: MortechQuote) => Math.abs(getPoints(q)) <= EPS;
 
-  // 2) Find PAR index: executionPrice closest to 100 across the entire ladder.
-  let parIndex = 0;
-  let bestDiff = Number.POSITIVE_INFINITY;
-  for (let i = 0; i < sorted.length; i++) {
-    const price = getPrice(sorted[i]);
-    const diff = Math.abs(price - PRICE_PAR_TARGET);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      parIndex = i;
-    }
-  }
+  const sameRateApr = (a: MortechQuote, b: MortechQuote) =>
+    Math.abs(a.rate - b.rate) <= EPS && Math.abs(a.apr - b.apr) <= EPS;
 
-  const chosenIndices = new Set<number>();
-  chosenIndices.add(parIndex);
-
-  // Prefer one neighbor below PAR (lower executionPrice) and one above PAR (higher executionPrice).
-  const belowIndex = parIndex - 1;
-  const aboveIndex = parIndex + 1;
-  if (belowIndex >= 0) {
-    chosenIndices.add(belowIndex);
-  }
-  if (aboveIndex < sorted.length) {
-    chosenIndices.add(aboveIndex);
-  }
-
-  // If we still have fewer than 3, fill remaining slots with closest-by-price rows not yet chosen.
-  if (chosenIndices.size < 3 && sorted.length > chosenIndices.size) {
-    const remainingIndices = sorted
-      .map((_, idx) => idx)
-      .filter(idx => !chosenIndices.has(idx))
-      .sort((a, b) => {
-        const da = Math.abs(getPrice(sorted[a]) - PRICE_PAR_TARGET);
-        const db = Math.abs(getPrice(sorted[b]) - PRICE_PAR_TARGET);
-        return da - db;
-      });
-
-    for (const idx of remainingIndices) {
-      chosenIndices.add(idx);
-      if (chosenIndices.size >= 3) break;
-    }
-  }
-
-  // Map chosen indices to quote + provisional labels based on their price relative to PAR.
-  const parPrice = getPrice(sorted[parIndex]);
-  let lowestAssigned = false;
-  let higherAssigned = false;
-
-  const labeled: { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] = [];
-
-  for (const idx of chosenIndices) {
-    const quote = sorted[idx];
-    if (idx === parIndex) {
-      labeled.push({ quote, quoteType: 'PAR' });
-    } else {
-      const price = getPrice(quote);
-      if (price < parPrice && !lowestAssigned) {
-        labeled.push({ quote, quoteType: 'Lowest Rate' });
-        lowestAssigned = true;
-      } else if (price >= parPrice && !higherAssigned) {
-        labeled.push({ quote, quoteType: 'Higher Rate' });
-        higherAssigned = true;
-      } else if (!lowestAssigned) {
-        labeled.push({ quote, quoteType: 'Lowest Rate' });
-        lowestAssigned = true;
-      } else {
-        labeled.push({ quote, quoteType: 'Higher Rate' });
-        higherAssigned = true;
+  /** PAR index in `quotes` (XML order): among price≈0, lowest APR; tie → first in file. */
+  function pickParIndex(): number {
+    let bestIdx = -1;
+    let bestApr = Infinity;
+    for (let i = 0; i < quotes.length; i++) {
+      if (!isParRow(quotes[i])) continue;
+      const a = getApr(quotes[i]);
+      if (a < bestApr - 1e-9) {
+        bestApr = a;
+        bestIdx = i;
       }
     }
+    if (bestIdx >= 0) return bestIdx;
+
+    // No exact 0.000: nearest to zero points, then lowest APR (matches refreshSelectedRates pickParQuoteByPoints).
+    let bestIdx2 = 0;
+    let bestAbs = Infinity;
+    for (let i = 0; i < quotes.length; i++) {
+      const p = getPoints(quotes[i]);
+      const abs = Number.isFinite(p) ? Math.abs(p) : 9999;
+      if (abs < bestAbs - 1e-9) {
+        bestAbs = abs;
+        bestIdx2 = i;
+      } else if (Math.abs(abs - bestAbs) <= EPS) {
+        if (getApr(quotes[i]) < getApr(quotes[bestIdx2])) bestIdx2 = i;
+      }
+    }
+    return bestIdx2;
   }
 
-  // Return in a stable order: Lowest Rate, PAR, Higher Rate (when present).
-  const byOrder: ('Lowest Rate' | 'PAR' | 'Higher Rate')[] = ['Lowest Rate', 'PAR', 'Higher Rate'];
+  const parIdx = pickParIndex();
+  const par = quotes[parIdx];
+
+  const shouldSkipNeighbor = (q: MortechQuote) => isParRow(q) || sameRateApr(q, par);
+
   const ordered: { quote: MortechQuote; quoteType: 'Lowest Rate' | 'PAR' | 'Higher Rate' }[] = [];
 
-  for (const qt of byOrder) {
-    const entry = labeled.find(item => item.quoteType === qt);
-    if (entry) ordered.push(entry);
+  let j = parIdx - 1;
+  while (j >= 0 && shouldSkipNeighbor(quotes[j])) j--;
+  if (j >= 0) {
+    ordered.push({ quote: quotes[j], quoteType: 'Lowest Rate' });
+  }
+
+  ordered.push({ quote: par, quoteType: 'PAR' });
+
+  let k = parIdx + 1;
+  while (k < quotes.length && shouldSkipNeighbor(quotes[k])) k++;
+  if (k < quotes.length) {
+    ordered.push({ quote: quotes[k], quoteType: 'Higher Rate' });
   }
 
   return ordered;
@@ -551,20 +554,40 @@ export async function POST(request: NextRequest) {
     const mortechAPI = createMortechAPI();
 
     // Prepare request - matching test script format EXACTLY
-    // Derive productList from productCategory, if provided.
-    // For Custom Rates / Today's Rates we now send a bucket id (ProgramBucketId) and
-    // look up its candidate productIds via BUCKET_PRODUCT_IDS. For backward compatibility,
-    // if the value is not a known bucket id we treat it as a raw product id.
+    // Derive productList from dropdown program + loan term (preferred).
+    // Keep legacy bucket/raw-id behavior as fallback to avoid disturbing existing flows.
     let productList: string | undefined;
+    let selectedProgramKey: string | undefined;
     if (typeof productCategory === 'string' && productCategory.trim() !== '') {
       const trimmed = productCategory.trim();
-      const bucketIds = Object.keys(BUCKET_PRODUCT_IDS) as (keyof typeof BUCKET_PRODUCT_IDS)[];
-      if (bucketIds.includes(trimmed as keyof typeof BUCKET_PRODUCT_IDS)) {
-        const ids = BUCKET_PRODUCT_IDS[trimmed as keyof typeof BUCKET_PRODUCT_IDS];
-        if (Array.isArray(ids) && ids.length > 0) {
-          productList = ids.join(',');
+      const loanTermYears = parseLoanTermYears(finalLoanTerm);
+      const programKey = normalizeProgramKey(trimmed);
+      selectedProgramKey = programKey;
+
+      if (programKey) {
+        const byTerm = PROGRAM_TERM_PRODUCT_IDS[programKey]?.[loanTermYears];
+        if (typeof byTerm === 'number') {
+          productList = String(byTerm);
+        } else if (loanTermYears !== 30) {
+          console.log('⚠️ No exact product mapping for selected program+term:', {
+            productCategory: trimmed,
+            programKey,
+            loanTermYears,
+          });
         }
       }
+
+      // Legacy bucket mapping fallback (existing behavior)
+      if (!productList) {
+        const bucketIds = Object.keys(BUCKET_PRODUCT_IDS) as (keyof typeof BUCKET_PRODUCT_IDS)[];
+        if (bucketIds.includes(trimmed as keyof typeof BUCKET_PRODUCT_IDS)) {
+          const ids = BUCKET_PRODUCT_IDS[trimmed as keyof typeof BUCKET_PRODUCT_IDS];
+          if (Array.isArray(ids) && ids.length > 0) {
+            productList = ids.join(',');
+          }
+        }
+      }
+
       // Fallback: treat as a single product id (legacy format).
       if (!productList) {
         productList = trimmed;
@@ -576,10 +599,17 @@ export async function POST(request: NextRequest) {
       derivedProductList: productList,
     });
 
+    // Derive category-specific Mortech flags from selected program.
+    // This keeps behavior consistent across Custom Rates + Officer dashboard:
+    // - FHA: financeMI=1
+    // - VA:  financeMI=1, vaType=0, subsequentUse derived from first-time-use flag.
+    const shouldSetFinanceMI = selectedProgramKey === 'fha' || selectedProgramKey === 'va';
+    const shouldSetVaCodes = selectedProgramKey === 'va';
+
     // Derive VA type / subsequent use codes when applicable
     let vaTypeCode: string | undefined;
     let subsequentUseCode: number | undefined;
-    if (militaryVeteran === true) {
+    if (shouldSetVaCodes || militaryVeteran === true) {
       // Default to Regular military = 0
       vaTypeCode = '0';
       // 0 = First time use, 1 = Subsequent use
@@ -604,6 +634,7 @@ export async function POST(request: NextRequest) {
       ...(includeMI && {
         pmiCompany: -999, // Best MI company
       }),
+      ...(shouldSetFinanceMI && { financeMI: 1 }),
       noMI: 0,
       // Additional custom rate parameters - only include if they have meaningful values
       ...(waiveEscrow === true && { waiveEscrow: true }),
@@ -680,12 +711,10 @@ export async function POST(request: NextRequest) {
         Number.isFinite(quote.executionPrice) &&
         quote.executionPrice > 0;
 
-      // Compute borrower points from execution price relative to PAR (100).
-      // Positive => borrower pays discount points; negative => lender credit.
-      const computedPoints =
-        hasExecutionPrice
-          ? Number((100 - quote.executionPrice!).toFixed(3))
-          : quote.points;
+      // quote.points comes from <quote_detail price="..."/> and is already the
+      // borrower points / credit delta used by the Marksman UI.
+      // Support guidance: display price uses quote_detail.price as 100.000 + price.
+      const computedPoints = Number.isFinite(quote.points) ? Number(quote.points.toFixed(3)) : 0;
 
       return {
         id: quote.productId,

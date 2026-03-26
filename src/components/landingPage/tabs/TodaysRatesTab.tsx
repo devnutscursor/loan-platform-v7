@@ -169,9 +169,27 @@ export default function TodaysRatesTab({
     const getParPoints = (rate: any): number => {
       const ep = getExecutionPrice(rate);
       if (ep === undefined) return 0;
-      const diff = 100 - ep;
+      // Mortech <quote_detail price> is the delta used for Marksman display:
+      // displayPrice = 100 + priceDelta
+      // so priceDelta = executionPrice - 100 (when executionPrice is on the 0–100 scale).
+      const diff = ep - 100;
       if (Math.abs(diff) < 0.0005) return 0;
       return Number(diff.toFixed(3));
+    };
+
+    // Keep PAR selection aligned with server refresh/custom rules:
+    // 1) points closest to 0, 2) lowest APR, 3) closest executionPrice to 100.
+    const getPoints = (rate: any): number => {
+      const value =
+        typeof rate?.points === 'number' && !Number.isNaN(rate.points)
+          ? rate.points
+          : getParPoints(rate);
+      return Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
+    };
+
+    const getApr = (rate: any): number => {
+      const value = rate?.apr;
+      return typeof value === 'number' && Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
     };
 
     const mapRateToProduct = (selectedRate: SelectedRate) => {
@@ -246,17 +264,18 @@ export default function TodaysRatesTab({
     }
 
     // For each defined program bucket, find all matching selected rates and
-    // pick the one whose executionPrice is closest to PAR (100).
+    // pick the one closest to PAR by points (same as refresh/custom logic).
     const bucketBestRates = PROGRAM_BUCKETS.map((bucket) => {
       const matchLower = bucket.match.toLowerCase();
       const labelLower = bucket.label.toLowerCase();
 
-      const matching = selectedRates.filter((selectedRate) => {
+      const explicitBucketMatches = selectedRates.filter((selectedRate) => {
         const rate = selectedRate.rateData || {};
-        // Prefer explicit bucketId so each seeded row is always shown under the correct bucket.
-        if (rate.bucketId != null && String(rate.bucketId) === bucket.id) {
-          return true;
-        }
+        return rate.bucketId != null && String(rate.bucketId) === bucket.id;
+      });
+
+      const fallbackTextMatches = selectedRates.filter((selectedRate) => {
+        const rate = selectedRate.rateData || {};
         const program = (rate.loanProgram || '').toLowerCase();
         const productDesc = (rate.productDesc || '').toLowerCase();
         const vendorName = (rate.vendorProductName || '').toLowerCase();
@@ -265,33 +284,82 @@ export default function TodaysRatesTab({
         return combined.includes(matchLower) || combined.includes(labelLower);
       });
 
+      // Prefer explicit bucket-tagged rows to avoid cross-program text collisions.
+      const matching = explicitBucketMatches.length > 0 ? explicitBucketMatches : fallbackTextMatches;
+
       if (matching.length === 0) {
         return null;
+      }
+
+      if (isPublic && bucket.id === 'va_30yr') {
+        console.log('🧪 [VA DEBUG][TodaysRatesTab] VA matching candidates', {
+          selectedRatesCount: selectedRates.length,
+          matchingCount: matching.length,
+          candidates: matching.map((m) => {
+            const r = m.rateData || {};
+            return {
+              selectedRateId: m.id,
+              bucketId: r.bucketId,
+              loanProgram: r.loanProgram,
+              productId: r.productId ?? r.id,
+              rate: r.interestRate ?? r.rate,
+              apr: r.apr,
+              points: r.points,
+              executionPrice: r.executionPrice,
+            };
+          }),
+        });
       }
 
       const best = matching.reduce((bestSoFar, current) => {
         const bestRateData = bestSoFar.rateData || {};
         const currentRateData = current.rateData || {};
 
+        const bestAbsPoints = Math.abs(getPoints(bestRateData));
+        const currentAbsPoints = Math.abs(getPoints(currentRateData));
+        if (currentAbsPoints < bestAbsPoints) return current;
+        if (currentAbsPoints > bestAbsPoints) return bestSoFar;
+
+        // Tie-breaker 1: lower APR (PAR rule alignment)
+        const bestApr = getApr(bestRateData);
+        const currentApr = getApr(currentRateData);
+        if (currentApr < bestApr) return current;
+        if (currentApr > bestApr) return bestSoFar;
+
+        // Tie-breaker 2: execution price closer to PAR display 100 when available
         const bestEp = getExecutionPrice(bestRateData);
         const currentEp = getExecutionPrice(currentRateData);
-
-        // If one has executionPrice and the other doesn't, prefer the one with executionPrice.
         if (bestEp === undefined && currentEp !== undefined) return current;
         if (bestEp !== undefined && currentEp === undefined) return bestSoFar;
-
         if (bestEp !== undefined && currentEp !== undefined) {
-          const bestDiff = Math.abs(bestEp - 100);
-          const currentDiff = Math.abs(currentEp - 100);
-          if (currentDiff < bestDiff) return current;
-          if (currentDiff > bestDiff) return bestSoFar;
-          // Tie‑breaker: lower note rate.
+          const bestEpDiff = Math.abs(bestEp - 100);
+          const currentEpDiff = Math.abs(currentEp - 100);
+          if (currentEpDiff < bestEpDiff) return current;
+          if (currentEpDiff > bestEpDiff) return bestSoFar;
         }
 
+        // Final tie-breaker: lower note rate.
         const bestRate = getInterestRate(bestRateData);
         const currentRate = getInterestRate(currentRateData);
         return currentRate < bestRate ? current : bestSoFar;
       });
+
+      if (isPublic && bucket.id === 'va_30yr') {
+        const bestRateData = best.rateData || {};
+        console.log('🧪 [VA DEBUG][TodaysRatesTab] VA best rate chosen for display', {
+          selectedRateId: best.id,
+          bucketId: bestRateData.bucketId,
+          rate: bestRateData.interestRate ?? bestRateData.rate,
+          apr: bestRateData.apr,
+          points: bestRateData.points,
+          executionPrice: bestRateData.executionPrice,
+          // Current UI selection metric
+          diffFromPar100:
+            typeof bestRateData.executionPrice === 'number'
+              ? Math.abs(bestRateData.executionPrice - 100)
+              : undefined,
+        });
+      }
 
       return { bucket, selectedRate: best };
     }).filter(
@@ -337,7 +405,10 @@ export default function TodaysRatesTab({
             : typeof rate.fees === 'number' && !Number.isNaN(rate.fees)
               ? rate.fees
               : 0;
-      const points = getParPoints(rate);
+      const points =
+        typeof rate.points === 'number' && !Number.isNaN(rate.points)
+          ? rate.points
+          : getParPoints(rate);
       const credits =
         typeof rate.credits === 'number' && !Number.isNaN(rate.credits)
           ? rate.credits
@@ -348,7 +419,7 @@ export default function TodaysRatesTab({
           ? lockPeriodRaw
           : parseInt(String(lockPeriodRaw), 10) || 30;
 
-      return {
+      const mapped = {
         id: rate.id || rate.productId || selectedRate.id,
         lenderName: "Today's Rates",
         loanProgram: bucket.label,
@@ -365,6 +436,20 @@ export default function TodaysRatesTab({
         searchParams: rate.searchParams,
         feeItems,
       };
+
+      if (isPublic && bucket.id === 'va_30yr') {
+        console.log('🧪 [VA DEBUG][TodaysRatesTab] VA final card values', {
+          selectedRateId: selectedRate.id,
+          loanProgram: mapped.loanProgram,
+          interestRate: mapped.interestRate,
+          apr: mapped.apr,
+          points: mapped.points,
+          executionPrice: mapped.executionPrice,
+          monthlyPayment: mapped.monthlyPayment,
+        });
+      }
+
+      return mapped;
     });
   };
 

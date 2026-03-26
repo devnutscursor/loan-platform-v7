@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
           last_name,
           nmls_number,
           is_active,
+          deactivated,
           invite_status,
           invite_sent_at,
           invite_expires_at
@@ -127,6 +128,7 @@ export async function GET(req: NextRequest) {
         lastName: user.last_name || '',
         nmlsNumber: user.nmls_number || null,
         isActive: user.is_active && officerCompany.is_active,
+        deactivated: user.deactivated === true,
         inviteStatus: user.invite_status || null,
         inviteSentAt: user.invite_sent_at || null,
         inviteExpiresAt: user.invite_expires_at || null,

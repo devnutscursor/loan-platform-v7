@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { createMortechAPI } from '@/lib/mortech/api';
 import { db, selectedRates, userCompanies, companies } from '@/lib/db';
-import { BUCKET_PRODUCT_IDS, PROGRAM_BUCKETS, ProgramBucket } from '@/lib/mortech/programBuckets';
+import { BUCKET_PRODUCT_IDS, PROGRAM_BUCKETS, ProgramBucket, ProgramBucketId } from '@/lib/mortech/programBuckets';
 
 export type SeededSelectedRateRow = {
   id: string;
@@ -14,6 +14,42 @@ export type SeedSelectedRatesResult = {
   rates: SeededSelectedRateRow[];
   seeded: boolean;
 };
+
+// Fixed Today’s Rates product IDs requested by client (single product per bucket).
+const FIXED_TODAYS_PRODUCT_LIST_BY_BUCKET: Record<ProgramBucketId, string> = {
+  conv_30yr: '4',
+  conf_15yr: '2',
+  va_30yr: '26',
+  fha_30yr: '23',
+  jumbo_30yr: '2678',
+  second_home_30yr: '2869',
+  home_ready_30yr: '2420',
+  home_possible_30yr: '971',
+};
+
+function pickParQuoteByPoints(quotes: any[]): any {
+  if (!quotes.length) return undefined;
+
+  const EPS = 1e-6;
+  const getPoints = (q: any) =>
+    typeof q.points === 'number' && Number.isFinite(q.points) ? q.points : Number.POSITIVE_INFINITY;
+  const getApr = (q: any) =>
+    typeof q.apr === 'number' && Number.isFinite(q.apr) ? q.apr : Number.POSITIVE_INFINITY;
+
+  const zeroPoints = quotes.filter((q) => Math.abs(getPoints(q)) <= EPS);
+  if (zeroPoints.length > 0) {
+    // PAR rule requested: price="0.000" with lowest APR.
+    return zeroPoints.slice().sort((a, b) => getApr(a) - getApr(b))[0];
+  }
+
+  // Fallback when no exact 0.000 exists: nearest to zero points, then lowest APR.
+  return quotes.slice().sort((a, b) => {
+    const aAbs = Math.abs(getPoints(a));
+    const bAbs = Math.abs(getPoints(b));
+    if (aAbs !== bAbs) return aAbs - bAbs;
+    return getApr(a) - getApr(b);
+  })[0];
+}
 
 /**
  * Seed default selected rates for a given officer and company.
@@ -100,8 +136,11 @@ export async function seedSelectedRatesForOfficer(
 
   const mortechAPI = createMortechAPI();
 
-  // Standard scenario for Today's Rates: $550k loan, 20% down (purchase $687,500)
-  const standardScenario = {
+  // Standard scenario for Today's Rates (fixed across officers):
+  // - Purchase: $687,500 price, $550,000 loan, FICO 780, lock 30 days
+  // - 1-unit property type (proptype=0)
+  // Note: occupancy is adjusted per bucket (e.g. Second Home).
+  const baseScenario = {
     propertyState: 'CA',
     propertyZip: '95825',
     appraisedvalue: 687500,
@@ -111,8 +150,6 @@ export async function seedSelectedRatesForOfficer(
     loanpurpose: 'Purchase' as const,
     // 0 = 1 unit
     proptype: 0 as const,
-    // 0 = Owner occupied (Primary)
-    occupancy: 0 as const,
     lockDays: '30',
   };
 
@@ -120,17 +157,32 @@ export async function seedSelectedRatesForOfficer(
     await Promise.all(
       bucketsToSeed.map(async (bucket: ProgramBucket) => {
         try {
-          const productIds = BUCKET_PRODUCT_IDS[bucket.id] || [];
-          if (!productIds.length) {
-            console.warn(`[seed] ${bucket.id}: no product IDs`);
-            return null;
+          const productList = FIXED_TODAYS_PRODUCT_LIST_BY_BUCKET[bucket.id];
+          if (!productList) {
+            const fallbackIds = BUCKET_PRODUCT_IDS[bucket.id] || [];
+            if (!fallbackIds.length) {
+              console.warn(`[seed] ${bucket.id}: no product IDs`);
+              return null;
+            }
           }
 
-          const productList = productIds.join(',');
+          // Bucket-specific fixed params:
+          // - Second Home: Secondary occupancy
+          // - FHA/VA: finance MI to match Marksman pricing logic
+          const occupancy = bucket.id === 'second_home_30yr' ? 1 : 0;
+          const isFhaBucket = bucket.id.startsWith('fha_');
+          const isVaBucket = bucket.id.startsWith('va_');
+          const financeMI = isFhaBucket || isVaBucket ? 1 : undefined;
+          const vaType = isVaBucket ? '0' : undefined;
+          const subsequentUse = isVaBucket ? 0 : undefined;
 
           const response = await mortechAPI.getRates({
-            ...standardScenario,
-            productList,
+            ...baseScenario,
+            occupancy,
+            ...(financeMI !== undefined ? { financeMI } : {}),
+            ...(vaType !== undefined ? { vaType } : {}),
+            ...(subsequentUse !== undefined ? { subsequentUse } : {}),
+            productList: productList || BUCKET_PRODUCT_IDS[bucket.id].join(','),
           });
 
           if (!response.success || !response.quotes || response.quotes.length === 0) {
@@ -138,33 +190,10 @@ export async function seedSelectedRatesForOfficer(
             return null;
           }
 
-          // Pick the PAR quote for this bucket: executionPrice (ratesheet_price)
-          // closest to 100. Fallback to lowest note rate if executionPrice is
-          // missing on all quotes.
-          let parQuote = response.quotes[0];
-          let bestDiff = Number.POSITIVE_INFINITY;
-          let foundExecutionPrice = false;
-
-          for (const q of response.quotes) {
-            const ep = q.executionPrice;
-            if (typeof ep === 'number' && Number.isFinite(ep) && ep > 0) {
-              const diff = Math.abs(ep - 100);
-              if (diff < bestDiff) {
-                bestDiff = diff;
-                parQuote = q;
-                foundExecutionPrice = true;
-              }
-            }
-          }
-
-          // If no executionPrice was available on any quote, fall back to the
-          // lowest note rate as before.
-          if (!foundExecutionPrice) {
-            parQuote = response.quotes.reduce((bestSoFar, current) => {
-              const bestRate = bestSoFar.rate ?? Number.POSITIVE_INFINITY;
-              const currentRate = current.rate ?? Number.POSITIVE_INFINITY;
-              return currentRate < bestRate ? current : bestSoFar;
-            });
+          const parQuote = pickParQuoteByPoints(response.quotes);
+          if (!parQuote) {
+            console.warn(`[seed] ${bucket.id}: unable to pick PAR quote`);
+            return null;
           }
 
           return { bucket, quote: parQuote };
@@ -192,12 +221,12 @@ export async function seedSelectedRatesForOfficer(
 
   // Build rateData objects and insert into selected_rates
   const defaultSearchParams = {
-    purchasePrice: standardScenario.appraisedvalue,
-    downPayment: standardScenario.appraisedvalue - standardScenario.loan_amount,
-    loanAmount: standardScenario.loan_amount,
+    purchasePrice: baseScenario.appraisedvalue,
+    downPayment: baseScenario.appraisedvalue - baseScenario.loan_amount,
+    loanAmount: baseScenario.loan_amount,
     // Match UI bucket closest to 780
     creditScore: '780-799',
-    loanPurpose: standardScenario.loanpurpose,
+    loanPurpose: baseScenario.loanpurpose,
   } as const;
 
   const inserts = bucketBestQuotes.map(({ bucket, quote }) => {
@@ -219,9 +248,10 @@ export async function seedSelectedRatesForOfficer(
       typeof quote.executionPrice === 'number' &&
       Number.isFinite(quote.executionPrice) &&
       quote.executionPrice > 0;
-    const points = hasExecutionPrice
-      ? Number((100 - quote.executionPrice).toFixed(3))
-      : quote.points ?? 0;
+
+    // quote.points is the <quote_detail price="..."/> attribute (delta vs 100)
+    // used by Marksman for the "Price" (100.000 + price) and Points/Credit display.
+    const points = Number.isFinite(quote.points) ? Number(quote.points.toFixed(3)) : 0;
 
     return {
       officerId,

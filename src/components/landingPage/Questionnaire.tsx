@@ -1686,7 +1686,7 @@ function Questionnaire({
 
   return (
     <div style={{
-      backgroundColor: '#ffffff',
+      backgroundColor: colors.background,
       borderRadius: borderRadius.lg,
       boxShadow: shadows.lg,
       padding: spacing[6]

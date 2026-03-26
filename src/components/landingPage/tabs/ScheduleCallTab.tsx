@@ -160,19 +160,17 @@ export default function ScheduleCallTab({
       )}
 
       <div
-        className="w-full mt-6 relative"
+        className="w-full relative"
         style={{
-          minHeight: '600px',
-          borderRadius: `${layout.borderRadius}px`,
-          overflow: 'auto',
+          height: '860px',
+          overflow: 'hidden',
           backgroundColor: colors.background,
-          border: `1px solid ${colors.border}`
         }}
       >
         {!widgetLoaded && (
           <div
-            className="flex items-center justify-center py-12 absolute inset-0"
-            style={{ minHeight: '600px', zIndex: 1, backgroundColor: colors.background }}
+            className="flex items-center justify-center absolute inset-0"
+            style={{ zIndex: 1, backgroundColor: colors.background }}
           >
             <div className="text-center">
               <div
@@ -189,15 +187,16 @@ export default function ScheduleCallTab({
           title="Schedule a Call Widget"
           className="w-full border-0"
           style={{
-            minHeight: '600px',
+            height: '930px',
             width: '100%',
             border: 'none',
-            overflow: 'auto',
+            display: 'block',
+            marginTop: '-70px',
             opacity: widgetLoaded ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
-            pointerEvents: widgetLoaded ? 'auto' : 'none'
+            pointerEvents: widgetLoaded ? 'auto' : 'none',
           }}
-          scrolling="yes"
+          scrolling="no"
           onLoad={() => setWidgetLoaded(true)}
           onError={() => setWidgetLoaded(true)}
         />

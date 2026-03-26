@@ -321,6 +321,18 @@ function RateResults({
     return price.toFixed(3);
   };
 
+  // Marksman integration guidance:
+  // - Use <quote_detail price="..."> as the primary "Price" display value.
+  // - Display it as 100.000 + price.
+  // We store that delta as `product.points`.
+  const formatParDisplayPrice = (points?: number, executionPrice?: number) => {
+    if (typeof points === 'number' && Number.isFinite(points)) {
+      return (100 + points).toFixed(3);
+    }
+    // Fallback to old behavior when points are missing
+    return formatExecutionPrice(executionPrice);
+  };
+
   const formatPoints = (points: number) => {
     if (points > 0) {
       return `${points.toFixed(3)} Points`;
@@ -578,7 +590,7 @@ function RateResults({
                         <td className="px-4 py-4">
                           <span className="text-sm"
                                 style={{ color: colors.textSecondary }}>
-                            {formatExecutionPrice(product.executionPrice)}
+                            {formatParDisplayPrice(product.points, product.executionPrice)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
