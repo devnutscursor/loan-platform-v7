@@ -257,6 +257,15 @@ export default function LoanFinderWidget({
         <p>
           A conventional loan might be your best option. These loans offer competitive rates and flexible terms.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="va-loan" className="score-card result" style={{ display: activeCardId === 'va-loan' ? 'block' : 'none' }}>
@@ -264,6 +273,15 @@ export default function LoanFinderWidget({
         <p>
           As a veteran or active military member, a VA loan could offer you excellent benefits, including no down payment options.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="fha-loan" className="score-card result" style={{ display: activeCardId === 'fha-loan' ? 'block' : 'none' }}>
@@ -271,6 +289,15 @@ export default function LoanFinderWidget({
         <p>
           An FHA loan might be ideal for you, offering lower down payment requirements and more flexible credit guidelines.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="usda-loan" className="score-card result" style={{ display: activeCardId === 'usda-loan' ? 'block' : 'none' }}>
@@ -278,6 +305,15 @@ export default function LoanFinderWidget({
         <p>
           For rural properties, a USDA loan could offer you favorable terms, including potentially no down payment.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="dpa-loan" className="score-card result" style={{ display: activeCardId === 'dpa-loan' ? 'block' : 'none' }}>
@@ -285,6 +321,15 @@ export default function LoanFinderWidget({
         <p>
           A DPA loan could help you with your down payment, making homeownership more accessible.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="construction-loan" className="score-card result" style={{ display: activeCardId === 'construction-loan' ? 'block' : 'none' }}>
@@ -292,6 +337,15 @@ export default function LoanFinderWidget({
         <p>
           A construction loan can help you finance both the purchase of land and the construction of your new home.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="bridge-loan" className="score-card result" style={{ display: activeCardId === 'bridge-loan' ? 'block' : 'none' }}>
@@ -299,11 +353,29 @@ export default function LoanFinderWidget({
         <p>
           A bridge loan can help you manage the transition between selling your current home and buying a new one.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="heloc" className="score-card result" style={{ display: activeCardId === 'heloc' ? 'block' : 'none' }}>
         <h3 className="lf-h3">Recommended: Home Equity Line of Credit (HELOC)</h3>
         <p>A HELOC can provide you with flexible access to your home's equity for various purposes.</p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="cash-out-refinance" className="score-card result" style={{ display: activeCardId === 'cash-out-refinance' ? 'block' : 'none' }}>
@@ -311,6 +383,15 @@ export default function LoanFinderWidget({
         <p>
           A cash-out refinance can help you access your home's equity while potentially improving your loan terms.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="rate-term-refinance" className="score-card result" style={{ display: activeCardId === 'rate-term-refinance' ? 'block' : 'none' }}>
@@ -318,6 +399,15 @@ export default function LoanFinderWidget({
         <p>
           A rate and term refinance could help you lower your interest rate or adjust your loan term to better suit your needs.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="va-irrrl" className="score-card result" style={{ display: activeCardId === 'va-irrrl' ? 'block' : 'none' }}>
@@ -325,6 +415,15 @@ export default function LoanFinderWidget({
         <p>
           The VA IRRRL program offers a streamlined way for VA loan holders to potentially lower their interest rate.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="fha-streamline" className="score-card result" style={{ display: activeCardId === 'fha-streamline' ? 'block' : 'none' }}>
@@ -332,6 +431,15 @@ export default function LoanFinderWidget({
         <p>
           An FHA Streamline Refinance can help you refinance your existing FHA loan with reduced documentation and potentially lower costs.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div id="usda-streamline" className="score-card result" style={{ display: activeCardId === 'usda-streamline' ? 'block' : 'none' }}>
@@ -339,6 +447,15 @@ export default function LoanFinderWidget({
         <p>
           A USDA Streamline Refinance offers a simplified process to potentially improve the terms of your existing USDA loan.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       <div
@@ -350,6 +467,15 @@ export default function LoanFinderWidget({
         <p>
           A Conventional Streamline Refinance can help you refinance your existing conventional loan with a simplified process.
         </p>
+        <button
+          type="button"
+          className="button"
+          style={{ border: 'none' }}
+          onClick={() => setActiveCardId('landing-page')}
+          aria-label="Refresh questionnaire"
+        >
+          Refresh
+        </button>
       </div>
 
       {/* Scoped styling */}
@@ -394,6 +520,7 @@ export default function LoanFinderWidget({
           margin: 8px 6px;
           border-radius: 5px;
           text-decoration: none;
+          border: none;
           transition: filter 0.25s, background-color 0.25s;
           font-weight: 700;
           font-size: 13px;

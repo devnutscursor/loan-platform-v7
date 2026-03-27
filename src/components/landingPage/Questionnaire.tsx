@@ -92,6 +92,14 @@ function Questionnaire({
     }
   }, [stepHistory]);
 
+  const handleRefresh = useCallback(() => {
+    // Reset back to the initial questionnaire screen (like the first image).
+    setIsFinalized(false);
+    setCurrentStep('landing');
+    setStepHistory(['landing']);
+    setQuestionnaireAnswers({});
+  }, []);
+
   const handleFinalize = useCallback(() => {
     setIsFinalized(true);
     
@@ -1167,25 +1175,49 @@ function Questionnaire({
               display: 'flex', 
               justifyContent: 'center' 
             }}>
-              <Link 
-                href="/?loanType=Conventional" 
-                className="flex items-center space-x-3 px-4 py-2 text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: colors.primary,
-                  color: colors.background,
-                  borderRadius: `${layout.borderRadius}px`,
-                  border: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.secondary;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.primary;
-                }}
-              >
-                <icons.applyNow size={20} color={colors.background} />
-                Get Started
-              </Link>
+              {isPublic ? (
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  className="flex items-center space-x-3 px-4 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.background,
+                    borderRadius: `${layout.borderRadius}px`,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.secondary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primary;
+                  }}
+                >
+                  <icons.refresh size={20} color={colors.background} />
+                  Refresh
+                </button>
+              ) : (
+                <Link 
+                  href="/?loanType=Conventional" 
+                  className="flex items-center space-x-3 px-4 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.background,
+                    borderRadius: `${layout.borderRadius}px`,
+                    border: 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.secondary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primary;
+                  }}
+                >
+                  <icons.applyNow size={20} color={colors.background} />
+                  Get Started
+                </Link>
+              )}
             </div>
           </div>
         );
@@ -1222,27 +1254,52 @@ function Questionnaire({
               display: 'flex', 
               justifyContent: 'center' 
             }}>
-              <Link 
-                href="/?loanType=VA" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <icons.applyNow size={20} color={colors.background} />
-                Get Started
-              </Link>
+              {isPublic ? (
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: spacing.sm,
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <icons.refresh size={20} color={colors.background} />
+                  Refresh
+                </button>
+              ) : (
+                <Link 
+                  href="/?loanType=VA" 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: spacing.sm,
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <icons.applyNow size={20} color={colors.background} />
+                  Get Started
+                </Link>
+              )}
             </div>
           </div>
         );
@@ -1279,27 +1336,52 @@ function Questionnaire({
               display: 'flex', 
               justifyContent: 'center' 
             }}>
-              <Link 
-                href="/?loanType=FHA" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: spacing.sm,
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <icons.applyNow size={20} color={colors.background} />
-                Get Started
-              </Link>
+              {isPublic ? (
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: spacing.sm,
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <icons.refresh size={20} color={colors.background} />
+                  Refresh
+                </button>
+              ) : (
+                <Link 
+                  href="/?loanType=FHA" 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: spacing.sm,
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <icons.applyNow size={20} color={colors.background} />
+                  Get Started
+                </Link>
+              )}
             </div>
           </div>
         );
@@ -1332,23 +1414,45 @@ function Questionnaire({
               display: 'flex', 
               justifyContent: 'center' 
             }}>
-              <Link 
-                href="/?loanType=USDA" 
-                style={{ 
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: `${colors.primary} !important`,
-                  color: `${colors.background} !important`,
-                  border: 'none !important',
-                  borderRadius: borderRadius.md,
-                  fontSize: typography.fontSize.base,
-                  fontWeight: typography.fontWeight.medium,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                Get Started
-              </Link>
+              {isPublic ? (
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  style={{ 
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <icons.refresh size={20} color={colors.background} />
+                  Refresh
+                </button>
+              ) : (
+                <Link 
+                  href="/?loanType=USDA" 
+                  style={{ 
+                    padding: `${spacing.md} ${spacing.lg}`,
+                    backgroundColor: `${colors.primary} !important`,
+                    color: `${colors.background} !important`,
+                    border: 'none !important',
+                    borderRadius: borderRadius.md,
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.medium,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Get Started
+                </Link>
+              )}
             </div>
           </div>
         );
@@ -1364,23 +1468,45 @@ function Questionnaire({
           }}>
             <h3>Recommended: Down Payment Assistance (DPA) Loan</h3>
             <p>A DPA loan could help you with your down payment, making homeownership more accessible.</p>
-            <Link 
-              href="/?loanType=Conventional&dpa=true" 
-              style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link 
+                href="/?loanType=Conventional&dpa=true" 
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1395,20 +1521,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Construction Loan</h3>
             <p>A construction loan can help you finance both the purchase of land and the construction of your new home.</p>
-            <Link href="/?loanType=Conventional&construction=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=Conventional&construction=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1423,20 +1571,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Bridge Loan</h3>
             <p>A bridge loan can help you manage the transition between selling your current home and buying a new one.</p>
-            <Link href="/?loanType=Conventional&bridge=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=Conventional&bridge=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1451,20 +1621,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Home Equity Line of Credit (HELOC)</h3>
             <p>A HELOC can provide you with flexible access to your home&apos;s equity for various purposes.</p>
-            <Link href="/?loanType=HELOC" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=HELOC" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1479,20 +1671,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Cash-Out Refinance</h3>
             <p>A cash-out refinance can help you access your home&apos;s equity while potentially improving your loan terms.</p>
-            <Link href="/?loanType=Conventional&cashOut=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=Conventional&cashOut=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1507,20 +1721,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Rate and Term Refinance</h3>
             <p>A rate and term refinance could help you lower your interest rate or adjust your loan term to better suit your needs.</p>
-            <Link href="/?loanType=Conventional&refinance=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=Conventional&refinance=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1535,20 +1771,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: VA Interest Rate Reduction Refinance Loan (IRRRL)</h3>
             <p>The VA IRRRL program offers a streamlined way for VA loan holders to potentially lower their interest rate.</p>
-            <Link href="/?loanType=VA&irrrl=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=VA&irrrl=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1563,20 +1821,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: FHA Streamline Refinance</h3>
             <p>An FHA Streamline Refinance can help you refinance your existing FHA loan with reduced documentation and potentially lower costs.</p>
-            <Link href="/?loanType=FHA&streamline=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=FHA&streamline=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1591,20 +1871,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: USDA Streamline Refinance</h3>
             <p>A USDA Streamline Refinance offers a simplified process to potentially improve the terms of your existing USDA loan.</p>
-            <Link href="/?loanType=USDA&streamline=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=USDA&streamline=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
@@ -1619,20 +1921,42 @@ function Questionnaire({
           }}>
             <h3>Recommended: Conventional Streamline Refinance</h3>
             <p>A Conventional Streamline Refinance can help you refinance your existing conventional loan with a simplified process.</p>
-            <Link href="/?loanType=Conventional&streamline=true" style={{ 
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: `${colors.primary} !important`,
-                color: `${colors.background} !important`,
-                border: 'none !important',
-                borderRadius: borderRadius.md,
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.medium,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-              Get Started
-            </Link>
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={handleRefresh}
+                style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <icons.refresh size={20} color={colors.background} />
+                Refresh
+              </button>
+            ) : (
+              <Link href="/?loanType=Conventional&streamline=true" style={{ 
+                  padding: `${spacing.md} ${spacing.lg}`,
+                  backgroundColor: `${colors.primary} !important`,
+                  color: `${colors.background} !important`,
+                  border: 'none !important',
+                  borderRadius: borderRadius.md,
+                  fontSize: typography.fontSize.base,
+                  fontWeight: typography.fontWeight.medium,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                Get Started
+              </Link>
+            )}
           </div>
         );
 
