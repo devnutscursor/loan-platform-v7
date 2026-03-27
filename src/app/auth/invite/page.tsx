@@ -602,7 +602,7 @@ function InvitePageContent() {
             <div className="mt-6 text-center">
               <p className="text-sm text-[#005b7c]/70">
                 Need help?{' '}
-                <a href="mailto:support@loanplatform.com" className="text-[#01bcc6] hover:text-[#008eab] font-medium transition-colors duration-200">
+                <a href="mailto:support@syncly360.com" className="text-[#01bcc6] hover:text-[#008eab] font-medium transition-colors duration-200">
                   Contact Support
                 </a>
               </p>
