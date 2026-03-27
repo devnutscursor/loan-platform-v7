@@ -519,7 +519,7 @@ export default function UnifiedHeroSection({
                     <div className="flex items-center gap-2">
                       <span 
                         className="text-sm font-medium"
-                        style={{ color: colors.heroTextColor }}
+                        style={{ color: colors.heroTextColor || '#ffffff' }}
                       >
                         NMLS #{displayNmls}
                       </span>
@@ -680,7 +680,7 @@ export default function UnifiedHeroSection({
                 {displayNmls && (
                   <span 
                     className="text-xs @[400px]:text-sm font-medium mb-2"
-                    style={{ color: colors.heroTextColor }}
+                    style={{ color: colors.heroTextColor || '#ffffff' }}
                   >
                     NMLS #{displayNmls}
                   </span>
