@@ -249,24 +249,28 @@ export default function OfficersSettingsPage() {
     try {
       setSaving(true);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const res = await fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email.trim() }),
       });
+      const data = await res.json();
 
-      if (error) throw error;
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send reset email');
+      }
 
       showNotification({
         type: 'success',
-        title: 'Success',
-        message: 'Password reset link sent to your email!'
+        title: 'Message sent',
+        message: '',
       });
-      
     } catch (error) {
       console.error('Error sending password reset:', error);
       showNotification({
-        type: 'success',
-        title: 'Success',
-        message: 'Failed to send password reset email'
+        type: 'error',
+        title: 'Error',
+        message: 'Could not send. Try again.',
       });
     } finally {
       setSaving(false);

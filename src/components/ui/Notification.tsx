@@ -144,7 +144,9 @@ const NotificationItem: React.FC<{ notification: Notification; onClose: (id: str
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             <p className="text-sm font-medium">{title}</p>
-            <p className="mt-1 text-sm opacity-90 whitespace-pre-line">{message}</p>
+            {message.trim() ? (
+              <p className="mt-1 text-sm opacity-90 whitespace-pre-line">{message}</p>
+            ) : null}
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button

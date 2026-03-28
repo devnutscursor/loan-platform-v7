@@ -157,19 +157,22 @@ function AuthPageContent() {
     setForgotPasswordSuccess('');
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const res = await fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotPasswordEmail.trim() }),
       });
+      const data = await res.json();
 
-      if (error) {
-        throw error;
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send reset email');
       }
 
-      setForgotPasswordSuccess('📧 Password reset link sent! Check your email for instructions.');
+      setForgotPasswordSuccess('Message sent');
       showNotification({
         type: 'success',
-        title: 'Success',
-        message: 'Password reset email sent! Check your inbox.'
+        title: 'Message sent',
+        message: '',
       });
       
       // Close modal after 2 seconds
@@ -178,13 +181,13 @@ function AuthPageContent() {
         setForgotPasswordEmail('');
         setForgotPasswordSuccess('');
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password reset error:', error);
-      setForgotPasswordError('❌ Failed to send password reset email. Please try again.');
+      setForgotPasswordError('Could not send. Try again.');
       showNotification({
         type: 'error',
         title: 'Error',
-        message: error.message || 'Failed to send reset email'
+        message: 'Could not send. Try again.',
       });
     } finally {
       setForgotPasswordLoading(false);

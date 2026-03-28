@@ -337,3 +337,96 @@ export async function sendContactEmail(
   }
 }
 
+/**
+ * Password reset link via app SMTP (same credentials as other transactional mail).
+ */
+export async function sendPasswordResetLinkEmail(
+  toEmail: string,
+  resetUrl: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const emailSubject = 'Reset your ratecaddy password';
+    const emailBody = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>ratecaddy — Password reset</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px;">
+            <h1 style="color: #005b7c; margin-bottom: 16px;">Password reset</h1>
+            <p style="font-size: 16px; margin-bottom: 24px;">
+              We received a request to reset your password. Click the button below to choose a new password. You will need your <strong>current password</strong> to complete the reset.
+            </p>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${resetUrl.replace(/"/g, '&quot;')}"
+                 style="display: inline-block; background: linear-gradient(135deg, #01bcc6, #008eab); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Reset password
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666;">
+              This link expires in 60 minutes. If you did not request a reset, you can ignore this email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpSenderName = process.env.SMTP_PASSWORD_RESET_SENDER_NAME || 'ratecaddy!';
+    const smtpSenderEmail = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER;
+
+    if (smtpHost && smtpUser && smtpPass) {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${smtpSenderName}" <${smtpSenderEmail}>`,
+        to: toEmail,
+        subject: emailSubject,
+        html: emailBody,
+      });
+
+      console.log('Password reset email sent. Message ID:', info.messageId);
+      return { success: true, message: 'Password reset email sent' };
+    }
+
+    const missingConfig: string[] = [];
+    if (!smtpHost) missingConfig.push('SMTP_HOST');
+    if (!smtpUser) missingConfig.push('SMTP_USER');
+    if (!smtpPass) missingConfig.push('SMTP_PASS');
+
+    console.warn(`Email service not fully configured. Missing: ${missingConfig.join(', ')}`);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n========================================');
+      console.log('[DEV MODE] Password reset link for:', toEmail);
+      console.log(resetUrl);
+      console.log('========================================\n');
+      return { success: true, message: 'Password reset link logged (dev mode)' };
+    }
+
+    throw new Error(
+      `Email service not configured. Set ${missingConfig.join(', ')} (same as invite / transactional mail).`
+    );
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to send password reset email',
+    };
+  }
+}
+
