@@ -21,8 +21,9 @@ const FIXED_TODAYS_PRODUCT_LIST_BY_BUCKET: Record<ProgramBucketId, string> = {
   conf_15yr: '2',
   va_30yr: '26',
   fha_30yr: '23',
-  jumbo_30yr: '2678',
-  second_home_30yr: '2869',
+  // Jumbo Today’s Rates uses Non Conf 30 Yr Fixed.
+  jumbo_30yr: '15',
+  second_home_30yr: '4',
   home_ready_30yr: '2420',
   home_possible_30yr: '971',
 };
@@ -137,14 +138,14 @@ export async function seedSelectedRatesForOfficer(
   const mortechAPI = createMortechAPI();
 
   // Standard scenario for Today's Rates (fixed across officers):
-  // - Purchase: $687,500 price, $550,000 loan, FICO 780, lock 30 days
+  // - Purchase: $550,000 price, $440,000 loan (20% down), FICO 780, lock 30 days
   // - 1-unit property type (proptype=0)
   // Note: occupancy is adjusted per bucket (e.g. Second Home).
   const baseScenario = {
     propertyState: 'CA',
     propertyZip: '95825',
-    appraisedvalue: 687500,
-    loan_amount: 550000,
+    appraisedvalue: 550000,
+    loan_amount: 440000,
     // Seed with FICO 780 per default criteria
     fico: 780,
     loanpurpose: 'Purchase' as const,
@@ -167,9 +168,9 @@ export async function seedSelectedRatesForOfficer(
           }
 
           // Bucket-specific fixed params:
-          // - Second Home: Secondary occupancy
+          // - Second Home: occupancy=2 (RateCaddy second-home code)
           // - FHA/VA: finance MI to match Marksman pricing logic
-          const occupancy = bucket.id === 'second_home_30yr' ? 1 : 0;
+          const occupancy = bucket.id === 'second_home_30yr' ? 2 : 0;
           const isFhaBucket = bucket.id.startsWith('fha_');
           const isVaBucket = bucket.id.startsWith('va_');
           const financeMI = isFhaBucket || isVaBucket ? 1 : undefined;

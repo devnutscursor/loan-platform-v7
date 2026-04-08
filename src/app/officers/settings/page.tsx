@@ -242,35 +242,78 @@ export default function OfficersSettingsPage() {
     }
   };
 
-  // Handle password reset request
-  const handlePasswordReset = async () => {
+  // Handle in-session password change
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user?.email) return;
 
-    try {
-      setSaving(true);
-      
-      const res = await fetch('/api/auth/request-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email.trim() }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to send reset email');
-      }
-
-      showNotification({
-        type: 'success',
-        title: 'Message sent',
-        message: '',
-      });
-    } catch (error) {
-      console.error('Error sending password reset:', error);
+    if (passwordForm.newPassword.length < 8) {
       showNotification({
         type: 'error',
         title: 'Error',
-        message: 'Could not send. Try again.',
+        message: 'New password must be at least 8 characters long',
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'New password and confirm password do not match',
+      });
+      return;
+    }
+
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      showNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'New password must be different from current password',
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordForm.currentPassword,
+      });
+
+      if (signInError) {
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Current password is incorrect',
+        });
+        return;
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword,
+      });
+
+      if (updateError) throw updateError;
+
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+
+      showNotification({
+        type: 'success',
+        title: 'Success',
+        message: 'Password changed successfully!',
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      showNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to change password. Please try again.',
       });
     } finally {
       setSaving(false);
@@ -555,38 +598,102 @@ export default function OfficersSettingsPage() {
               <p className="text-sm text-gray-600">Update your password securely</p>
             </CardHeader>
             <CardBody>
-              <div className="space-y-6">
-                <div className="bg-[#01bcc6]/10 border border-[#01bcc6]/20 rounded-md p-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <Lock className="h-5 w-5 text-[#008eab]" />
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-[#005b7c]">
-                        Secure Password Reset
-                      </h3>
-                      <div className="mt-2 text-sm text-[#008eab]">
-                        <p>
-                          For security reasons, password changes require email verification. 
-                          Click the button below to receive a secure password reset link.
-                        </p>
-                      </div>
-                    </div>
+              <form onSubmit={handlePasswordChange} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter current password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showCurrentPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter new password"
+                      minLength={8}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Confirm new password"
+                      minLength={8}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
                   <Button
-                    onClick={handlePasswordReset}
+                    type="submit"
                     loading={saving}
                     disabled={saving}
                     className="flex items-center space-x-2"
                   >
                     <Lock className="h-4 w-4" />
-                    <span>{saving ? 'Sending...' : 'Send Reset Link'}</span>
+                    <span>{saving ? 'Updating...' : 'Update Password'}</span>
                   </Button>
                 </div>
-              </div>
+              </form>
             </CardBody>
           </SpotlightCard>
         )}

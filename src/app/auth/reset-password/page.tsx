@@ -27,11 +27,9 @@ function ResetPasswordContent() {
 
   const token = searchParams.get('token');
 
-  const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showCurrent, setShowCurrent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checkingToken, setCheckingToken] = useState(true);
@@ -96,7 +94,6 @@ function ResetPasswordContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token,
-          currentPassword,
           newPassword: password,
         }),
       });
@@ -190,39 +187,11 @@ function ResetPasswordContent() {
               {emailMasked ? (
                 <p className="text-[#005b7c]/80 text-lg">Account: {emailMasked}</p>
               ) : (
-                <p className="text-[#005b7c]/80 text-lg">Enter your current password and choose a new one</p>
+                <p className="text-[#005b7c]/80 text-lg">Choose a new password for your account</p>
               )}
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-[#005b7c] mb-3">Current password</label>
-                <div className="relative">
-                  <FieldLockIcon />
-                  <input
-                    type={showCurrent ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className={inputBaseClass}
-                    placeholder="Current password"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrent(!showCurrent)}
-                    className="absolute inset-y-0 right-0 z-10 flex items-center pr-4 text-[#005b7c] hover:text-[#01bcc6]"
-                    aria-label={showCurrent ? 'Hide password' : 'Show password'}
-                  >
-                    {showCurrent ? (
-                      <EyeOff className="h-5 w-5 shrink-0" strokeWidth={2.25} />
-                    ) : (
-                      <Eye className="h-5 w-5 shrink-0" strokeWidth={2.25} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-[#005b7c] mb-3">New password</label>
                 <div className="relative">
@@ -303,19 +272,11 @@ function ResetPasswordContent() {
                 )}
               </div>
 
-              <div className="flex items-center p-4 bg-green-50 border-2 border-green-200 rounded-xl">
-                <CheckCircle className="h-5 w-5 text-green-500 mr-3 shrink-0" />
-                <span className="text-sm text-green-700 font-medium">
-                  We verify your current password before updating your account.
-                </span>
-              </div>
-
               <div className="space-y-4">
                 <button
                   type="submit"
                   disabled={
                     loading ||
-                    !currentPassword ||
                     !password ||
                     !confirmPassword ||
                     !confirmMatches ||

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { db, selectedRates, userCompanies, companies, manualRates } from '@/lib/db';
 import { seedSelectedRatesForOfficer } from '@/lib/mortech/seedSelectedRates';
-import { refreshSelectedRatesForOfficer } from '@/lib/mortech/refreshSelectedRates';
 import { eq, and } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -10,13 +9,11 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const SELECTED_RATES_CACHE_TTL_MS = 30000;
-const PUBLIC_REFRESH_TTL_MS = 10 * 60 * 1000;
 const selectedRatesCache = new Map<
   string,
   { data: { success: true; rates: any[] }; fetchedAt: number }
 >();
 const selectedRatesFetchPromises = new Map<string, Promise<{ success: true; rates: any[] }>>();
-const publicSelectedRatesLastRefreshAt = new Map<string, number>();
 
 function mapRateRow(row: any) {
   return {
@@ -112,39 +109,16 @@ export async function GET(request: NextRequest) {
     if (cached && Date.now() - cached.fetchedAt < SELECTED_RATES_CACHE_TTL_MS) {
       const res = NextResponse.json(cached.data);
       res.headers.set('X-Cache', 'HIT');
-      res.headers.set('Cache-Control', 'private, max-age=30');
+      res.headers.set(
+        'Cache-Control',
+        officerIdParam ? 'public, s-maxage=60, stale-while-revalidate=120' : 'private, max-age=30'
+      );
       return res;
     }
 
     let promise = selectedRatesFetchPromises.get(cacheKey);
     if (!promise) {
       promise = (async () => {
-        // Public profile Today's Rates should stay close to real-time.
-        // On cache misses, periodically refresh this officer's selected rates so
-        // bucket-specific params (e.g. VA financeMI/vaType/subsequentUse) are reflected.
-        if (officerIdParam && isMortechCompany) {
-          const lastRefreshedAt = publicSelectedRatesLastRefreshAt.get(officerId) ?? 0;
-          const now = Date.now();
-          if (now - lastRefreshedAt > PUBLIC_REFRESH_TTL_MS) {
-            console.log('🧪 [VA DEBUG][selected-rates API] Public selected-rates refresh start', {
-              officerId,
-              companyId,
-              refreshTtlMs: PUBLIC_REFRESH_TTL_MS,
-              elapsedSinceLastMs: now - lastRefreshedAt,
-            });
-            try {
-              await refreshSelectedRatesForOfficer(officerId, companyId);
-              publicSelectedRatesLastRefreshAt.set(officerId, now);
-              console.log('🧪 [VA DEBUG][selected-rates API] Public selected-rates refresh done', {
-                officerId,
-                companyId,
-              });
-            } catch (refreshErr) {
-              console.warn('[selected-rates] public refresh failed:', refreshErr);
-            }
-          }
-        }
-
         const { data: rows, error } = await supabase
           .from('selected_rates')
           .select('id, rate_data, created_at, updated_at')
@@ -198,7 +172,10 @@ export async function GET(request: NextRequest) {
     const payload = await promise;
     const res = NextResponse.json(payload);
     res.headers.set('X-Cache', 'MISS');
-    res.headers.set('Cache-Control', 'private, max-age=30');
+    res.headers.set(
+      'Cache-Control',
+      officerIdParam ? 'public, s-maxage=60, stale-while-revalidate=120' : 'private, max-age=30'
+    );
     return res;
   } catch (error) {
     console.error('❌ Error fetching selected rates:', error);

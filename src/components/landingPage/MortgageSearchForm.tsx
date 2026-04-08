@@ -218,8 +218,8 @@ function MortgageSearchForm({
   
   const defaultFormData: SearchFormData = {
     zipCode: '95825',
-    salesPrice: '687500',
-    downPayment: '137500',
+    salesPrice: '550000',
+    downPayment: '110000',
     downPaymentPercent: '20',
     creditScore: '780-799',
     propertyType: 'SingleFamily',
@@ -655,7 +655,7 @@ function MortgageSearchForm({
                   color: templateColors.text,
                   backgroundColor: templateColors.background
                 }}
-                placeholder="$687,500"
+                placeholder="$550,000"
               />
             </div>
           )}
@@ -693,7 +693,7 @@ function MortgageSearchForm({
                       height: '100%',
                       boxSizing: 'border-box'
                     }}
-                    placeholder="$137,500"
+                    placeholder="$110,000"
                   />
                   <div style={{ 
                     display: 'flex',
@@ -747,7 +747,7 @@ function MortgageSearchForm({
                   color: templateColors.text,
                   backgroundColor: templateColors.background
                 }}
-                placeholder="$687,500"
+                placeholder="$550,000"
               />
             </div>
           )}

@@ -11,11 +11,54 @@ const PROGRAM_TERM_PRODUCT_IDS: Record<string, Partial<Record<10 | 20 | 25 | 30,
   conv: { 10: 1, 20: 3, 25: 40, 30: 4 },
   fha: { 10: 635, 20: 209, 25: 1877, 30: 23 },
   va: { 10: 636, 20: 189, 25: 1878, 30: 26 },
-  jumbo: { 10: 1662, 20: 1681, 25: 2406, 30: 1307 },
-  second_home: { 20: 2868, 30: 2869 },
+  // Non Conf fixed mappings for Jumbo (10-year unavailable in current catalog selection).
+  jumbo: { 20: 101, 25: 344, 30: 15 },
+  // Second-home uses conforming products with occupancy=2.
+  second_home: { 10: 1, 20: 3, 25: 40, 30: 4 },
   home_ready: { 10: 2416, 20: 2418, 30: 2420 },
   home_possible: { 10: 2440, 20: 970, 30: 971 },
 };
+
+function normalizeOccupancyCode(raw: unknown): 0 | 1 | 2 {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    if (raw === 2) return 2;
+    if (raw === 1) return 1;
+    return 0;
+  }
+
+  const value = String(raw ?? '').toLowerCase().trim();
+  if (!value) return 0;
+
+  if (
+    value === '2' ||
+    value === 'secondary' ||
+    value === 'secondhome' ||
+    value === 'second home'
+  ) {
+    return 2;
+  }
+
+  if (
+    value === '1' ||
+    value === 'investment' ||
+    value === 'nonowner' ||
+    value === 'non-owner' ||
+    value === 'non owner'
+  ) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function resolveOccupancyCode(raw: unknown, programKey?: string): 0 | 1 | 2 {
+  if (programKey === 'second_home') {
+    // RateCaddy mapping required by client:
+    // 0 = Owner occupied, 1 = Non-owner occupied, 2 = Second home
+    return 2;
+  }
+  return normalizeOccupancyCode(raw);
+}
 
 function parseLoanTermYears(rawTerm: unknown): 10 | 20 | 25 | 30 {
   const asString = String(rawTerm ?? '').toLowerCase().trim();
@@ -206,7 +249,7 @@ export async function GET(request: NextRequest) {
     const propertyZip = searchParams.get('propertyZip') || '';
     const loanPurpose = searchParams.get('loanPurpose') as 'Purchase' | 'Refinance' || 'Purchase';
     const propertyType = searchParams.get('propertyType') as 'Single Family' | 'Condo' | 'Townhouse' | 'Multi-Family' || 'Single Family';
-    const occupancy = searchParams.get('occupancy') as 'Primary' | 'Secondary' | 'Investment' || 'Primary';
+    const occupancy = resolveOccupancyCode(searchParams.get('occupancy'));
     const loanTerm = searchParams.get('loanTerm') || '30 year fixed';
     const filterId = searchParams.get('filterId') || undefined;
     const includeMI = searchParams.get('includeMI') === 'true';
@@ -564,6 +607,17 @@ export async function POST(request: NextRequest) {
       const programKey = normalizeProgramKey(trimmed);
       selectedProgramKey = programKey;
 
+      // Jumbo 10-year fixed is intentionally unavailable for current Product Category mapping.
+      if (programKey === 'jumbo' && loanTermYears === 10) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Jumbo 10-year fixed is not available for the selected Product Category.',
+          },
+          { status: 400 },
+        );
+      }
+
       if (programKey) {
         const byTerm = PROGRAM_TERM_PRODUCT_IDS[programKey]?.[loanTermYears];
         if (typeof byTerm === 'number') {
@@ -594,9 +648,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const normalizedOccupancy = resolveOccupancyCode(occupancy, selectedProgramKey);
+
     console.log('🔎 Mortech product selection:', {
       productCategoryRaw: productCategory,
       derivedProductList: productList,
+      occupancyRaw: occupancy,
+      occupancyResolved: normalizedOccupancy,
     });
 
     // Derive category-specific Mortech flags from selected program.
@@ -624,7 +682,7 @@ export async function POST(request: NextRequest) {
       fico: finalCreditScore,
       loanpurpose: finalLoanPurpose,
       proptype: finalPropertyType,
-      occupancy,
+      occupancy: normalizedOccupancy,
       // Only send loanProduct1 when not forcing a specific product via productList
       ...(!productList && { loanProduct1: finalLoanTerm }),
       ...(productList && { productList }),
@@ -668,7 +726,7 @@ export async function POST(request: NextRequest) {
         propertyZip,
         finalLoanPurpose,
         finalPropertyType,
-        occupancy,
+        occupancy: normalizedOccupancy,
         finalLoanTerm,
       });
       
@@ -681,7 +739,7 @@ export async function POST(request: NextRequest) {
           propertyZip,
           finalLoanPurpose,
           finalPropertyType,
-          occupancy,
+          occupancy: normalizedOccupancy,
           finalLoanTerm,
         });
       }
@@ -694,7 +752,7 @@ export async function POST(request: NextRequest) {
         propertyZip,
         finalLoanPurpose,
         finalPropertyType,
-        occupancy,
+          occupancy: normalizedOccupancy,
         finalLoanTerm,
       });
     }
@@ -782,7 +840,7 @@ export async function POST(request: NextRequest) {
         propertyZip,
         finalLoanPurpose,
         finalPropertyType,
-        occupancy,
+        occupancy: normalizedOccupancy,
         finalLoanTerm,
         filterId,
         includeMI,

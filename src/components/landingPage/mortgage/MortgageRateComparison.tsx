@@ -568,7 +568,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     const mappedCreditScore = mapCreditScoreToDropdown(creditScore);
     
     // Default sales price (Today's Rates / backend standard)
-    const defaultSalesPrice = 687500;
+    const defaultSalesPrice = 550000;
     
     // Calculate down payment amount from percentage if provided
     let downPayment: string | undefined = undefined;
@@ -591,7 +591,7 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     const formDataPartial: Partial<SearchFormData> = {
       zipCode: '95825',
       salesPrice: loanPurpose === 'Purchase' ? defaultSalesPrice.toString() : undefined,
-      downPayment: downPayment || (loanPurpose === 'Purchase' ? '137500' : undefined),
+      downPayment: downPayment || (loanPurpose === 'Purchase' ? '110000' : undefined),
       downPaymentPercent: downPaymentPercent || (loanPurpose === 'Purchase' ? '20' : undefined),
       creditScore: mappedCreditScore, // Use mapped value
       // Default to 1-unit (Mortech proptype=0); still overridable by questionnaire if we add that question later.
@@ -637,8 +637,8 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
     // Create full form data for search
     const formData: SearchFormData = {
       zipCode: formDataPartial.zipCode || '95825',
-      salesPrice: formDataPartial.salesPrice || '687500',
-      downPayment: formDataPartial.downPayment || '137500',
+      salesPrice: formDataPartial.salesPrice || '550000',
+      downPayment: formDataPartial.downPayment || '110000',
       downPaymentPercent: formDataPartial.downPaymentPercent || '20',
       creditScore: formDataPartial.creditScore || '780-799',
       propertyType: formDataPartial.propertyType || '1Unit',

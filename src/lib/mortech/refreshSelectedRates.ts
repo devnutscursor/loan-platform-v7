@@ -30,8 +30,9 @@ const FIXED_TODAYS_PRODUCT_LIST_BY_BUCKET: Record<ProgramBucketId, string> = {
   conf_15yr: '2',
   va_30yr: '26',
   fha_30yr: '23',
-  jumbo_30yr: '2678',
-  second_home_30yr: '2869',
+  // Jumbo Today’s Rates uses Non Conf 30 Yr Fixed.
+  jumbo_30yr: '15',
+  second_home_30yr: '4',
   home_ready_30yr: '2420',
   home_possible_30yr: '971',
 };
@@ -116,20 +117,21 @@ async function refreshSelectedRateRows(
         const bucketId = rate.bucketId as string | undefined;
 
         // Fixed Today's Rates scenario for all refreshed selected rates:
-        // - Purchase price: $687,500
-        // - Loan amount:   $550,000
+        // - Purchase price: $550,000
+        // - Loan amount:   $440,000 (20% down)
         // - Credit score:  780
         // - Purpose:       Purchase
         // - Property:      CA / 95825 / Single Family / Primary
         // - Lock:          30 days
-        const appraisedvalue = 687500;
-        const loan_amount = 550000;
+        const appraisedvalue = 550000;
+        const loan_amount = 440000;
         const fico = 780;
         const loanpurpose = 'Purchase';
         const lockDays = '30';
-        // Second Home should be "Secondary" occupancy in Mortech/Marksman.
-        // For other buckets (Conventional/Jumbo/VA/FHA/etc), keep Primary.
-        const occupancy = bucketId === 'second_home_30yr' ? 1 : 0;
+        // RateCaddy occupancy mapping:
+        // 0 = Owner occupied, 1 = Non-owner occupied, 2 = Second home.
+        // Today's Rates "Second Home" bucket should always use occupancy=2.
+        const occupancy = bucketId === 'second_home_30yr' ? 2 : 0;
 
         const request: Record<string, unknown> = {
           propertyState: 'CA',
@@ -140,7 +142,7 @@ async function refreshSelectedRateRows(
           loanpurpose,
           // 0 = 1 unit
           proptype: 0,
-          // 0 = Owner occupied (Primary), 1 = Secondary
+          // 0 = Owner occupied (Primary), 2 = Second home
           occupancy,
           lockDays,
         };
@@ -262,6 +264,14 @@ async function refreshSelectedRateRows(
             // Store detailed fee breakdown and numeric summary for DB-backed views.
             fees: totalFees,
             feeItems,
+            // Keep Today’s Rates card defaults aligned across public profile/officer views.
+            searchParams: {
+              purchasePrice: appraisedvalue,
+              downPayment: appraisedvalue - loan_amount,
+              loanAmount: loan_amount,
+              creditScore: '780-799',
+              loanPurpose: 'Purchase',
+            },
           };
 
           if (isVaBucket) {

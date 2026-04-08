@@ -6,7 +6,6 @@ import { validatePasswordStrength } from '@/lib/password-policy';
 
 const bodySchema = z.object({
   token: z.string().min(1),
-  currentPassword: z.string().min(1),
   newPassword: z.string().min(1),
 });
 
@@ -29,34 +28,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (json.currentPassword === json.newPassword) {
-      return NextResponse.json(
-        { success: false, message: 'New password must be different from your current password.' },
-        { status: 400 }
-      );
-    }
-
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !anonKey || !serviceKey) {
       return NextResponse.json({ success: false, message: 'Server misconfiguration.' }, { status: 500 });
-    }
-
-    const anon = createClient(url, anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
-    const { error: signError } = await anon.auth.signInWithPassword({
-      email: payload.email,
-      password: json.currentPassword,
-    });
-
-    if (signError) {
-      return NextResponse.json(
-        { success: false, message: 'Current password is incorrect.' },
-        { status: 401 }
-      );
     }
 
     const admin = createClient(url, serviceKey, {

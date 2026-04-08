@@ -61,8 +61,10 @@ export const BUCKET_PRODUCT_IDS: Record<ProgramBucketId, number[]> = {
   conf_15yr: [2],
   va_30yr: [26],
   fha_30yr: [23],
-  jumbo_30yr: [2678],
-  second_home_30yr: [2869],
+  // Jumbo uses Non Conf 30 Yr Fixed for Today’s Rates bucket.
+  jumbo_30yr: [15],
+  // Second-home pricing is conforming with occupancy=2.
+  second_home_30yr: [4],
   home_ready_30yr: [2420],
   home_possible_30yr: [971],
 };
