@@ -561,14 +561,10 @@ function RateResults({
                                 {product.quoteType}
                               </span>
                             )}
-                            <div className="flex items-center space-x-2">
-                              {React.createElement(icons.document, { 
-                                size: 16, 
-                                color: colors.primary 
-                              })}
+                            <div>
                               <span
-                                className="text-sm font-medium"
-                                style={{ color: colors.text }}
+                                className="text-base font-bold"
+                                style={{ color: colors.primary }}
                               >
                                 {product.loanProgram || `${product.loanTerm}-Year Fixed`}
                               </span>

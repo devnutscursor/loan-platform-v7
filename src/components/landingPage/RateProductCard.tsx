@@ -69,16 +69,12 @@ export default function RateProductCard({
         <div className="space-y-3">
           {/* Loan Type */}
           <div>
-            <div className="flex items-center space-x-2 mb-1">
-              {React.createElement(icons.document, { 
-                size: 16, 
-                color: colors.primary 
-              })}
+            <div className="mb-1">
               <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
                 Loan Type
               </span>
             </div>
-            <span className="text-sm font-medium" style={{ color: colors.text }}>
+            <span className="text-lg font-bold" style={{ color: colors.primary }}>
               {product.loanProgram || `${product.loanTerm}-Year Fixed`}
             </span>
           </div>
