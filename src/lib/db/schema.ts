@@ -16,6 +16,9 @@ export const users = pgTable('users', {
   inviteSentAt: timestamp('invite_sent_at'), // When invite was sent
   inviteExpiresAt: timestamp('invite_expires_at'), // When invite expires (24 hours)
   inviteToken: text('invite_token'), // Supabase invite token
+  ghlUserId: text('ghl_user_id'), // Created user id in GoHighLevel (if synced)
+  ghlUserPayload: jsonb('ghl_user_payload'), // Last create-user response payload from GHL
+  ghlUserCreatedAt: timestamp('ghl_user_created_at'),
   lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -101,6 +104,10 @@ export const companies = pgTable('companies', {
   
   // Mortech subscription access
   hasMortechSubscription: boolean('has_mortech_subscription').default(true),
+
+  /** Full GoHighLevel OAuth token payload (location install) — per company */
+  ghlOauthPayload: jsonb('ghl_oauth_payload'),
+  ghlConnectedAt: timestamp('ghl_connected_at'),
   
   // Timestamps
   createdAt: timestamp('created_at').defaultNow(),

@@ -25,6 +25,10 @@ export interface DataTableProps<T = any> {
   onReactivate?: (record: T) => void;
   onDelete?: (record: T) => void;
   onViewDetails?: (record: T) => void;
+  /** Super-admin: start GoHighLevel OAuth for a company (stores tokens on company row). */
+  onConnectGhl?: (record: T) => void;
+  /** Super-admin: create GHL admin user after OAuth connect. */
+  onCreateGhlAdmin?: (record: T) => void;
   className?: string;
 }
 
@@ -49,6 +53,8 @@ export const DataTable = <T extends Record<string, any>>({
   onReactivate,
   onDelete,
   onViewDetails,
+  onConnectGhl,
+  onCreateGhlAdmin,
   className = '',
 }: DataTableProps<T>) => {
   // Get role-based empty message
@@ -69,8 +75,14 @@ export const DataTable = <T extends Record<string, any>>({
 
     // For companies: active when invite is accepted; for officers: accepted or explicit isActive
     const isActive =
-      inviteStatusNorm === 'accepted' || record?.isActive === true;
+      inviteStatusNorm === 'accepted' || record?.isActive === true || record?.is_active === true;
     const isDeactivated = record?.deactivated === true;
+    const isGhlConnected =
+      Boolean(record?.ghl_connected_at) || Boolean(record?.ghl_oauth_payload);
+    const hasGhlAdminUser = Boolean(
+      record?.company_metadata?.ghlAdminUser || record?.companyMetadata?.ghlAdminUser
+    );
+    const canShowGhlActions = !isDeactivated && isActive && !hasGhlAdminUser;
 
     // Reactivate button for deactivated records
     if (onReactivate && isDeactivated) {
@@ -156,6 +168,40 @@ export const DataTable = <T extends Record<string, any>>({
       );
     }
 
+    if (onConnectGhl && canShowGhlActions && !isGhlConnected) {
+      if (actions.length > 0) {
+        actions.push(<span key="separator-ghl" className="text-gray-300">|</span>);
+      }
+      actions.push(
+        <Button
+          key="connect-ghl"
+          variant="secondary"
+          size="sm"
+          onClick={() => onConnectGhl(record)}
+          className="text-xs border-[#01bcc6] text-[#005b7c] hover:bg-[#01bcc6]/10"
+        >
+          Connect GHL
+        </Button>
+      );
+    }
+
+    if (onCreateGhlAdmin && canShowGhlActions && isGhlConnected) {
+      if (actions.length > 0) {
+        actions.push(<span key="separator-ghl-admin" className="text-gray-300">|</span>);
+      }
+      actions.push(
+        <Button
+          key="create-ghl-admin"
+          variant="secondary"
+          size="sm"
+          onClick={() => onCreateGhlAdmin(record)}
+          className="text-xs border-[#10b981] text-[#065f46] hover:bg-[#10b981]/10"
+        >
+          Create GHL Admin
+        </Button>
+      );
+    }
+
     return actions.length > 0 ? (
       <div className="flex space-x-2">
         {actions}
@@ -166,7 +212,7 @@ export const DataTable = <T extends Record<string, any>>({
   // Add actions column if any action handlers are provided
   const finalColumns: TableColumn<T>[] = [
     ...columns,
-    ...(onResend || onDeactivate || onReactivate || onDelete || onViewDetails ? [{
+    ...(onResend || onDeactivate || onReactivate || onDelete || onViewDetails || onConnectGhl || onCreateGhlAdmin ? [{
       key: 'actions',
       title: 'Actions',
       render: (value, record, index) => renderActions(record),
@@ -248,8 +294,10 @@ export const DataTable = <T extends Record<string, any>>({
 // Specialized components for common use cases
 export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & { 
   onViewDetails?: (companySlug: string) => void;
+  onConnectGhl?: (company: any) => void;
+  onCreateGhlAdmin?: (company: any) => void;
 }> = (props) => {
-  const { onViewDetails, onResend, onDeactivate, onReactivate, onDelete, ...restProps } = props;
+  const { onViewDetails, onResend, onDeactivate, onReactivate, onDelete, onConnectGhl, onCreateGhlAdmin, ...restProps } = props;
   
   // Wrap onViewDetails to extract slug from record
   const handleViewDetails = onViewDetails ? (record: any) => {
@@ -353,6 +401,35 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
       },
     },
     {
+      key: 'ghl',
+      title: 'GHL',
+      render: (_, record) => {
+        const connected =
+          Boolean(record.ghl_connected_at) || Boolean(record.ghl_oauth_payload);
+        const loc = record.ghl_oauth_payload?.locationId;
+        return (
+          <div className="text-sm">
+            {connected ? (
+              <>
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                  Connected
+                </span>
+                {loc && (
+                  <div className="text-xs text-gray-500 mt-1 font-mono truncate max-w-[140px]" title={loc}>
+                    {loc}
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                Not connected
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'totalOfficers',
       title: 'Total Officers',
       dataIndex: 'totalOfficers',
@@ -380,6 +457,12 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
     const isDeactivated = record.deactivated === true;
     // Same as desktop: active when invite accepted or is_active/isActive true (API uses snake_case)
     const isActiveCompany = status === 'accepted' || record?.isActive === true || record?.is_active === true;
+    const isGhlConnected =
+      Boolean(record?.ghl_connected_at) || Boolean(record?.ghl_oauth_payload);
+    const hasGhlAdminUser = Boolean(
+      record?.company_metadata?.ghlAdminUser || record?.companyMetadata?.ghlAdminUser
+    );
+    const canShowGhlActions = !isDeactivated && isActiveCompany && !hasGhlAdminUser;
     const expiresAt = record.invite_expires_at;
     const companyEmail = record.admin_email || record.email;
     const createdDate = record.created_at || record.createdAt;
@@ -512,6 +595,24 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
         {/* Card Footer - Actions */}
         <div className="pt-3 border-t border-gray-100">
           <div className="flex flex-wrap gap-2 justify-center">
+            {onConnectGhl && canShowGhlActions && !isGhlConnected && (
+              <button
+                onClick={() => onConnectGhl(record)}
+                className="inline-flex items-center px-3 py-1.5 border border-[#01bcc6] text-xs font-medium rounded-md text-[#005b7c] bg-white hover:bg-[#01bcc6]/10"
+              >
+                Connect GHL
+              </button>
+            )}
+            {onCreateGhlAdmin &&
+              canShowGhlActions &&
+              isGhlConnected && (
+              <button
+                onClick={() => onCreateGhlAdmin(record)}
+                className="inline-flex items-center px-3 py-1.5 border border-[#10b981] text-xs font-medium rounded-md text-[#065f46] bg-white hover:bg-[#10b981]/10"
+              >
+                Create GHL Admin
+              </button>
+            )}
             {handleViewDetails && (
               <button
                 onClick={() => handleViewDetails(record)}
@@ -584,6 +685,8 @@ export const CompanyTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
           onDeactivate={onDeactivate}
           onReactivate={onReactivate}
           onDelete={onDelete}
+          onConnectGhl={onConnectGhl}
+          onCreateGhlAdmin={onCreateGhlAdmin}
         />
       </div>
     </>
@@ -597,8 +700,9 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
   onDeactivate?: (officer: any) => void;
   onReactivate?: (officer: any) => void;
   onDelete?: (officer: any) => void;
+  onCreateGhlUser?: (officer: any) => void;
 }> = (props) => {
-  const { onViewLeads, onViewDetails, onResend, onDeactivate, onReactivate, onDelete, ...restProps } = props;
+  const { onViewLeads, onViewDetails, onResend, onDeactivate, onReactivate, onDelete, onCreateGhlUser, ...restProps } = props;
 
   const officerInviteStatusKey = (record: any) =>
     String(record?.inviteStatus ?? record?.invite_status ?? 'pending').toLowerCase();
@@ -813,6 +917,19 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               className="inline-flex items-center px-3 py-1 border-0 text-sm font-medium rounded-md text-white bg-[#01bcc6] hover:bg-[#008eab] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01bcc6]"
             >
               View Details
+            </button>
+          )}
+
+          {onCreateGhlUser &&
+            officerInviteAccepted(record) &&
+            record.isActive &&
+            !record.deactivated &&
+            !record.ghlUserId && (
+            <button
+              onClick={() => onCreateGhlUser(record)}
+              className="inline-flex items-center px-3 py-1 border text-sm font-medium rounded-md text-[#065f46] border-[#10b981] bg-white hover:bg-[#10b981]/10"
+            >
+              Create User
             </button>
           )}
           
@@ -1032,6 +1149,19 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
                 className="inline-flex items-center px-3 py-1.5 border-0 text-xs font-medium rounded-md text-white bg-[#01bcc6] hover:bg-[#008eab] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01bcc6]"
               >
                 View Details
+              </button>
+            )}
+
+            {onCreateGhlUser &&
+              officerInviteAccepted(record) &&
+              record.isActive &&
+              !record.deactivated &&
+              !record.ghlUserId && (
+              <button
+                onClick={() => onCreateGhlUser(record)}
+                className="inline-flex items-center px-3 py-1.5 border border-[#10b981] text-xs font-medium rounded-md text-[#065f46] bg-white hover:bg-[#10b981]/10"
+              >
+                Create User
               </button>
             )}
             

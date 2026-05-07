@@ -26,6 +26,8 @@ interface LoanOfficer {
   totalLeads?: number;
   hasPublicLink?: boolean;
   selectedTemplate?: string;
+  ghlUserId?: string | null;
+  ghlUserCreatedAt?: string | null;
 }
 
 interface CreateOfficerForm {
@@ -354,6 +356,55 @@ export default function LoanOfficersPage() {
     router.push(`/admin/loanofficers/${officerSlug}/details`);
   };
 
+  const handleCreateGhlUser = async (officer: LoanOfficer) => {
+    if (!companyId) return;
+    if (!officer.isActive || officer.deactivated) {
+      showNotification({
+        type: 'error',
+        title: 'Officer Not Active',
+        message: 'Activate the loan officer first, then create GHL user.',
+      });
+      return;
+    }
+    if (officer.ghlUserId) {
+      showNotification({
+        type: 'success',
+        title: 'Already Created',
+        message: 'This loan officer already has a GHL user.',
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ghl/users/create-officer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ officerId: officer.id, companyId }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create GHL user');
+      }
+
+      showNotification({
+        type: 'success',
+        title: 'GHL User Created',
+        message: `${officer.firstName} ${officer.lastName} synced to GHL.`,
+      });
+      fetchOfficers();
+    } catch (error) {
+      showNotification({
+        type: 'error',
+        title: 'Create GHL User Failed',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to create GHL user for this officer.',
+      });
+    }
+  };
+
   if (authLoading) {
     return (
       <RouteGuard allowedRoles={['super_admin', 'company_admin']}>
@@ -401,6 +452,7 @@ export default function LoanOfficersPage() {
                 onReactivate={handleReactivateOfficer}
                 onDelete={handleDeleteOfficer}
                 onViewDetails={handleViewDetails}
+                onCreateGhlUser={handleCreateGhlUser}
               />
             </div>
           </div>

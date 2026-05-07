@@ -435,6 +435,7 @@ export default function AdminDashboardPage() {
           {/* Quick Actions */}
           <QuickActions
             actions={[
+              { label: 'Company', icon: 'building', href: '/admin/companies' },
               { label: 'Loan Officers', icon: 'profile', href: '/admin/loanofficers' },
               { label: 'Leads Insights', icon: 'trendingUp', href: '/admin/insights' },
               { label: 'Conversion Stats', icon: 'calculator', href: '/admin/stats' },

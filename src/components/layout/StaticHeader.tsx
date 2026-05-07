@@ -186,6 +186,7 @@ const StaticHeader = memo(function StaticHeader() {
         ];
       case 'company_admin':
         return [
+          { label: 'Company', icon: 'building' as keyof typeof icons, href: '/admin/companies' },
           { label: 'Loan Officers', icon: 'profile' as keyof typeof icons, href: '/admin/loanofficers' },
           { label: 'Leads Insights', icon: 'trendingUp' as keyof typeof icons, href: '/admin/insights' },
           { label: 'Conversion Stats', icon: 'calculator' as keyof typeof icons, href: '/admin/stats' },
