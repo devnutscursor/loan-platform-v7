@@ -23,6 +23,9 @@ interface Company {
   invite_token?: string;
   admin_user_id?: string;
   isActive?: boolean; // Optional due to schema cache issues
+  company_metadata?: Record<string, unknown> | null;
+  ghl_oauth_payload?: Record<string, unknown> | null;
+  ghl_connected_at?: string | null;
   created_at?: string;
   createdAt: string;
   totalOfficers?: number;
@@ -365,6 +368,84 @@ export default function CompaniesPage() {
     router.push(`/super-admin/companies/${companySlug}/details`);
   };
 
+  const handleConnectGhl = (company: Company) => {
+    if (typeof window === 'undefined') return;
+    const url = `${window.location.origin}/api/oauth/choose-location?company=${encodeURIComponent(company.id)}`;
+    window.location.href = url;
+  };
+
+  const handleCreateGhlAdmin = async (company: Company) => {
+    const metadata = (company.company_metadata ?? {}) as Record<string, unknown>;
+    const alreadyCreated = Boolean((metadata as any)?.ghlAdminUser);
+    if (alreadyCreated) {
+      showNotification({
+        type: 'success',
+        title: 'GHL Admin Already Created',
+        message: `A GHL admin user has already been created for "${company.name}".`,
+      });
+      return;
+    }
+
+    const connected =
+      Boolean(company.ghl_connected_at) || Boolean(company.ghl_oauth_payload);
+    if (!connected) {
+      showNotification({
+        type: 'error',
+        title: 'Connect GHL First',
+        message: `Connect "${company.name}" to GHL before creating an admin user.`,
+      });
+      return;
+    }
+
+    if (
+      !confirm(
+        `Create a GHL admin user for "${company.name}" using company admin email?\n\nA temporary password will be generated.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ghl/users/create-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: company.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const detailsText =
+          typeof result?.details === 'string'
+            ? result.details
+            : result?.details
+              ? JSON.stringify(result.details)
+              : '';
+        throw new Error(
+          `${result?.error || 'Failed to create GHL admin user'}${detailsText ? ` | ${detailsText}` : ''}`
+        );
+      }
+
+      showNotification({
+        type: 'success',
+        title: 'GHL Admin User Created',
+        message: `Email: ${result.email}\n\nUser created in GHL. Ask the admin to complete/reset password from GHL flow.`,
+        persistent: true,
+      });
+
+      fetchCompanies();
+    } catch (error) {
+      showNotification({
+        type: 'error',
+        title: 'Create GHL Admin Failed',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to create GHL admin user.',
+      });
+    }
+  };
+
   // Temporarily bypass auth check for testing
   // TODO: Fix authentication detection for free Supabase plan
   
@@ -457,6 +538,8 @@ export default function CompaniesPage() {
                 onReactivate={handleReactivateCompany}
                 onDelete={handleDeleteCompany}
                 onViewDetails={handleViewDetails}
+                onConnectGhl={handleConnectGhl}
+                onCreateGhlAdmin={handleCreateGhlAdmin}
               />
             </div>
           </div>

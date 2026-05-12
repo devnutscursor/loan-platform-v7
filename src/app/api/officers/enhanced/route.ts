@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
           deactivated,
           invite_status,
           invite_sent_at,
-          invite_expires_at
+          invite_expires_at,
+          ghl_user_id,
+          ghl_user_created_at
         )
       `)
       .eq('company_id', companyId)
@@ -132,6 +134,8 @@ export async function GET(req: NextRequest) {
         inviteStatus: user.invite_status || null,
         inviteSentAt: user.invite_sent_at || null,
         inviteExpiresAt: user.invite_expires_at || null,
+        ghlUserId: user.ghl_user_id || null,
+        ghlUserCreatedAt: user.ghl_user_created_at || null,
         createdAt: officerCompany.joined_at || user.created_at,
         totalLeads: leadsCount[officerId] || 0,
         hasPublicLink: hasPublicLink[officerId] || false,

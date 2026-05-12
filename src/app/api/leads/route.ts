@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, leads } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
+import { and, eq } from 'drizzle-orm';
+import { companies, users } from '@/lib/db/schema';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -12,6 +14,205 @@ const leadsCache = new Map<
   { data: { success: true; leads: any[] }; fetchedAt: number }
 >();
 const leadsFetchPromises = new Map<string, Promise<{ success: true; leads: any[] }>>();
+
+type GhlOauthPayload = {
+  access_token?: string;
+  locationId?: string;
+  companyId?: string;
+  scope?: string;
+};
+
+function getGhlHeaders(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    Version: '2021-07-28',
+    Accept: 'application/json',
+  };
+}
+
+function parsePipelineResponse(raw: any): { pipelineId?: string; stageId?: string } {
+  const list =
+    raw?.pipelines ??
+    raw?.data?.pipelines ??
+    raw?.data ??
+    (Array.isArray(raw) ? raw : []);
+  if (!Array.isArray(list) || list.length === 0) return {};
+
+  const firstPipeline = list[0];
+  const pipelineId =
+    firstPipeline?.id ??
+    firstPipeline?._id ??
+    firstPipeline?.pipelineId;
+
+  const stages =
+    firstPipeline?.stages ??
+    firstPipeline?.pipelineStages ??
+    firstPipeline?.pipeline_stages ??
+    [];
+
+  const firstStage = Array.isArray(stages) && stages.length > 0 ? stages[0] : null;
+  const stageId =
+    firstStage?.id ??
+    firstStage?._id ??
+    firstStage?.pipelineStageId;
+
+  return { pipelineId, stageId };
+}
+
+async function syncLeadToGhl(params: {
+  companyId: string;
+  officerId: string;
+  leadId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  loanAmount?: string | number;
+}) {
+  const [companyRow] = await db
+    .select({
+      id: companies.id,
+      name: companies.name,
+      ghlOauthPayload: companies.ghlOauthPayload,
+      companyMetadata: companies.companyMetadata,
+    })
+    .from(companies)
+    .where(eq(companies.id, params.companyId))
+    .limit(1);
+
+  if (!companyRow) throw new Error('Company not found for GHL sync');
+
+  const oauth = (companyRow.ghlOauthPayload ?? {}) as GhlOauthPayload;
+  const accessToken = oauth.access_token;
+  const locationId = oauth.locationId;
+  if (!accessToken || !locationId) {
+    throw new Error('Company is not connected to GHL (missing access_token/locationId)');
+  }
+
+  const headers = getGhlHeaders(accessToken);
+  const query = encodeURIComponent(params.email.trim().toLowerCase());
+
+  // 1) Try find existing contact by email
+  let contactId: string | undefined;
+  const contactLookupRes = await fetch(
+    `https://services.leadconnectorhq.com/contacts/?locationId=${encodeURIComponent(locationId)}&limit=50&query=${query}`,
+    { method: 'GET', headers }
+  );
+  const contactLookupJson = await contactLookupRes.json().catch(() => null);
+  const existingContacts =
+    contactLookupJson?.contacts ??
+    contactLookupJson?.data?.contacts ??
+    contactLookupJson?.data ??
+    [];
+  if (Array.isArray(existingContacts) && existingContacts.length > 0) {
+    const first = existingContacts[0];
+    contactId = first?.id ?? first?._id ?? first?.contactId;
+  }
+
+  // 2) Create contact if not found
+  if (!contactId) {
+    const createContactRes = await fetch('https://services.leadconnectorhq.com/contacts/', {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        locationId,
+        firstName: params.firstName,
+        lastName: params.lastName,
+        email: params.email,
+        phone: params.phone,
+      }),
+    });
+    const createContactJson = await createContactRes.json().catch(() => null);
+    if (!createContactRes.ok) {
+      throw new Error(
+        `GHL contact create failed (${createContactRes.status}): ${JSON.stringify(createContactJson)}`
+      );
+    }
+    contactId =
+      createContactJson?.contact?.id ??
+      createContactJson?.id ??
+      createContactJson?._id ??
+      createContactJson?.data?.id;
+  }
+
+  if (!contactId) throw new Error('Unable to resolve GHL contactId');
+
+  // 3) Resolve assignee (officer user first, then company admin user fallback)
+  const [officerRow] = await db
+    .select({
+      ghlUserId: users.ghlUserId,
+    })
+    .from(users)
+    .where(eq(users.id, params.officerId))
+    .limit(1);
+  const companyMeta =
+    companyRow.companyMetadata && typeof companyRow.companyMetadata === 'object'
+      ? (companyRow.companyMetadata as Record<string, any>)
+      : {};
+  const fallbackAssignedTo =
+    companyMeta?.ghlAdminUser?.response?.id ??
+    companyMeta?.ghlAdminUser?.response?.user?.id ??
+    null;
+  const assignedTo = officerRow?.ghlUserId ?? fallbackAssignedTo ?? undefined;
+
+  // 4) Fetch pipelines and use the first pipeline/stage for quick test flow
+  const pipelineRes = await fetch(
+    `https://services.leadconnectorhq.com/opportunities/pipelines?locationId=${encodeURIComponent(locationId)}`,
+    { method: 'GET', headers }
+  );
+  const pipelineJson = await pipelineRes.json().catch(() => null);
+  if (!pipelineRes.ok) {
+    throw new Error(
+      `GHL pipelines fetch failed (${pipelineRes.status}): ${JSON.stringify(pipelineJson)}`
+    );
+  }
+  const { pipelineId, stageId } = parsePipelineResponse(pipelineJson);
+  if (!pipelineId || !stageId) {
+    throw new Error('No pipeline or stage found in GHL for this location');
+  }
+
+  // 5) Create opportunity
+  const opportunityBody: Record<string, unknown> = {
+    locationId,
+    name: `${params.firstName} ${params.lastName} - Mortgage Lead`,
+    pipelineId,
+    pipelineStageId: stageId,
+    contactId,
+    status: 'open',
+  };
+  if (assignedTo) opportunityBody.assignedTo = assignedTo;
+  const numericLoanAmount = Number(params.loanAmount ?? 0);
+  if (!Number.isNaN(numericLoanAmount) && numericLoanAmount > 0) {
+    opportunityBody.monetaryValue = numericLoanAmount;
+  }
+
+  const oppRes = await fetch('https://services.leadconnectorhq.com/opportunities/', {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(opportunityBody),
+  });
+  const oppJson = await oppRes.json().catch(() => null);
+  if (!oppRes.ok) {
+    throw new Error(
+      `GHL opportunity create failed (${oppRes.status}): ${JSON.stringify(oppJson)}`
+    );
+  }
+
+  return {
+    contactId,
+    opportunityId:
+      oppJson?.id ?? oppJson?._id ?? oppJson?.data?.id ?? oppJson?.opportunity?.id ?? null,
+    pipelineId,
+    stageId,
+    assignedTo: assignedTo ?? null,
+  };
+}
 
 function mapLeadRow(row: any) {
   return {
@@ -189,6 +390,27 @@ export async function POST(request: NextRequest) {
       source: 'rate_table'
     });
 
+    // Try GHL sync, but don't block lead creation if external sync fails.
+    let ghlSync: any = null;
+    let ghlSyncError: string | null = null;
+    try {
+      ghlSync = await syncLeadToGhl({
+        companyId,
+        officerId: userId,
+        leadId: newLead.id,
+        firstName: leadData.firstName,
+        lastName: leadData.lastName,
+        email: leadData.email,
+        phone: leadData.phone,
+        loanAmount: leadData.loanAmount,
+      });
+      console.log('✅ Lead synced to GHL successfully:', ghlSync);
+    } catch (syncError) {
+      ghlSyncError =
+        syncError instanceof Error ? syncError.message : String(syncError);
+      console.error('⚠️ Lead GHL sync failed (lead still saved):', ghlSyncError);
+    }
+
     return NextResponse.json({
       success: true,
       lead: {
@@ -199,7 +421,9 @@ export async function POST(request: NextRequest) {
         phone: newLead.phone,
         status: newLead.status,
         createdAt: newLead.createdAt
-      }
+      },
+      ghlSync,
+      ghlSyncError,
     });
 
   } catch (error) {

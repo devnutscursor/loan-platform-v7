@@ -25,6 +25,9 @@ export async function GET(req: NextRequest) {
         admin_user_id,
         is_active,
         deactivated,
+        company_metadata,
+        ghl_oauth_payload,
+        ghl_connected_at,
         created_at,
         updated_at
       `)

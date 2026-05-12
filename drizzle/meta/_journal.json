@@ -92,6 +92,20 @@
       "when": 1771948417051,
       "tag": "0012_watery_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777550400000,
+      "tag": "0016_add_ghl_oauth_to_companies",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1777573500000,
+      "tag": "0017_add_ghl_user_fields_to_users",
+      "breakpoints": true
     }
   ]
 }

@@ -205,91 +205,83 @@ function InvitePageContent() {
 
         console.log('✅ User-company relationship activated successfully');
 
-        // Create personal templates for the loan officer when they activate their account
-        try {
-          console.log('🎨 Creating personal templates for activated loan officer:', user.id);
-          const firstName = user.user_metadata?.first_name || '';
-          const lastName = user.user_metadata?.last_name || '';
-          
-          // Validate user ID format
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-          if (!uuidRegex.test(user.id)) {
-            throw new Error(`Invalid user ID format: ${user.id}`);
-          }
-          
-          // Call API to create personal templates
-          const response = await fetch('/api/templates/create-personal', {
-            method: 'POST',
-            headers: {
+        // Run heavy post-activation setup asynchronously to keep invite completion snappy.
+        void (async () => {
+          try {
+            console.log('🎨 Creating personal templates for activated loan officer:', user.id);
+            const firstName = user.user_metadata?.first_name || '';
+            const lastName = user.user_metadata?.last_name || '';
+
+            // Validate user ID format
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(user.id)) {
+              throw new Error(`Invalid user ID format: ${user.id}`);
+            }
+
+            const session = await supabase.auth.getSession();
+            const accessToken = session.data.session?.access_token;
+            const authHeaders = {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            },
-            body: JSON.stringify({
-              userId: user.id,
-              firstName,
-              lastName
-            })
-          });
+              ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+            };
 
-          if (response.ok) {
-            const result = await response.json();
-            console.log('✅ Personal templates created successfully:', result.data.templatesCreated);
-          } else {
-            const errorText = await response.text();
-            console.error('❌ Error creating personal templates:', errorText);
-            // Don't fail the activation process if template creation fails
-          }
-        } catch (templateError) {
-          console.error('❌ Error creating personal templates:', templateError);
-          // Don't fail the activation process if template creation fails
-        }
-
-        // Upload default content if company has access enabled
-        try {
-          console.log('📚 Checking default content access for company:', companyId);
-          
-          // Fetch company record to check hasDefaultContentAccess
-          const { data: company, error: companyFetchError } = await supabase
-            .from('companies')
-            .select('has_default_content_access')
-            .eq('id', companyId)
-            .single();
-
-          if (companyFetchError) {
-            console.error('❌ Error fetching company:', companyFetchError);
-            // Don't fail the activation process
-          } else if (company?.has_default_content_access) {
-            console.log('✅ Company has default content access enabled. Uploading content...');
-            
-            // Call API to upload default content
-            const contentResponse = await fetch('/api/officers/content/upload-default', {
+            // Call API to create personal templates
+            const response = await fetch('/api/templates/create-personal', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-              }
+              headers: authHeaders,
+              body: JSON.stringify({
+                userId: user.id,
+                firstName,
+                lastName
+              })
             });
 
-            if (contentResponse.ok) {
-              const contentResult = await contentResponse.json();
-              if (contentResult.success) {
-                console.log(`✅ Default content uploaded: ${contentResult.data.faqsCount} FAQs, ${contentResult.data.guidesCount} guides, ${contentResult.data.videosCount} videos`);
+            if (response.ok) {
+              const result = await response.json();
+              console.log('✅ Personal templates created successfully:', result.data.templatesCreated);
+            } else {
+              const errorText = await response.text();
+              console.error('❌ Error creating personal templates:', errorText);
+            }
+
+            // Upload default content if company has access enabled
+            console.log('📚 Checking default content access for company:', companyId);
+            const { data: company, error: companyFetchError } = await supabase
+              .from('companies')
+              .select('has_default_content_access')
+              .eq('id', companyId)
+              .single();
+
+            if (companyFetchError) {
+              console.error('❌ Error fetching company:', companyFetchError);
+              return;
+            }
+
+            if (company?.has_default_content_access) {
+              console.log('✅ Company has default content access enabled. Uploading content...');
+              const contentResponse = await fetch('/api/officers/content/upload-default', {
+                method: 'POST',
+                headers: authHeaders,
+              });
+
+              if (contentResponse.ok) {
+                const contentResult = await contentResponse.json();
+                if (contentResult.success) {
+                  console.log(`✅ Default content uploaded: ${contentResult.data.faqsCount} FAQs, ${contentResult.data.guidesCount} guides, ${contentResult.data.videosCount} videos`);
+                } else {
+                  console.error('❌ Error uploading default content:', contentResult.error);
+                }
               } else {
-                console.error('❌ Error uploading default content:', contentResult.error);
-                // Don't fail the activation process if content upload fails
+                const errorText = await contentResponse.text();
+                console.error('❌ Error uploading default content:', errorText);
               }
             } else {
-              const errorText = await contentResponse.text();
-              console.error('❌ Error uploading default content:', errorText);
-              // Don't fail the activation process if content upload fails
+              console.log('ℹ️ Company does not have default content access enabled. Skipping upload.');
             }
-          } else {
-            console.log('ℹ️ Company does not have default content access enabled. Skipping upload.');
+          } catch (postSetupError) {
+            console.error('❌ Async officer post-setup failed:', postSetupError);
           }
-        } catch (contentError) {
-          console.error('❌ Error checking/uploading default content:', contentError);
-          // Don't fail the activation process if content upload fails
-        }
+        })();
       } else {
         // Update company status to accepted and activate for company admin
         const { error: companyError } = await supabase
@@ -329,6 +321,32 @@ function InvitePageContent() {
           role: isOfficerInvite ? 'employee' : 'admin',
           is_active: true
         });
+
+      if (isOfficerInvite && companyId) {
+        void (async () => {
+          try {
+            const ghlResponse = await fetch('/api/ghl/users/create-officer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                officerId: user.id,
+                companyId,
+              }),
+            });
+            const ghlResult = await ghlResponse.json().catch(() => ({}));
+            if (!ghlResponse.ok || !ghlResult.success) {
+              console.warn(
+                '⚠️ GHL user auto-create skipped/failed:',
+                ghlResult?.error || ghlResult
+              );
+            } else {
+              console.log('✅ GHL user auto-created for loan officer:', user.email);
+            }
+          } catch (ghlError) {
+            console.warn('⚠️ GHL user auto-create error:', ghlError);
+          }
+        })();
+      }
 
       setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard...');
       
