@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { companies } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { oauthCallbackShell } from './oauth-callback-html';
 
 const RATECADDY_COMPANY_ID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isRateCaddyCompanyUuid(s: string | null): s is string {
   return Boolean(s && RATECADDY_COMPANY_ID_REGEX.test(s));
+}
+
+function htmlResponse(html: string, status = 200) {
+  return new NextResponse(html, {
+    status,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+}
+
+function wantJsonDebug(request: NextRequest) {
+  return (
+    request.nextUrl.searchParams.get('format') === 'json' &&
+    process.env.NODE_ENV !== 'production'
+  );
 }
 
 type GhlTokenSuccess = {
@@ -36,13 +51,17 @@ export async function GET(request: NextRequest) {
         hasRedirectUri: Boolean(redirectUri),
       })
     );
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          'Missing required env vars: GHL_LOCATION_CLIENT_ID, GHL_LOCATION_CLIENT_SECRET, and/or GHL_REDIRECT_URI',
-      },
-      { status: 500 }
+    return htmlResponse(
+      oauthCallbackShell({
+        title: 'Configuration error',
+        heading: 'Something went wrong',
+        message:
+          'GoHighLevel connection is not configured on this server. Please contact support.',
+        variant: 'error',
+        primaryHref: '/',
+        primaryLabel: 'Go to home',
+      }),
+      500
     );
   }
 
@@ -58,9 +77,19 @@ export async function GET(request: NextRequest) {
   );
 
   if (!code) {
-    return NextResponse.json(
-      { success: false, error: 'Missing "code" in querystring' },
-      { status: 400 }
+    return htmlResponse(
+      oauthCallbackShell({
+        title: 'Connection incomplete',
+        heading: 'We could not finish connecting',
+        message:
+          'The sign-in flow did not return a valid authorization code. Please try connecting GoHighLevel again from your dashboard.',
+        variant: 'error',
+        primaryHref: '/admin/dashboard',
+        primaryLabel: 'Go to dashboard',
+        secondaryHref: '/super-admin/companies',
+        secondaryLabel: 'Super Admin — Companies',
+      }),
+      400
     );
   }
 
@@ -92,14 +121,19 @@ export async function GET(request: NextRequest) {
         '❌ [OAuth Callback] Token exchange failed',
         JSON.stringify(json)
       );
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Token exchange failed',
-          status: res.status,
-          details: json,
-        },
-        { status: 400 }
+      return htmlResponse(
+        oauthCallbackShell({
+          title: 'Connection failed',
+          heading: 'GoHighLevel could not be connected',
+          message:
+            'We could not complete the authorization with GoHighLevel. Please try again, or contact support if this keeps happening.',
+          variant: 'error',
+          primaryHref: '/admin/dashboard',
+          primaryLabel: 'Go to dashboard',
+          secondaryHref: '/super-admin/companies',
+          secondaryLabel: 'Super Admin — Companies',
+        }),
+        400
       );
     }
 
@@ -143,14 +177,29 @@ export async function GET(request: NextRequest) {
           '❌ [OAuth Callback] state is UUID but no company row:',
           state
         );
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Company not found for OAuth state',
-            state,
-            tokens: json,
-          },
-          { status: 404 }
+        if (wantJsonDebug(request)) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Company not found for OAuth state',
+              state,
+            },
+            { status: 404 }
+          );
+        }
+        return htmlResponse(
+          oauthCallbackShell({
+            title: 'Company not found',
+            heading: 'We could not save this connection',
+            message:
+              'Your organization could not be matched in RateCaddy. Please start the GoHighLevel connection again from the Companies page.',
+            variant: 'error',
+            primaryHref: '/super-admin/companies',
+            primaryLabel: 'Super Admin — Companies',
+            secondaryHref: '/admin/dashboard',
+            secondaryLabel: 'Company dashboard',
+          }),
+          404
         );
       }
 
@@ -168,30 +217,64 @@ export async function GET(request: NextRequest) {
 
       console.log('💾 [OAuth Callback] Stored GHL payload on company', state);
 
+      if (wantJsonDebug(request)) {
+        return NextResponse.json({
+          success: true,
+          message: 'GHL OAuth completed (dev JSON only; use without format=json in production).',
+        });
+      }
+
+      return htmlResponse(
+        oauthCallbackShell({
+          title: 'Connected',
+          heading: 'GoHighLevel connected',
+          message:
+            'Your RateCaddy company is now linked to GoHighLevel. Tokens were saved securely — nothing else to do here.',
+          variant: 'success',
+          primaryHref: '/admin/dashboard',
+          primaryLabel: 'Go to your dashboard',
+          secondaryHref: '/super-admin/dashboard',
+          secondaryLabel: 'Super Admin dashboard',
+        })
+      );
+    }
+
+    if (wantJsonDebug(request)) {
       return NextResponse.json({
         success: true,
-        savedToCompanyId: state,
-        ghlLocationId: tokenPayload?.locationId ?? null,
-        ghlIntegrationCompanyId: tokenPayload?.companyId ?? null,
-        ghlUserId: tokenPayload?.userId ?? null,
-        message:
-          'GHL OAuth completed. Full token response stored in companies.ghl_oauth_payload.',
+        state,
+        message: 'OAuth completed (dev only; tokens not included in JSON for safety).',
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      state,
-      tokens: json,
-    });
+    return htmlResponse(
+      oauthCallbackShell({
+        title: 'Connected',
+        heading: 'Authorization complete',
+        message:
+          'You can close this tab and return to RateCaddy. If you were setting up an integration, open your dashboard to continue.',
+        variant: 'success',
+        primaryHref: '/admin/dashboard',
+        primaryLabel: 'Go to your dashboard',
+        secondaryHref: '/',
+        secondaryLabel: 'Home',
+      })
+    );
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Unexpected error exchanging code for token',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
+    console.error('❌ [OAuth Callback] Unexpected error:', error);
+    return htmlResponse(
+      oauthCallbackShell({
+        title: 'Error',
+        heading: 'Something went wrong',
+        message:
+          'We could not finish connecting to GoHighLevel. Please try again later or contact support.',
+        variant: 'error',
+        primaryHref: '/admin/dashboard',
+        primaryLabel: 'Go to dashboard',
+        secondaryHref: '/super-admin/companies',
+        secondaryLabel: 'Super Admin — Companies',
+      }),
+      500
     );
   }
 }
