@@ -15,6 +15,7 @@
     "db:baseline": "tsx scripts/baseline-migrations.ts",
     "sync-mortech-catalog": "tsx scripts/sync-mortech-catalog.ts",
     "reseed:selected-rates": "tsx scripts/reseed-selected-rates.ts",
+    "cron:refresh-todays-rates": "tsx scripts/run-mortech-snapshot-refresh.ts",
     "script:delete-all-public-links": "tsx scripts/delete-all-public-links.ts",
     "type-check": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",

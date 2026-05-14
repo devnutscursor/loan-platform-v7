@@ -130,7 +130,11 @@ export const handler = async () => {
 
 ---
 
-### Lambda 2: Refresh selected rates (3× daily)
+### Lambda 2: Refresh Today's Rates snapshot (3× daily)
+
+Refreshes the **global** table `mortech_todays_rates_snapshot` (one PAR row per program bucket, ~8 Mortech calls). **Do not** use the old pattern: `GET .../officers-with-selected-rates` plus a loop of `POST .../refresh-selected-rates/officer` (that list is empty / per-officer refresh is a no-op).
+
+**Canonical handler file in this repo:** [`docs/lambda-mortech-refresh-selected-rates-handler.mjs`](lambda-mortech-refresh-selected-rates-handler.mjs) — copy its contents into Lambda **index.mjs**, or use the shorter inline version below.
 
 **1. Lambda list**
 
@@ -141,39 +145,38 @@ export const handler = async () => {
 - **Create function**.
 - **Author from scratch**.
 - **Function name:** `mortech-refresh-selected-rates`.
-- **Runtime:** **Node.js 18.x**.
+- **Runtime:** **Node.js 18.x** (or 20.x).
 - **Create function**.
 
 **3. Paste the handler code**
 
 - **Code** tab → open **index.mjs** (or `index.js`).
-- Replace contents with:
+- Replace contents with the linked file above, **or**:
 
 ```javascript
 export const handler = async () => {
-  const APP_URL = process.env.APP_URL;
-  const CRON_SECRET_TOKEN = process.env.CRON_SECRET_TOKEN;
+  const baseUrl = (process.env.APP_URL || 'https://www.ratecaddy.com').replace(/\/$/, '');
+  const token = process.env.CRON_SECRET_TOKEN;
+  if (!token) throw new Error('CRON_SECRET_TOKEN is required');
 
-  if (!APP_URL || !CRON_SECRET_TOKEN) {
-    throw new Error('Missing APP_URL or CRON_SECRET_TOKEN in Lambda env');
-  }
-
-  const url = `${APP_URL}/api/cron/mortech/refresh-selected-rates`;
-  const res = await fetch(url, {
+  const res = await fetch(`${baseUrl}/api/cron/mortech/refresh-selected-rates`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${CRON_SECRET_TOKEN}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
-
   const text = await res.text();
-  console.log('refresh-selected-rates status:', res.status, 'body:', text);
-
-  if (!res.ok) {
-    throw new Error(`refresh-selected-rates failed: ${res.status} ${text}`);
+  const data = JSON.parse(text);
+  if (!res.ok || !data.success) {
+    throw new Error(`refresh failed ${res.status}: ${text}`);
   }
-
-  return { statusCode: res.status, body: text };
+  const r = data.result || {};
+  return {
+    success: true,
+    refreshed: 1,
+    total: 1,
+    totalRatesUpdated: r.updated ?? 0,
+    totalRatesFailed: r.failed ?? 0,
+    message: 'Global mortech_todays_rates_snapshot refresh completed',
+  };
 };
 ```
 
@@ -182,7 +185,7 @@ export const handler = async () => {
 **4. Environment variables**
 
 - **Configuration** → **Environment variables** → **Edit**.
-- **APP_URL** = same Amplify URL as above.
+- **APP_URL** = same Amplify URL as above (optional if the default host in code is correct for your environment).
 - **CRON_SECRET_TOKEN** = same secret.
 - **Save**.
 
@@ -203,7 +206,7 @@ export const handler = async () => {
 | Catalog sync | **TRUNCATE** then **INSERT** (full replace, no upsert by ID). |
 | Secret | `openssl rand -base64 32` → paste in Amplify + both Lambdas as `CRON_SECRET_TOKEN`. |
 | Lambda 1 | `mortech-sync-catalog` → calls `POST .../api/cron/mortech/sync-catalog` daily. |
-| Lambda 2 | `mortech-refresh-selected-rates` → calls `POST .../api/cron/mortech/refresh-selected-rates` 3× daily. |
+| Lambda 2 | `mortech-refresh-selected-rates` → **POST** `.../api/cron/mortech/refresh-selected-rates` 3× daily (global snapshot, ~8 Mortech calls). |
 | Env in both Lambdas | `APP_URL`, `CRON_SECRET_TOKEN`. |
 
 ---

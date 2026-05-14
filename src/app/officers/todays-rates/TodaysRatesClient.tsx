@@ -60,6 +60,8 @@ interface SelectedRate {
   rateData: Rate;
   createdAt: string;
   updatedAt: string;
+  /** True for shared global PAR rows from `mortech_todays_rates_snapshot` (not removable). */
+  isGlobalSnapshot?: boolean;
 }
 
 interface ManualRate {
@@ -1383,13 +1385,15 @@ export default function TodaysRatesClient({ initialProductCategoryOptions }: Tod
                             >
                               Details
                             </Button>
-                            <Button
-                              variant="danger"
-                              onClick={() => handleRemoveRateClick(selectedRate)}
-                              className="w-full sm:w-auto sm:min-w-[110px]"
-                            >
-                              Remove
-                            </Button>
+                            {!selectedRate.isGlobalSnapshot && (
+                              <Button
+                                variant="danger"
+                                onClick={() => handleRemoveRateClick(selectedRate)}
+                                className="w-full sm:w-auto sm:min-w-[110px]"
+                              >
+                                Remove
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </SpotlightCard>

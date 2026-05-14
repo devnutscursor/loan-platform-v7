@@ -14,11 +14,13 @@ These routes are intended to be invoked by **AWS Lambda** on a schedule (EventBr
 - Fetches investors + products from Mortech and writes to `mortech_investors` / `mortech_products` (dropdown data).
 - **EventBridge:** e.g. `cron(0 6 * * ? *)` (daily 06:00 UTC).
 
-### 2. Refresh selected rates (3× daily)
+### 2. Refresh Today's Rates snapshot (3× daily)
 
 - **POST** `/api/cron/mortech/refresh-selected-rates`
-- Reads all rows from `selected_rates`, calls Mortech per row with stored params, updates `rate_data` with new rate/APR/P&I/points.
+- Refreshes the global Mortech PAR snapshot in `mortech_todays_rates_snapshot` (one Mortech pricing request per program bucket, ~8 calls per run). Officer UIs read this table plus any officer-specific extras in `selected_rates`.
 - **EventBridge:** e.g. `cron(0 3,11,19 * * ? *)` (03:00, 11:00, 19:00 UTC).
+
+**Note:** Legacy Lambdas that called `GET .../officers-with-selected-rates` and fanned out to `POST .../refresh-selected-rates/officer` should be retired; only the single POST above is needed.
 
 ## Lambda example (Node 18)
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { db, selectedRates } from '@/lib/db';
+import { db, selectedRates, mortechTodaysRatesSnapshot } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -31,6 +31,19 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const snapRow = await db
+      .select({ id: mortechTodaysRatesSnapshot.id })
+      .from(mortechTodaysRatesSnapshot)
+      .where(eq(mortechTodaysRatesSnapshot.id, id))
+      .limit(1);
+
+    if (snapRow.length > 0) {
+      return NextResponse.json(
+        { error: "Shared Today's Rates cannot be removed" },
+        { status: 403 },
+      );
+    }
 
     // Verify the rate belongs to this officer
     const rate = await db

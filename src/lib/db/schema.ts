@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, index, boolean, integer, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, index, boolean, integer, decimal, uniqueIndex } from 'drizzle-orm/pg-core';
 
 // Users table (managed by Supabase Auth)
 export const users = pgTable('users', {
@@ -424,6 +424,26 @@ export const selectedRates = pgTable('selected_rates', {
   companyIdx: index('selected_rates_company_idx').on(table.companyId),
 }));
 
+/** Global PAR row per program bucket for Mortech-backed Today's Rates (one refresh ≈ 8 API calls). */
+export const mortechTodaysRatesSnapshot = pgTable(
+  'mortech_todays_rates_snapshot',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    scopeKey: text('scope_key').notNull().default('global'),
+    bucketId: text('bucket_id').notNull(),
+    rateData: jsonb('rate_data').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => ({
+    scopeBucketUq: uniqueIndex('mortech_todays_rates_snapshot_scope_bucket_uq').on(
+      table.scopeKey,
+      table.bucketId,
+    ),
+    bucketIdx: index('mortech_todays_rates_snapshot_bucket_idx').on(table.bucketId),
+  }),
+);
+
 // Manual Rates table - Stores manually entered rates for non-Mortech companies
 export const manualRates = pgTable('manual_rates', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -541,6 +561,8 @@ export type OfficerContentGuide = typeof officerContentGuides.$inferSelect;
 export type NewOfficerContentGuide = typeof officerContentGuides.$inferInsert;
 export type SelectedRate = typeof selectedRates.$inferSelect;
 export type NewSelectedRate = typeof selectedRates.$inferInsert;
+export type MortechTodaysRatesSnapshot = typeof mortechTodaysRatesSnapshot.$inferSelect;
+export type NewMortechTodaysRatesSnapshot = typeof mortechTodaysRatesSnapshot.$inferInsert;
 export type ManualRate = typeof manualRates.$inferSelect;
 export type NewManualRate = typeof manualRates.$inferInsert;
 export type MortechApiCall = typeof mortechApiCalls.$inferSelect;

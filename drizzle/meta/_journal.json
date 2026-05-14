@@ -106,6 +106,13 @@
       "when": 1777573500000,
       "tag": "0017_add_ghl_user_fields_to_users",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1777600000000,
+      "tag": "0018_mortech_todays_rates_snapshot",
+      "breakpoints": true
     }
   ]
 }

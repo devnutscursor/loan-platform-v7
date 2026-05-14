@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { refreshSelectedRatesForOfficer } from '@/lib/mortech/refreshSelectedRates';
 
 /**
  * POST /api/cron/mortech/refresh-selected-rates/officer
- * Refreshes selected rates for a single officer+company pair.
- * Body: { officerId: string; companyId: string }
- * Secured by CRON_SECRET_TOKEN. Intended to be called from a Lambda driver.
+ * Legacy endpoint (deprecated). Today's Rates use a global snapshot; this route does
+ * not call Mortech. Body: { officerId: string; companyId: string } (still validated).
+ * Secured by CRON_SECRET_TOKEN.
  */
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization') || '';
@@ -26,19 +25,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await refreshSelectedRatesForOfficer(officerId, companyId);
     return NextResponse.json({
       success: true,
       officerId,
       companyId,
-      result,
+      result: { updated: 0, failed: 0 },
+      message:
+        "Per-officer refresh is deprecated. Use POST /api/cron/mortech/refresh-selected-rates to refresh the global Today's Rates snapshot (~8 Mortech calls).",
     });
   } catch (error) {
-    console.error('❌ Cron refreshSelectedRatesForOfficer failed:', error);
+    console.error('❌ Cron refresh-selected-rates/officer failed:', error);
     return NextResponse.json(
       { success: false, error: (error as Error).message },
       { status: 500 },
     );
   }
 }
-

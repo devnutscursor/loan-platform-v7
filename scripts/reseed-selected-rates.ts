@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Reseed selected_rates for all officers (with Mortech subscription).
- * - Deletes existing selected_rates rows per officer+company.
- * - Calls seedSelectedRatesForOfficer (PAR-based) to insert fresh rows per bucket.
+ * Clears legacy `selected_rates` rows for Mortech-backed officers and refreshes the
+ * global Today's Rates snapshot (`mortech_todays_rates_snapshot`, ~8 Mortech calls).
  *
- * Run once after changing seed logic to PAR, or when you want to reset Today's Rates.
+ * Run after migrating to the snapshot model or when you want to reset officer-specific
+ * Mortech picks while keeping the shared PAR rows fresh.
  *
  * Usage: npm run reseed:selected-rates
  *        pnpm reseed:selected-rates
@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 import { config } from 'dotenv';
 import { and, eq } from 'drizzle-orm';
 import { db, selectedRates, userCompanies, companies } from '../src/lib/db';
-import { seedSelectedRatesForOfficer } from '../src/lib/mortech/seedSelectedRates';
+import { refreshMortechTodaysRatesSnapshot } from '../src/lib/mortech/todaysRatesSnapshot';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.resolve(__dirname, '../.env.local'), override: true });
@@ -38,11 +38,9 @@ async function getOfficerCompanyPairs(): Promise<{ officerId: string; companyId:
 
 async function reseed() {
   const pairs = await getOfficerCompanyPairs();
-  console.log(`Found ${pairs.length} officer+company pair(s) to reseed.\n`);
+  console.log(`Clearing selected_rates for ${pairs.length} Mortech officer+company pair(s)...\n`);
 
   for (const { officerId, companyId } of pairs) {
-    console.log(`Reseeding officer=${officerId}, company=${companyId} ...`);
-
     await db
       .delete(selectedRates)
       .where(
@@ -51,10 +49,10 @@ async function reseed() {
           eq(selectedRates.companyId, companyId),
         ),
       );
-
-    const { rates, seeded } = await seedSelectedRatesForOfficer(officerId, companyId);
-    console.log(`  -> ${seeded ? `inserted ${rates.length} rows` : 'no new rows (already had data)'}\n`);
   }
+
+  const result = await refreshMortechTodaysRatesSnapshot();
+  console.log('Global snapshot refresh:', result);
 }
 
 reseed()

@@ -3,7 +3,8 @@ import { refreshAllSelectedRates } from '@/lib/mortech/refreshSelectedRates';
 
 /**
  * POST /api/cron/mortech/refresh-selected-rates
- * Refreshes all selected rates: reads from DB, calls Mortech per row, updates rateData.
+ * Refreshes the global Mortech Today's Rates snapshot (`mortech_todays_rates_snapshot`):
+ * one PAR quote per program bucket (~8 Mortech API calls per run).
  * Secured by CRON_SECRET_TOKEN. Invoke from AWS Lambda 3× daily.
  */
 export async function POST(req: NextRequest) {

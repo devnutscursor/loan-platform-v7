@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, selectedRates } from '@/lib/db';
 
 /**
  * GET /api/cron/mortech/officers-with-selected-rates
- * Returns distinct (officerId, companyId) from selected_rates for Lambda to call
- * POST .../refresh-selected-rates/officer for each.
+ * Legacy endpoint: previously returned distinct (officerId, companyId) pairs for
+ * per-officer refresh. Today's Rates now use a global snapshot only; this returns
+ * an empty list with `useGlobalCron` so old Lambdas fail soft.
  * Secured by CRON_SECRET_TOKEN.
  */
 export async function GET(req: NextRequest) {
@@ -15,17 +15,13 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const rows = await db
-      .selectDistinct({
-        officerId: selectedRates.officerId,
-        companyId: selectedRates.companyId,
-      })
-      .from(selectedRates);
-
     return NextResponse.json({
       success: true,
-      count: rows.length,
-      officers: rows,
+      count: 0,
+      officers: [] as { officerId: string; companyId: string }[],
+      useGlobalCron: true,
+      message:
+        'Per-officer refresh removed. Schedule POST /api/cron/mortech/refresh-selected-rates only.',
     });
   } catch (error) {
     console.error('❌ Cron officers-with-selected-rates failed:', error);

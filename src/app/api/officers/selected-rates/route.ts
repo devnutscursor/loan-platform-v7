@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { db, selectedRates, userCompanies, companies, manualRates } from '@/lib/db';
-import { seedSelectedRatesForOfficer } from '@/lib/mortech/seedSelectedRates';
+import { getMortechMergedSelectedRatesForDisplay, type MortechMergedApiRateRow } from '@/lib/mortech/todaysRatesSnapshot';
 import { eq, and } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -15,12 +15,13 @@ const selectedRatesCache = new Map<
 >();
 const selectedRatesFetchPromises = new Map<string, Promise<{ success: true; rates: any[] }>>();
 
-function mapRateRow(row: any) {
+function serializeMortechMergedRow(r: MortechMergedApiRateRow) {
   return {
-    id: row.id,
-    rateData: row.rate_data,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    id: r.id,
+    rateData: r.rateData,
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
+    updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : r.updatedAt,
+    ...(r.isGlobalSnapshot ? { isGlobalSnapshot: true as const } : {}),
   };
 }
 
@@ -35,7 +36,6 @@ export async function GET(request: NextRequest) {
 
     let officerId: string;
     let companyId: string;
-    let isMortechCompany = true;
 
     if (officerIdParam) {
       officerId = officerIdParam;
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         .where(eq(companies.id, companyId))
         .limit(1);
 
-      isMortechCompany = companyRows[0]?.hasMortechSubscription !== false;
+      const isMortechCompany = companyRows[0]?.hasMortechSubscription !== false;
       if (!isMortechCompany) {
         const manualRows = await db
           .select()
@@ -104,6 +104,35 @@ export async function GET(request: NextRequest) {
       companyId = (ucRows[0] as any).company_id;
     }
 
+    if (!officerIdParam) {
+      const [companyRow] = await db
+        .select({ hasMortechSubscription: companies.hasMortechSubscription })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+
+      const isAuthMortech = companyRow?.hasMortechSubscription !== false;
+      if (!isAuthMortech) {
+        const manualRows = await db
+          .select()
+          .from(manualRates)
+          .where(and(eq(manualRates.officerId, officerId), eq(manualRates.companyId, companyId)))
+          .orderBy(manualRates.createdAt);
+
+        const res = NextResponse.json({
+          success: true as const,
+          rates: manualRows.map((row) => ({
+            id: row.id,
+            rateData: row.rateData,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          })),
+        });
+        res.headers.set('Cache-Control', 'private, max-age=60');
+        return res;
+      }
+    }
+
     const cacheKey = `selected-rates:${officerId}`;
     const cached = selectedRatesCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < SELECTED_RATES_CACHE_TTL_MS) {
@@ -119,44 +148,11 @@ export async function GET(request: NextRequest) {
     let promise = selectedRatesFetchPromises.get(cacheKey);
     if (!promise) {
       promise = (async () => {
-        const { data: rows, error } = await supabase
-          .from('selected_rates')
-          .select('id, rate_data, created_at, updated_at')
-          .eq('officer_id', officerId)
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // New Mortech officers: seed the fixed 8 categories once so every user sees updated rates.
-        if ((rows ?? []).length === 0) {
-          const [companyRow] = await db
-            .select({ hasMortechSubscription: companies.hasMortechSubscription })
-            .from(companies)
-            .where(eq(companies.id, companyId))
-            .limit(1);
-          if (companyRow?.hasMortechSubscription !== false) {
-            try {
-              const { rates } = await seedSelectedRatesForOfficer(officerId, companyId);
-              const payload = {
-                success: true as const,
-                rates: rates.map((r) => ({
-                  id: r.id,
-                  rateData: r.rateData,
-                  createdAt: r.createdAt,
-                  updatedAt: r.updatedAt,
-                })),
-              };
-              selectedRatesCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
-              selectedRatesFetchPromises.delete(cacheKey);
-              return payload;
-            } catch (seedErr) {
-              console.warn('[selected-rates] seed for new officer failed:', seedErr);
-            }
-          }
-        }
-
-        const payload = { success: true as const, rates: (rows ?? []).map(mapRateRow) };
+        const merged = await getMortechMergedSelectedRatesForDisplay(officerId, companyId);
+        const payload = {
+          success: true as const,
+          rates: merged.map(serializeMortechMergedRow),
+        };
         selectedRatesCache.set(cacheKey, { data: payload, fetchedAt: Date.now() });
         selectedRatesFetchPromises.delete(cacheKey);
         return payload;
@@ -306,6 +302,9 @@ export async function POST(request: NextRequest) {
         rateData: rateDataWithSearchParams,
       })
       .returning();
+
+    selectedRatesCache.delete(`selected-rates:${user.id}`);
+    selectedRatesFetchPromises.delete(`selected-rates:${user.id}`);
 
     return NextResponse.json({
       success: true,
