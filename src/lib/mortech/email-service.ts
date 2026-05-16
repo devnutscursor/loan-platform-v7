@@ -338,6 +338,87 @@ export async function sendContactEmail(
 }
 
 /**
+ * Platform invite link (resend path when Auth user already exists but is unconfirmed).
+ */
+export async function sendInviteLinkEmail(
+  toEmail: string,
+  inviteUrl: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const safeUrl = inviteUrl.replace(/"/g, '&quot;');
+    const emailSubject = 'You are invited to ratecaddy';
+    const emailBody = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>ratecaddy invitation</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px;">
+            <h1 style="color: #005b7c; margin-bottom: 16px;">Accept your invitation</h1>
+            <p style="font-size: 16px; margin-bottom: 24px;">
+              Click the button below to set your password and finish setting up your account.
+            </p>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${safeUrl}"
+                 style="display: inline-block; background: linear-gradient(135deg, #01bcc6, #008eab); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Accept invitation
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666;">
+              If you did not expect this email, you can ignore it.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpSenderName = process.env.SMTP_SENDER_NAME || 'ratecaddy';
+    const smtpSenderEmail = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER;
+
+    if (smtpHost && smtpUser && smtpPass) {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+
+      await transporter.sendMail({
+        from: `"${smtpSenderName}" <${smtpSenderEmail}>`,
+        to: toEmail,
+        subject: emailSubject,
+        html: emailBody,
+      });
+
+      return { success: true, message: 'Invite email sent' };
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n========================================');
+      console.log('[DEV MODE] Invite link for:', toEmail);
+      console.log(inviteUrl);
+      console.log('========================================\n');
+      return { success: true, message: 'Invite link logged (dev mode)' };
+    }
+
+    return { success: false, message: 'Email service is not configured' };
+  } catch (error) {
+    console.error('Error sending invite email:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to send invite email',
+    };
+  }
+}
+
+/**
  * Password reset link via app SMTP (same credentials as other transactional mail).
  */
 export async function sendPasswordResetLinkEmail(

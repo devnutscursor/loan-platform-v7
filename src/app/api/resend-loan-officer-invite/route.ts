@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, userCompanies } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getAppBaseUrl } from '@/lib/app-url';
+import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 const resendInviteSchema = z.object({
@@ -20,7 +21,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { officerId } = resendInviteSchema.parse(body);
 
-    // Check officer status and invite expiration
     const officer = await db
       .select({
         id: users.id,
@@ -29,8 +29,6 @@ export async function POST(request: NextRequest) {
         lastName: users.lastName,
         isActive: users.isActive,
         deactivated: users.deactivated,
-        inviteExpiresAt: users.inviteExpiresAt,
-        inviteStatus: users.inviteStatus,
         companyId: userCompanies.companyId,
       })
       .from(users)
@@ -44,80 +42,71 @@ export async function POST(request: NextRequest) {
 
     const officerData = officer[0];
 
-    // Check if officer is deactivated
     if (officerData.deactivated) {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'Cannot resend invite for deactivated officer' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: 'Cannot resend invite for deactivated officer' },
+        { status: 400 },
+      );
     }
 
-    // Check if invite was already accepted
     if (officerData.isActive) {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'Officer has already accepted the invite' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: 'Officer has already accepted the invite' },
+        { status: 400 },
+      );
     }
 
-    // Check if invite is still valid (not expired)
-    if (officerData.inviteExpiresAt && new Date() < officerData.inviteExpiresAt) {
-      const expirationTime = new Date(officerData.inviteExpiresAt).toLocaleString();
-      return NextResponse.json({ 
-        success: false, 
-        message: `You can resend after ${expirationTime}` 
-      }, { status: 400 });
+    if (!officerData.email) {
+      return NextResponse.json(
+        { success: false, message: 'Officer has no email on file' },
+        { status: 400 },
+      );
     }
 
-    // Resend the invite
-    const { data: inviteResult, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      officerData.email,
-      {
-        redirectTo: `${getAppBaseUrl()}/auth/invite?officer=true&company=${officerData.companyId}`,
-        data: {
-          first_name: officerData.firstName,
-          last_name: officerData.lastName,
-          role: 'employee',
-          company_id: officerData.companyId
-        }
-      }
-    );
-
-    if (inviteError) {
-      console.error('Error resending loan officer invite:', inviteError);
-      return NextResponse.json({
-        success: false,
-        message: `Failed to resend invite: ${inviteError.message}`
-      }, { status: 500 });
+    const guard = await assertEmailCanReceiveInvite(supabase, officerData.email, 'loan_officer', {
+      existingAppUserId: officerData.id,
+    });
+    if (!guard.ok) {
+      return NextResponse.json({ success: false, message: guard.message }, { status: 409 });
     }
 
-    // Update invite expiration time
-    const newExpirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await sendSupabaseInviteOrResend(supabase, officerData.email, {
+      redirectTo: `${getAppBaseUrl()}/auth/invite?officer=true&company=${officerData.companyId}`,
+      data: {
+        first_name: officerData.firstName,
+        last_name: officerData.lastName,
+        role: 'employee',
+        company_id: officerData.companyId,
+      },
+    });
+
+    const newExpirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await db
       .update(users)
       .set({
         inviteExpiresAt: newExpirationTime,
-        inviteStatus: 'sent'
+        inviteStatus: 'sent',
+        inviteSentAt: new Date(),
       })
       .where(eq(users.id, officerId));
 
     return NextResponse.json({
       success: true,
-      message: `Invite resent successfully to ${officerData.email}. The loan officer will receive an email to set up their account.`
+      message: `Invite resent successfully to ${officerData.email}. The loan officer will receive an email to set up their account.`,
     });
   } catch (error) {
     console.error('API error resending loan officer invite:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, message: 'Invalid request data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

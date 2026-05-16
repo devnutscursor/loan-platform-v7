@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createPersonalTemplatesForUser } from '@/lib/template-manager';
 import { getAppBaseUrl } from '@/lib/app-url';
+import { normalizeInviteEmail } from '@/lib/auth-admin-users';
+import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export interface LoanOfficerInviteData {
@@ -22,180 +24,148 @@ export interface LoanOfficerInviteResult {
   officerId?: string;
 }
 
+const INVITE_EXPIRES_MS = 24 * 60 * 60 * 1000;
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, firstName, lastName, nmlsNumber, companyId }: LoanOfficerInviteData = await request.json();
+    const { email, firstName, lastName, nmlsNumber, companyId }: LoanOfficerInviteData =
+      await request.json();
 
-    // Validate required fields
     if (!email || !firstName || !lastName || !nmlsNumber || !companyId) {
-      return NextResponse.json({
-        success: false,
-        message: 'All fields are required.'
-      }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: 'All fields are required.' },
+        { status: 400 },
+      );
     }
 
-    // Validate email format
+    const normalizedEmail = normalizeInviteEmail(email);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({
-        success: false,
-        message: 'Please enter a valid email address.'
-      }, { status: 400 });
+    if (!emailRegex.test(normalizedEmail)) {
+      return NextResponse.json(
+        { success: false, message: 'Please enter a valid email address.' },
+        { status: 400 },
+      );
     }
 
-    // Check if user already exists in our database
     const { data: existingUser } = await supabase
       .from('users')
       .select('id, is_active, deactivated')
-      .eq('email', email)
-      .single();
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    const guard = await assertEmailCanReceiveInvite(supabase, normalizedEmail, 'loan_officer', {
+      existingAppUserId: existingUser?.id,
+    });
+    if (!guard.ok) {
+      return NextResponse.json({ success: false, message: guard.message }, { status: 409 });
+    }
+
+    const redirectTo = `${getAppBaseUrl()}/auth/invite?officer=true&company=${companyId}`;
+    const inviteMeta = {
+      first_name: firstName,
+      last_name: lastName,
+      role: 'employee',
+      company_id: companyId,
+    };
+
+    const { userId: authUserId } = await sendSupabaseInviteOrResend(supabase, normalizedEmail, {
+      redirectTo,
+      data: inviteMeta,
+    });
+
+    if (existingUser && existingUser.id !== authUserId) {
+      console.error(
+        '[send-loan-officer-invite] users.id does not match Auth id',
+        { usersId: existingUser.id, authUserId },
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'This email has inconsistent account records. Please contact support before re-inviting.',
+        },
+        { status: 409 },
+      );
+    }
+
+    const inviteSentAt = new Date().toISOString();
+    const inviteExpiresAt = new Date(Date.now() + INVITE_EXPIRES_MS).toISOString();
+    const userPayload = {
+      email: normalizedEmail,
+      first_name: firstName,
+      last_name: lastName,
+      nmls_number: nmlsNumber,
+      role: 'employee',
+      is_active: false,
+      deactivated: false,
+      invite_status: 'sent',
+      invite_sent_at: inviteSentAt,
+      invite_expires_at: inviteExpiresAt,
+    };
 
     if (existingUser) {
-      // If user exists and is active, show error
-      if (existingUser.is_active && !existingUser.deactivated) {
-        return NextResponse.json({
-          success: false,
-          message: 'A user with this email already exists and is active. Please use a different email address.'
-        }, { status: 400 });
-      }
-      // If user exists but is inactive/pending/deactivated, allow resending invite
-      // We'll update the existing record instead of creating a new one
-    }
-
-    // Check if user exists in Supabase Auth and delete if needed
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingAuthUser = existingUsers?.users?.find(user => user.email === email);
-    
-    if (existingAuthUser) {
-      // Delete existing user from Supabase Auth to allow fresh invite
-      await supabase.auth.admin.deleteUser(existingAuthUser.id);
-    }
-
-    // Create the loan officer user via invite
-    const { data: inviteResult, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      email,
-      {
-        redirectTo: `${getAppBaseUrl()}/auth/invite?officer=true&company=${companyId}`,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          role: 'employee',
-          company_id: companyId
-        }
-      }
-    );
-
-    if (inviteError) {
-      console.error('Error sending loan officer invite:', inviteError);
-      return NextResponse.json({
-        success: false,
-        message: `Failed to send invite: ${inviteError.message}`
-      }, { status: 500 });
-    }
-
-    if (inviteResult?.user) {
-      let userError;
-      
-      if (existingUser) {
-        // Update existing user record
-        const { error } = await supabase
-          .from('users')
-          .update({
-            id: inviteResult.user.id,
-            email: email,
-            first_name: firstName,
-            last_name: lastName,
-            nmls_number: nmlsNumber,
-            role: 'employee',
-            is_active: false, // Will be activated when they accept the invite
-            deactivated: false, // Reset deactivation status
-            invite_status: 'sent',
-            invite_sent_at: new Date().toISOString(),
-            invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-          })
-          .eq('id', existingUser.id);
-        
-        userError = error;
-      } else {
-        // Create new user record in database
-        const { error } = await supabase
-          .from('users')
-          .insert({
-            id: inviteResult.user.id,
-            email: email,
-            first_name: firstName,
-            last_name: lastName,
-            nmls_number: nmlsNumber,
-            role: 'employee',
-            is_active: false, // Will be activated when they accept the invite
-            invite_status: 'sent',
-            invite_sent_at: new Date().toISOString(),
-            invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-          });
-        
-        userError = error;
-      }
+      const { error: userError } = await supabase
+        .from('users')
+        .update(userPayload)
+        .eq('id', existingUser.id);
 
       if (userError) {
-        console.error('Error creating/updating user record:', userError);
-        return NextResponse.json({
-          success: false,
-          message: 'Failed to create user record. Please try again.'
-        }, { status: 500 });
+        console.error('Error updating user record:', userError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to update user record. Please try again.' },
+          { status: 500 },
+        );
       }
-
-      // Delete existing user-company relationships and create new one
-      await supabase
-        .from('user_companies')
-        .delete()
-        .eq('user_id', inviteResult.user.id);
-
-      // Create user-company relationship
-      const { error: companyError } = await supabase
-        .from('user_companies')
-        .insert({
-          user_id: inviteResult.user.id,
-          company_id: companyId,
-          role: 'employee',
-          is_active: false, // Will be activated when they accept the invite
-        });
-
-      if (companyError) {
-        console.error('Error creating user-company relationship:', companyError);
-        return NextResponse.json({
-          success: false,
-          message: 'Failed to create company relationship. Please try again.'
-        }, { status: 500 });
-      }
-
-      // Create personal templates for the loan officer
-      try {
-        console.log('🎨 Creating personal templates for new loan officer:', inviteResult.user.id);
-        await createPersonalTemplatesForUser(inviteResult.user.id, firstName, lastName);
-        console.log('✅ Personal templates created successfully');
-      } catch (templateError) {
-        console.error('❌ Error creating personal templates:', templateError);
-        // Don't fail the entire invite process if template creation fails
-        // The user can still be created and templates can be created later
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: `Invite sent successfully to ${email}. The loan officer will receive an email to set up their account.`,
-        officerId: inviteResult.user.id
+    } else {
+      const { error: userError } = await supabase.from('users').insert({
+        id: authUserId,
+        ...userPayload,
       });
+
+      if (userError) {
+        console.error('Error creating user record:', userError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to create user record. Please try again.' },
+          { status: 500 },
+        );
+      }
+    }
+
+    const officerUserId = existingUser?.id ?? authUserId;
+
+    await supabase.from('user_companies').delete().eq('user_id', officerUserId);
+
+    const { error: companyError } = await supabase.from('user_companies').insert({
+      user_id: officerUserId,
+      company_id: companyId,
+      role: 'employee',
+      is_active: false,
+    });
+
+    if (companyError) {
+      console.error('Error creating user-company relationship:', companyError);
+      return NextResponse.json(
+        { success: false, message: 'Failed to create company relationship. Please try again.' },
+        { status: 500 },
+      );
+    }
+
+    try {
+      await createPersonalTemplatesForUser(officerUserId, firstName, lastName);
+    } catch (templateError) {
+      console.error('Error creating personal templates:', templateError);
     }
 
     return NextResponse.json({
-      success: false,
-      message: 'Failed to create invite. Please try again.'
-    }, { status: 500 });
-
+      success: true,
+      message: `Invite sent successfully to ${normalizedEmail}. The loan officer will receive an email to set up their account.`,
+      officerId: officerUserId,
+    });
   } catch (error) {
     console.error('Error in sendLoanOfficerInvite:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'An unexpected error occurred. Please try again.'
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: 'An unexpected error occurred. Please try again.' },
+      { status: 500 },
+    );
   }
 }

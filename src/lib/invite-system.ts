@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { getAppBaseUrl } from '@/lib/app-url';
+import { normalizeInviteEmail } from '@/lib/auth-admin-users';
+import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,8 +39,9 @@ export async function sendCompanyAdminInvite(
 ): Promise<InviteResult> {
   try {
     // Validate email format
+    const normalizedEmail = normalizeInviteEmail(adminEmail);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(adminEmail)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return {
         success: false,
         message: 'Please enter a valid email address.'
@@ -49,7 +52,7 @@ export async function sendCompanyAdminInvite(
     const { data: existingCompany } = await supabase
       .from('companies')
       .select('id, invite_status, deactivated')
-      .eq('admin_email', adminEmail)
+      .eq('admin_email', normalizedEmail)
       .single();
 
     if (existingCompany) {
@@ -74,9 +77,9 @@ export async function sendCompanyAdminInvite(
         .update({
           name: companyName,
           slug: companyName.toLowerCase().replace(/\s+/g, '-'),
-          email: adminEmail,
+          email: normalizedEmail,
           website: website || '',
-          admin_email: adminEmail,
+          admin_email: normalizedEmail,
           admin_email_verified: false,
           invite_status: 'pending',
           invite_sent_at: new Date().toISOString(),
@@ -99,9 +102,9 @@ export async function sendCompanyAdminInvite(
         .insert({
           name: companyName,
           slug: companyName.toLowerCase().replace(/\s+/g, '-'),
-          email: adminEmail,
+          email: normalizedEmail,
           website: website || '',
-          admin_email: adminEmail,
+          admin_email: normalizedEmail,
           admin_email_verified: false,
           invite_status: 'pending',
           invite_sent_at: new Date().toISOString(),
@@ -121,30 +124,28 @@ export async function sendCompanyAdminInvite(
       throw companyError;
     }
 
-    // Check if user exists in Supabase Auth and delete if needed
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers.users.find(user => user.email === adminEmail);
-    
-    if (existingUser) {
-      // Delete existing user from Supabase Auth to allow fresh invite
-      await supabase.auth.admin.deleteUser(existingUser.id);
+    const guard = await assertEmailCanReceiveInvite(supabase, normalizedEmail, 'company_admin', {
+      existingCompanyId: existingCompany?.id,
+    });
+    if (!guard.ok) {
+      if (!existingCompany) {
+        await supabase.from('companies').delete().eq('id', companyData.id);
+      }
+      return { success: false, message: guard.message };
     }
 
-    // Send Supabase invite
-    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      adminEmail,
-      {
+    let inviteUserId: string;
+    try {
+      const inviteResult = await sendSupabaseInviteOrResend(supabase, normalizedEmail, {
+        redirectTo: `${getAppBaseUrl()}/auth/invite?company=${companyData.id}`,
         data: {
           company_id: companyData.id,
           company_name: companyName,
-          role: 'company_admin'
+          role: 'company_admin',
         },
-        redirectTo: `${getAppBaseUrl()}/auth/invite?company=${companyData.id}`
-      }
-    );
-
-    if (inviteError) {
-      // If invite fails, delete the company (only if it was newly created)
+      });
+      inviteUserId = inviteResult.userId;
+    } catch (inviteError) {
       if (!existingCompany) {
         await supabase.from('companies').delete().eq('id', companyData.id);
       }
@@ -158,13 +159,13 @@ export async function sendCompanyAdminInvite(
       .update({
         invite_status: 'sent',
         invite_token: inviteToken,
-        admin_user_id: inviteData.user?.id
+        admin_user_id: inviteUserId,
       })
       .eq('id', companyData.id);
 
     return {
       success: true,
-      message: `🎉 Company "${companyName}" created successfully!\n\n📧 Invite sent to: ${adminEmail}\n\n⏳ The admin has 24 hours to accept the invite. You can track the status in your dashboard.`,
+      message: `🎉 Company "${companyName}" created successfully!\n\n📧 Invite sent to: ${normalizedEmail}\n\n⏳ The admin has 24 hours to accept the invite. You can track the status in your dashboard.`,
       companyId: companyData.id,
       inviteToken
     };
@@ -223,33 +224,29 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
       };
     }
 
-    // Check if invite is still valid (not expired)
-    const now = new Date();
-    const expiresAt = company.invite_expires_at ? new Date(company.invite_expires_at) : null;
-    
-    if (expiresAt && now > expiresAt) {
+    if (company.invite_status === 'accepted') {
       return {
         success: false,
-        message: 'Invite has expired. Please delete and recreate the company.'
+        message: 'This company has already accepted the invite.',
       };
     }
 
-    // Resend invite
-    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      company.admin_email,
-      {
-        data: {
-          company_id: company.id,
-          company_name: company.name,
-          role: 'company_admin'
-        },
-        redirectTo: `${getAppBaseUrl()}/auth/invite?company=${company.id}`
-      }
-    );
-
-    if (inviteError) {
-      throw inviteError;
+    const normalizedEmail = normalizeInviteEmail(company.admin_email);
+    const guard = await assertEmailCanReceiveInvite(supabase, normalizedEmail, 'company_admin', {
+      existingCompanyId: companyId,
+    });
+    if (!guard.ok) {
+      return { success: false, message: guard.message };
     }
+
+    const { userId: inviteUserId } = await sendSupabaseInviteOrResend(supabase, normalizedEmail, {
+      redirectTo: `${getAppBaseUrl()}/auth/invite?company=${company.id}`,
+      data: {
+        company_id: company.id,
+        company_name: company.name,
+        role: 'company_admin',
+      },
+    });
 
     // Update company with new invite details
     const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -259,7 +256,7 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
         invite_status: 'sent',
         invite_sent_at: new Date().toISOString(),
         invite_expires_at: newExpiresAt,
-        admin_user_id: inviteData.user?.id
+        admin_user_id: inviteUserId,
       })
       .eq('id', companyId);
 

@@ -1,27 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createPasswordResetToken } from '@/lib/password-reset-token';
 import { sendPasswordResetLinkEmail } from '@/lib/mortech/email-service';
 import { getAppBaseUrlFromRequest } from '@/lib/app-url';
+import { findAuthUserByEmail } from '@/lib/auth-admin-users';
 
 const bodySchema = z.object({
   email: z.string().email(),
 });
-
-async function findAuthUserByEmail(supabase: SupabaseClient, email: string) {
-  const normalized = email.trim().toLowerCase();
-  let page = 1;
-  const perPage = 1000;
-  for (;;) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-    const user = data.users.find((u) => u.email?.toLowerCase() === normalized);
-    if (user) return user;
-    if (!data.users.length || data.users.length < perPage) return null;
-    page += 1;
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
