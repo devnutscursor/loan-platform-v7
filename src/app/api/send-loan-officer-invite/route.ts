@@ -4,6 +4,10 @@ import { createPersonalTemplatesForUser } from '@/lib/template-manager';
 import { getAppBaseUrl } from '@/lib/app-url';
 import { normalizeInviteEmail } from '@/lib/auth-admin-users';
 import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
+import {
+  assertCanManageCompany,
+  requireCompanyAdminOrSuperAdmin,
+} from '@/lib/api-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,6 +32,10 @@ const INVITE_EXPIRES_MS = 24 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { email, firstName, lastName, nmlsNumber, companyId }: LoanOfficerInviteData =
       await request.json();
 
@@ -37,6 +45,9 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const denied = await assertCanManageCompany(ctx, companyId);
+    if (denied) return denied;
 
     const normalizedEmail = normalizeInviteEmail(email);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -133,14 +144,22 @@ export async function POST(request: NextRequest) {
 
     const officerUserId = existingUser?.id ?? authUserId;
 
-    await supabase.from('user_companies').delete().eq('user_id', officerUserId);
+    // Scope to this company only — never delete other company memberships for the same user.
+    await supabase
+      .from('user_companies')
+      .delete()
+      .eq('user_id', officerUserId)
+      .eq('company_id', companyId);
 
-    const { error: companyError } = await supabase.from('user_companies').insert({
-      user_id: officerUserId,
-      company_id: companyId,
-      role: 'employee',
-      is_active: false,
-    });
+    const { error: companyError } = await supabase.from('user_companies').upsert(
+      {
+        user_id: officerUserId,
+        company_id: companyId,
+        role: 'employee',
+        is_active: false,
+      },
+      { onConflict: 'user_id,company_id' },
+    );
 
     if (companyError) {
       console.error('Error creating user-company relationship:', companyError);

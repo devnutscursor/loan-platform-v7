@@ -24,8 +24,20 @@ export function oauthCallbackShell(opts: {
   /** Optional secondary link */
   secondaryHref?: string;
   secondaryLabel?: string;
+  /** Auto-redirect to primaryHref after N ms (success pages) */
+  autoRedirectMs?: number;
 }): string {
-  const { title, heading, message, variant, primaryHref, primaryLabel, secondaryHref, secondaryLabel } = opts;
+  const {
+    title,
+    heading,
+    message,
+    variant,
+    primaryHref,
+    primaryLabel,
+    secondaryHref,
+    secondaryLabel,
+    autoRedirectMs,
+  } = opts;
   const accent = variant === 'success' ? '#10b981' : '#dc2626';
 
   const primaryBlock =
@@ -38,12 +50,19 @@ export function oauthCallbackShell(opts: {
       ? `<p class="secondary"><a href="${escapeHtml(secondaryHref)}">${escapeHtml(secondaryLabel)}</a></p>`
       : '';
 
+  const autoRedirectBlock =
+    variant === 'success' && primaryHref && autoRedirectMs && autoRedirectMs > 0
+      ? `<meta http-equiv="refresh" content="${Math.ceil(autoRedirectMs / 1000)};url=${escapeHtml(primaryHref)}" />
+  <script>setTimeout(function(){window.location.href=${JSON.stringify(primaryHref)};},${autoRedirectMs});</script>`
+      : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)} — RateCaddy</title>
+  ${autoRedirectBlock}
   <style>
     * { box-sizing: border-box; }
     body {

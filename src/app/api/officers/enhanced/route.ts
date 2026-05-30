@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { apiCacheHeaders, getApiCache, setApiCache } from '@/lib/api-cache';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, serviceKey);
+
+const CACHE_TTL = 30;
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,15 +14,18 @@ export async function GET(req: NextRequest) {
     const companyId = searchParams.get('companyId');
 
     if (!companyId) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Missing companyId' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Missing companyId' },
+        { status: 400 },
+      );
     }
 
-    console.log(`🔄 Fetching enhanced officers data for company: ${companyId}`);
+    const cacheKey = `officers:enhanced:${companyId}`;
+    const cached = getApiCache<unknown>(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, { headers: apiCacheHeaders(CACHE_TTL) });
+    }
 
-    // Get officers with their basic info (including pending invites)
     const { data: officersData, error: officersError } = await supabase
       .from('user_companies')
       .select(`
@@ -39,132 +45,136 @@ export async function GET(req: NextRequest) {
           invite_sent_at,
           invite_expires_at,
           ghl_user_id,
-          ghl_user_created_at
+          ghl_user_created_at,
+          created_at
         )
       `)
       .eq('company_id', companyId)
       .eq('role', 'employee');
 
     if (officersError) {
-      console.error('❌ Error fetching officers:', officersError);
-      return NextResponse.json({ 
-        success: false, 
-        error: officersError.message 
-      }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: officersError.message },
+        { status: 500 },
+      );
     }
 
-    console.log(`👥 Found ${officersData.length} officers`);
+    const officerIds = officersData.map((o) => o.user_id);
 
-    // Get leads count for each officer
-    const { data: leadsData, error: leadsError } = await supabase
-      .from('leads')
-      .select('officer_id')
-      .eq('company_id', companyId);
+    const [leadsRes, publicLinksRes, templatesRes] = await Promise.all([
+      supabase.from('leads').select('officer_id').eq('company_id', companyId),
+      officerIds.length
+        ? supabase
+            .from('loan_officer_public_links')
+            .select('user_id, is_active')
+            .in('user_id', officerIds)
+        : Promise.resolve({ data: [], error: null }),
+      officerIds.length
+        ? supabase
+            .from('templates')
+            .select('user_id, slug, is_selected')
+            .in('user_id', officerIds)
+            .eq('is_selected', true)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-    if (leadsError) {
-      console.error('❌ Error fetching leads:', leadsError);
-      return NextResponse.json({ 
-        success: false, 
-        error: leadsError.message 
-      }, { status: 500 });
+    if (leadsRes.error) {
+      return NextResponse.json(
+        { success: false, error: leadsRes.error.message },
+        { status: 500 },
+      );
+    }
+    if (publicLinksRes.error) {
+      return NextResponse.json(
+        { success: false, error: publicLinksRes.error.message },
+        { status: 500 },
+      );
+    }
+    if (templatesRes.error) {
+      return NextResponse.json(
+        { success: false, error: templatesRes.error.message },
+        { status: 500 },
+      );
     }
 
-    // Count leads per officer
     const leadsCount: Record<string, number> = {};
-    leadsData.forEach(lead => {
+    for (const lead of leadsRes.data ?? []) {
       leadsCount[lead.officer_id] = (leadsCount[lead.officer_id] || 0) + 1;
-    });
-
-    // Get public links for each officer
-    const { data: publicLinksData, error: publicLinksError } = await supabase
-      .from('loan_officer_public_links')
-      .select('user_id, is_active')
-      .in('user_id', officersData.map(o => o.user_id));
-
-    if (publicLinksError) {
-      console.error('❌ Error fetching public links:', publicLinksError);
-      return NextResponse.json({ 
-        success: false, 
-        error: publicLinksError.message 
-      }, { status: 500 });
     }
 
-    // Check which officers have active public links
     const hasPublicLink: Record<string, boolean> = {};
-    publicLinksData.forEach(link => {
-      if (link.is_active) {
-        hasPublicLink[link.user_id] = true;
-      }
-    });
-
-    // Get selected templates for each officer
-    const { data: templatesData, error: templatesError } = await supabase
-      .from('templates')
-      .select('user_id, slug, is_selected')
-      .in('user_id', officersData.map(o => o.user_id))
-      .eq('is_selected', true);
-
-    if (templatesError) {
-      console.error('❌ Error fetching templates:', templatesError);
-      return NextResponse.json({ 
-        success: false, 
-        error: templatesError.message 
-      }, { status: 500 });
+    for (const link of publicLinksRes.data ?? []) {
+      if (link.is_active) hasPublicLink[link.user_id] = true;
     }
 
-    // Map selected templates
     const selectedTemplates: Record<string, string> = {};
-    templatesData.forEach(template => {
+    for (const template of templatesRes.data ?? []) {
       selectedTemplates[template.user_id] = template.slug;
-    });
+    }
 
-    // Combine all data
-    const enhancedOfficers = officersData.map(officerCompany => {
-      const user = officerCompany.users as any;
+    const enhancedOfficers = officersData.map((officerCompany) => {
+      const rawUser = officerCompany.users;
+      const user = (Array.isArray(rawUser) ? rawUser[0] : rawUser) as {
+        id: string;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+        nmls_number: string | null;
+        is_active: boolean;
+        deactivated: boolean;
+        invite_status: string | null;
+        invite_sent_at: string | null;
+        invite_expires_at: string | null;
+        ghl_user_id: string | null;
+        ghl_user_created_at: string | null;
+        created_at: string;
+      };
       const officerId = user.id;
-      
+      const joinedAt = officerCompany.joined_at ?? null;
+      const membershipActive = officerCompany.is_active === true;
+      const userActive = user.is_active === true;
+      const isActive = userActive && membershipActive;
+
       return {
         id: officerId,
         email: user.email,
         firstName: user.first_name || '',
         lastName: user.last_name || '',
         nmlsNumber: user.nmls_number || null,
-        isActive: user.is_active && officerCompany.is_active,
+        isActive,
         deactivated: user.deactivated === true,
         inviteStatus: user.invite_status || null,
         inviteSentAt: user.invite_sent_at || null,
         inviteExpiresAt: user.invite_expires_at || null,
+        joinedAt,
         ghlUserId: user.ghl_user_id || null,
         ghlUserCreatedAt: user.ghl_user_created_at || null,
-        createdAt: officerCompany.joined_at || user.created_at,
+        createdAt: joinedAt || user.created_at,
         totalLeads: leadsCount[officerId] || 0,
         hasPublicLink: hasPublicLink[officerId] || false,
-        selectedTemplate: selectedTemplates[officerId] || null
+        selectedTemplate: selectedTemplates[officerId] || null,
       };
     });
 
-    // Deduplicate officers by ID to prevent duplicate keys
-    const uniqueOfficers = enhancedOfficers.reduce((acc: any[], officer: any) => {
-      if (!acc.find(item => item.id === officer.id)) {
-        acc.push(officer);
-      } else {
-        console.warn(`⚠️ Duplicate officer found: ${officer.email} (${officer.id})`);
-      }
-      return acc;
-    }, []);
+    const uniqueOfficers = enhancedOfficers.reduce<typeof enhancedOfficers>(
+      (acc, officer) => {
+        const existingIdx = acc.findIndex((item) => item.id === officer.id);
+        if (existingIdx === -1) {
+          acc.push(officer);
+        } else if (officer.isActive && !acc[existingIdx].isActive) {
+          acc[existingIdx] = officer;
+        }
+        return acc;
+      },
+      [],
+    );
 
-    console.log(`✅ Enhanced officers data prepared for ${uniqueOfficers.length} officers (${enhancedOfficers.length - uniqueOfficers.length} duplicates removed)`);
-
-    return NextResponse.json({ 
-      success: true, 
-      data: uniqueOfficers 
-    });
-
-  } catch (error: any) {
-    console.error('❌ Unexpected error fetching enhanced officers:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error?.message || 'Server error' 
-    }, { status: 500 });
+    const payload = { success: true, data: uniqueOfficers };
+    setApiCache(cacheKey, payload, CACHE_TTL);
+    return NextResponse.json(payload, { headers: apiCacheHeaders(CACHE_TTL) });
+  } catch (error: unknown) {
+    console.error('Unexpected error fetching enhanced officers:', error);
+    const message = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

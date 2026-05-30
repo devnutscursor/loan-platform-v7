@@ -11,11 +11,26 @@ function isRateCaddyCompanyUuid(s: string | null): s is string {
   return Boolean(s && RATECADDY_COMPANY_ID_REGEX.test(s));
 }
 
-function htmlResponse(html: string, status = 200) {
-  return new NextResponse(html, {
+function htmlResponse(html: string, status = 200, clearOAuthCookies = false) {
+  const response = new NextResponse(html, {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
+  if (clearOAuthCookies) {
+    response.cookies.set('ghl_oauth_return', '', { maxAge: 0, path: '/' });
+    response.cookies.set('ghl_oauth_autoredirect', '', { maxAge: 0, path: '/' });
+  }
+  return response;
+}
+
+function resolveOAuthReturn(request: NextRequest) {
+  const dashboardPath = request.cookies.get('ghl_oauth_return')?.value;
+  const autoRedirect = request.cookies.get('ghl_oauth_autoredirect')?.value === '1';
+  const primaryHref =
+    dashboardPath === '/super-admin/dashboard' || dashboardPath === '/admin/dashboard'
+      ? dashboardPath
+      : '/admin/dashboard';
+  return { primaryHref, autoRedirect };
 }
 
 function wantJsonDebug(request: NextRequest) {
@@ -77,6 +92,7 @@ export async function GET(request: NextRequest) {
   );
 
   if (!code) {
+    const { primaryHref } = resolveOAuthReturn(request);
     return htmlResponse(
       oauthCallbackShell({
         title: 'Connection incomplete',
@@ -84,12 +100,11 @@ export async function GET(request: NextRequest) {
         message:
           'The sign-in flow did not return a valid authorization code. Please try connecting GoHighLevel again from your dashboard.',
         variant: 'error',
-        primaryHref: '/admin/dashboard',
-        primaryLabel: 'Go to dashboard',
-        secondaryHref: '/super-admin/companies',
-        secondaryLabel: 'Super Admin — Companies',
+        primaryHref,
+        primaryLabel: 'Go to your dashboard',
       }),
-      400
+      400,
+      true,
     );
   }
 
@@ -121,6 +136,7 @@ export async function GET(request: NextRequest) {
         '❌ [OAuth Callback] Token exchange failed',
         JSON.stringify(json)
       );
+      const { primaryHref } = resolveOAuthReturn(request);
       return htmlResponse(
         oauthCallbackShell({
           title: 'Connection failed',
@@ -128,12 +144,11 @@ export async function GET(request: NextRequest) {
           message:
             'We could not complete the authorization with GoHighLevel. Please try again, or contact support if this keeps happening.',
           variant: 'error',
-          primaryHref: '/admin/dashboard',
-          primaryLabel: 'Go to dashboard',
-          secondaryHref: '/super-admin/companies',
-          secondaryLabel: 'Super Admin — Companies',
+          primaryHref,
+          primaryLabel: 'Go to your dashboard',
         }),
-        400
+        400,
+        true,
       );
     }
 
@@ -187,6 +202,7 @@ export async function GET(request: NextRequest) {
             { status: 404 }
           );
         }
+        const { primaryHref } = resolveOAuthReturn(request);
         return htmlResponse(
           oauthCallbackShell({
             title: 'Company not found',
@@ -194,12 +210,11 @@ export async function GET(request: NextRequest) {
             message:
               'Your organization could not be matched in RateCaddy. Please start the GoHighLevel connection again from the Companies page.',
             variant: 'error',
-            primaryHref: '/super-admin/companies',
-            primaryLabel: 'Super Admin — Companies',
-            secondaryHref: '/admin/dashboard',
-            secondaryLabel: 'Company dashboard',
+            primaryHref,
+            primaryLabel: 'Go to your dashboard',
           }),
-          404
+          404,
+          true,
         );
       }
 
@@ -224,18 +239,22 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      const { primaryHref, autoRedirect } = resolveOAuthReturn(request);
+
       return htmlResponse(
         oauthCallbackShell({
           title: 'Connected',
           heading: 'GoHighLevel connected',
-          message:
-            'Your RateCaddy company is now linked to GoHighLevel. Tokens were saved securely — nothing else to do here.',
+          message: autoRedirect
+            ? 'Your company is now linked to GoHighLevel. Redirecting you to your dashboard…'
+            : 'Your company is now linked to GoHighLevel. Tokens were saved securely.',
           variant: 'success',
-          primaryHref: '/admin/dashboard',
+          primaryHref,
           primaryLabel: 'Go to your dashboard',
-          secondaryHref: '/super-admin/dashboard',
-          secondaryLabel: 'Super Admin dashboard',
-        })
+          autoRedirectMs: autoRedirect ? 2500 : undefined,
+        }),
+        200,
+        true,
       );
     }
 
@@ -247,6 +266,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const { primaryHref } = resolveOAuthReturn(request);
+
     return htmlResponse(
       oauthCallbackShell({
         title: 'Connected',
@@ -254,14 +275,15 @@ export async function GET(request: NextRequest) {
         message:
           'You can close this tab and return to RateCaddy. If you were setting up an integration, open your dashboard to continue.',
         variant: 'success',
-        primaryHref: '/admin/dashboard',
+        primaryHref,
         primaryLabel: 'Go to your dashboard',
-        secondaryHref: '/',
-        secondaryLabel: 'Home',
-      })
+      }),
+      200,
+      true,
     );
   } catch (error) {
     console.error('❌ [OAuth Callback] Unexpected error:', error);
+    const { primaryHref } = resolveOAuthReturn(request);
     return htmlResponse(
       oauthCallbackShell({
         title: 'Error',
@@ -269,12 +291,11 @@ export async function GET(request: NextRequest) {
         message:
           'We could not finish connecting to GoHighLevel. Please try again later or contact support.',
         variant: 'error',
-        primaryHref: '/admin/dashboard',
-        primaryLabel: 'Go to dashboard',
-        secondaryHref: '/super-admin/companies',
-        secondaryLabel: 'Super Admin — Companies',
+        primaryHref,
+        primaryLabel: 'Go to your dashboard',
       }),
-      500
+      500,
+      true,
     );
   }
 }

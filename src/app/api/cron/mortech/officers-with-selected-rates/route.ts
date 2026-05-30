@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyBearerSecret } from '@/lib/api-auth';
 
 /**
  * GET /api/cron/mortech/officers-with-selected-rates
@@ -8,9 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Secured by CRON_SECRET_TOKEN.
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization') || '';
-  const expected = `Bearer ${process.env.CRON_SECRET_TOKEN}`;
-  if (!process.env.CRON_SECRET_TOKEN || authHeader !== expected) {
+  if (!verifyBearerSecret(req, 'CRON_SECRET_TOKEN')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { companies, userCompanies, users } from '@/lib/db/schema';
 
@@ -51,6 +51,41 @@ function isLikelyDuplicate(details: unknown): boolean {
   );
 }
 
+const GHL_RECONNECT_MESSAGE =
+  'Reconnect to GHL from Admin Dashboard → GHL.';
+
+function isGhlTokenOrAuthError(status?: number, text?: string): boolean {
+  if (status === 401 || status === 403) return true;
+  const hay = (text ?? '').toLowerCase();
+  return (
+    hay.includes('token') ||
+    hay.includes('unauthorized') ||
+    hay.includes('invalid') ||
+    hay.includes('expired') ||
+    hay.includes('jwt') ||
+    hay.includes('scope') ||
+    hay.includes('connection missing') ||
+    hay.includes('reconnect')
+  );
+}
+
+function ghlErrorResponse(
+  error: string,
+  status: number,
+  extra?: Record<string, unknown>,
+) {
+  const reconnectRequired = isGhlTokenOrAuthError(status, error);
+  return NextResponse.json(
+    {
+      success: false,
+      error: reconnectRequired ? GHL_RECONNECT_MESSAGE : error,
+      reconnectRequired,
+      ...extra,
+    },
+    { status },
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -90,6 +125,7 @@ export async function POST(request: NextRequest) {
       )
       .innerJoin(companies, eq(companies.id, userCompanies.companyId))
       .where(eq(users.id, officerId))
+      .orderBy(desc(userCompanies.isActive), desc(userCompanies.joinedAt))
       .limit(1);
 
     if (!rows.length) {
@@ -128,24 +164,16 @@ export async function POST(request: NextRequest) {
     const ghlCompanyId = payload.companyId;
     const scope = payload.scope;
     if (!accessToken || !locationId || !ghlCompanyId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Company GHL connection missing required fields (access_token/locationId/companyId).',
-        },
-        { status: 400 }
+      return ghlErrorResponse(
+        'Company GHL connection missing required fields (access_token/locationId/companyId).',
+        400,
       );
     }
     if (scope && !scope.split(/\s+/).includes('users.write')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Connected token does not include users.write scope. Reconnect GHL for this company.',
-          details: { scope },
-        },
-        { status: 400 }
+      return ghlErrorResponse(
+        'Connected token does not include users.write scope. Reconnect GHL for this company.',
+        400,
+        { details: { scope } },
       );
     }
 
@@ -190,14 +218,11 @@ export async function POST(request: NextRequest) {
           { status: 409 }
         );
       }
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Failed to create GHL loan officer user',
-          status: ghlResponse.status,
-          details: ghlJson,
-        },
-        { status: ghlResponse.status }
+      const ghlErrorText = JSON.stringify(ghlJson ?? {});
+      return ghlErrorResponse(
+        'Failed to create GHL loan officer user',
+        ghlResponse.status,
+        { details: ghlJson, rawError: ghlErrorText },
       );
     }
 

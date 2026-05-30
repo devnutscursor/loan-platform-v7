@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { redisCache } from '@/lib/redis';
+import { assertSelfOrAdmin, requireAuth } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -13,11 +14,18 @@ function toEtag(userId: string, lastLoginAt: string | null) {
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 });
     }
+
+    const denied = assertSelfOrAdmin(ctx, userId);
+    if (denied) return denied;
 
     // Try Redis first
     const cached = await redisCache.getProfile<any>(userId);

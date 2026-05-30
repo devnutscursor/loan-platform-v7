@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { db } from '@/lib/db';
-import { leads } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { requireSuperAdmin } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -13,6 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const { slug } = await params;
     console.log('🚀 GET /api/super-admin/officers/[slug]/leads - Requesting leads for officer slug:', slug);
 

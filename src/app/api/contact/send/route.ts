@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendContactEmail } from '@/lib/mortech/email-service';
 import { z } from 'zod';
+import { validateOfficerRecipientEmail } from '@/lib/api-auth';
+import { rateLimitByIp } from '@/lib/rate-limit';
 
 // Validation schema
 const contactFormSchema = z.object({
@@ -21,6 +23,14 @@ const contactFormSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const limit = await rateLimitByIp(request, 'contact-send', 10, 3600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     
     // Validate request body
@@ -48,6 +58,14 @@ export async function POST(request: NextRequest) {
       message,
       templateColors,
     } = validationResult.data;
+
+    const validRecipient = await validateOfficerRecipientEmail(recipientEmail);
+    if (!validRecipient) {
+      return NextResponse.json(
+        { success: false, message: 'Recipient is not a valid loan officer' },
+        { status: 400 },
+      );
+    }
     
     // Send the contact email
     const result = await sendContactEmail(

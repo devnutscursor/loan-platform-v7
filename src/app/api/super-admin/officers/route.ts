@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { headers } from 'next/headers';
+import { requireSuperAdmin } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Get all loan officers (employees only) with their company information
@@ -120,6 +123,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await request.json();
     const { officerId, isActive } = body;

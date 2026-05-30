@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { db } from '@/lib/db';
 import { leads, users, companies, userCompanies } from '@/lib/db/schema';
-import { eq, and, or, like, desc, asc } from 'drizzle-orm';
+import { eq, and, or, like, desc, count } from 'drizzle-orm';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -191,26 +191,25 @@ export async function GET(request: NextRequest) {
       : baseQuery;
 
     // Get total count for pagination
-    const countBaseQuery = db
-      .select({ count: leads.id })
-      .from(leads)
-      .leftJoin(users, eq(leads.officerId, users.id))
-      .leftJoin(companies, eq(leads.companyId, companies.id));
+    const countQuery = conditions.length > 0
+      ? db
+          .select({ total: count(leads.id) })
+          .from(leads)
+          .leftJoin(users, eq(leads.officerId, users.id))
+          .leftJoin(companies, eq(leads.companyId, companies.id))
+          .where(and(...conditions))
+      : db
+          .select({ total: count(leads.id) })
+          .from(leads)
+          .leftJoin(users, eq(leads.officerId, users.id))
+          .leftJoin(companies, eq(leads.companyId, companies.id));
 
-    const countQuery = conditions.length > 0 
-      ? countBaseQuery.where(and(...conditions))
-      : countBaseQuery;
-
-    // Execute queries
     const [leadsResult, countResult] = await Promise.all([
-      query
-        .orderBy(desc(leads.createdAt))
-        .limit(limit)
-        .offset(offset),
-      countQuery
+      query.orderBy(desc(leads.createdAt)).limit(limit).offset(offset),
+      countQuery,
     ]);
 
-    const total = countResult.length;
+    const total = Number(countResult[0]?.total ?? 0);
     const totalPages = Math.ceil(total / limit);
 
     console.log('✅ Found leads:', leadsResult.length, 'Total filtered:', total);

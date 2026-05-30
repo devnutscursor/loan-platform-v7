@@ -706,9 +706,13 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
 
   const officerInviteStatusKey = (record: any) =>
     String(record?.inviteStatus ?? record?.invite_status ?? 'pending').toLowerCase();
-  /** Invite row can still say "sent" if DB wasn't updated — active employees must not get Delete. */
+  /** Officer is fully active (matches GHL create-officer and enhanced API). */
+  const officerIsOperational = (record: any) => {
+    if (record?.deactivated) return false;
+    return record?.isActive === true;
+  };
   const officerInviteAccepted = (record: any) =>
-    officerInviteStatusKey(record) === 'accepted' || record?.isActive === true;
+    officerInviteStatusKey(record) === 'accepted' || officerIsOperational(record);
   const officerCanResend = (record: any) => {
     if (record?.deactivated) return false;
     if (officerInviteAccepted(record)) return false;
@@ -921,9 +925,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
           )}
 
           {onCreateGhlUser &&
-            officerInviteAccepted(record) &&
-            record.isActive &&
-            !record.deactivated &&
+            officerIsOperational(record) &&
             !record.ghlUserId && (
             <button
               onClick={() => onCreateGhlUser(record)}
@@ -941,10 +943,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             />
           )}
           
-          {onDeactivate &&
-            officerInviteAccepted(record) &&
-            record.isActive &&
-            !record.deactivated && (
+          {onDeactivate && officerIsOperational(record) && (
             <DeactivateButton
               role="company_admin"
               onClick={() => onDeactivate(record)}
@@ -1153,9 +1152,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
             )}
 
             {onCreateGhlUser &&
-              officerInviteAccepted(record) &&
-              record.isActive &&
-              !record.deactivated &&
+              officerIsOperational(record) &&
               !record.ghlUserId && (
               <button
                 onClick={() => onCreateGhlUser(record)}
@@ -1173,10 +1170,7 @@ export const OfficerTable: React.FC<Omit<DataTableProps, 'role' | 'columns'> & {
               />
             )}
             
-            {onDeactivate &&
-              officerInviteAccepted(record) &&
-              record.isActive &&
-              !record.deactivated && (
+            {onDeactivate && officerIsOperational(record) && (
               <DeactivateButton
                 role="company_admin"
                 onClick={() => onDeactivate(record)}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendCompanyAdminInvite } from '@/lib/invite-system';
 import { z } from 'zod';
+import { requireSuperAdmin } from '@/lib/api-auth';
 
 const sendInviteSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -12,31 +13,35 @@ const sendInviteSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
-    const { companyName, adminEmail, website, includeDefaultContent, hasMortechSubscription } = sendInviteSchema.parse(body);
+    const { companyName, adminEmail, website, includeDefaultContent, hasMortechSubscription } =
+      sendInviteSchema.parse(body);
 
     const result = await sendCompanyAdminInvite(
       companyName,
       adminEmail,
       website,
       includeDefaultContent,
-      hasMortechSubscription
+      hasMortechSubscription,
     );
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('API error sending invite:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, message: 'Invalid request data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

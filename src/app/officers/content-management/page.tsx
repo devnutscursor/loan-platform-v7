@@ -301,34 +301,34 @@ export default function ContentManagementPage() {
 
       applyContentData(type, result.data || {});
 
-      // If FAQs are empty and we haven't tried uploading default content yet,
-      // trigger a default content upload for this officer. The API itself
-      // enforces has_default_content_access and skips when not allowed.
+      // Default content upload runs in the background so first visit is not blocked
+      // on a large Cloudinary/DB seed (can take minutes locally).
       if (
         type === 'faqs' &&
         !defaultContentAttempted &&
         (!result.data?.faqs || result.data.faqs.length === 0)
       ) {
         setDefaultContentAttempted(true);
-        try {
-          const uploadResponse = await fetch('/api/officers/content/upload-default', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
+        void (async () => {
+          try {
+            const uploadResponse = await fetch('/api/officers/content/upload-default', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
 
-          if (uploadResponse.ok) {
-            const uploadResult = await uploadResponse.json();
-            if (uploadResult.success && uploadResult.data?.faqsCount > 0) {
-              // Refresh FAQs after successful default upload
-              await fetchContentType('faqs', false);
+            if (uploadResponse.ok) {
+              const uploadResult = await uploadResponse.json();
+              if (uploadResult.success && uploadResult.data?.faqsCount > 0) {
+                await fetchContentType('faqs', false);
+              }
             }
+          } catch (uploadError) {
+            console.error('Error uploading default officer content:', uploadError);
           }
-        } catch (uploadError) {
-          console.error('Error uploading default officer content:', uploadError);
-        }
+        })();
       }
     })();
 
@@ -392,10 +392,10 @@ export default function ContentManagementPage() {
   useEffect(() => {
     if (!user || authLoading) return;
     if (activeTab === 'videos' && !loadedContentRef.current.videos) {
-      fetchContentType('videos', true);
+      fetchContentType('videos', false);
     }
     if (activeTab === 'guides' && !loadedContentRef.current.guides) {
-      fetchContentType('guides', true);
+      fetchContentType('guides', false);
     }
   }, [activeTab, authLoading, fetchContentType, user]);
 

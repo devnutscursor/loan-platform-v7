@@ -5,55 +5,39 @@ import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotification } from '@/components/ui/Notification';
-import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
-
-interface CompanyAccessRow {
-  company_id: string;
-}
 
 interface CompanyGhlDetails {
   id: string;
   name: string;
   ghl_connected_at?: string | null;
-  ghl_oauth_payload?: Record<string, unknown> | null;
+  isConnected: boolean;
 }
 
 export default function AdminCompaniesPage() {
-  const { user } = useAuth();
+  const { user, companyId, accessToken, loading: authLoading, roleLoading } = useAuth();
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyGhlDetails | null>(null);
 
   useEffect(() => {
     const loadCompany = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !companyId || !accessToken) return;
       try {
         setLoading(true);
-        const { data: mapping, error: mappingError } = await supabase
-          .from('user_companies')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single<CompanyAccessRow>();
+        const res = await fetch('/api/companies/ghl-status', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const json = await res.json();
 
-        if (mappingError || !mapping?.company_id) {
-          throw new Error('No linked company found for current admin');
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Failed to load company GHL details');
         }
 
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .select('id, name, ghl_connected_at, ghl_oauth_payload')
-          .eq('id', mapping.company_id)
-          .single<CompanyGhlDetails>();
-
-        if (companyError || !companyData) {
-          throw new Error('Company record not found');
-        }
-
-        setCompany(companyData);
+        setCompany(json.data);
       } catch (error) {
-        console.error('Failed to load company GHL details:', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Failed to load company GHL details:', message);
         showNotification({
           type: 'error',
           title: 'Load Failed',
@@ -64,24 +48,18 @@ export default function AdminCompaniesPage() {
       }
     };
 
-    loadCompany();
-  }, [user?.id, showNotification]);
+    if (!authLoading && !roleLoading) {
+      loadCompany();
+    }
+  }, [user?.id, companyId, accessToken, authLoading, roleLoading, showNotification]);
 
   const handleReconnectGhl = () => {
     if (!company?.id || typeof window === 'undefined') return;
-    if (
-      !confirm(
-        `Reconnect GHL for "${company.name}"?\n\nThis will re-run OAuth and refresh stored tokens/scopes.`
-      )
-    ) {
-      return;
-    }
-    const url = `${window.location.origin}/api/oauth/choose-location?company=${encodeURIComponent(company.id)}`;
+    const url = `${window.location.origin}/api/oauth/choose-location?company=${encodeURIComponent(company.id)}&returnTo=admin`;
     window.location.href = url;
   };
 
-  const isConnected =
-    Boolean(company?.ghl_connected_at) || Boolean(company?.ghl_oauth_payload);
+  const isConnected = Boolean(company?.isConnected);
 
   return (
     <RouteGuard allowedRoles={['company_admin']}>

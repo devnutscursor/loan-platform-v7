@@ -328,25 +328,26 @@ function AuthPageContent() {
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="forgot-email" className="block text-sm font-semibold text-[#005b7c] mb-3">
-              Email Address *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="w-5 h-5 text-[#01bcc6]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            <EmailInput
+              id="forgot-email"
+              label="Email Address"
+              required
+              value={forgotPasswordEmail}
+              onChange={(e) => setForgotPasswordEmail(e.target.value)}
+              placeholder="Enter your email address"
+              disabled={forgotPasswordLoading}
+              leftIcon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
                 </svg>
-              </div>
-              <input
-                id="forgot-email"
-                type="email"
-                value={forgotPasswordEmail}
-                onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
-                disabled={forgotPasswordLoading}
-              />
-            </div>
+              }
+              className="pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:border-[#01bcc6] focus:ring-[#01bcc6]/20 bg-white text-[#005b7c] font-medium placeholder-[#005b7c]/50"
+            />
           </div>
 
           {forgotPasswordError && (

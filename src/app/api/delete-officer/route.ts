@@ -3,12 +3,11 @@ import { db } from '@/lib/db';
 import { users, userCompanies } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseService } from '@/lib/supabase/service';
+import {
+  assertCanManageOfficer,
+  requireCompanyAdminOrSuperAdmin,
+} from '@/lib/api-auth';
 
 const deleteOfficerSchema = z.object({
   officerId: z.string().uuid('Valid officer ID is required'),
@@ -16,10 +15,16 @@ const deleteOfficerSchema = z.object({
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const body = await request.json();
     const { officerId } = deleteOfficerSchema.parse(body);
 
-    // Check if officer exists
+    const denied = await assertCanManageOfficer(ctx, officerId);
+    if (denied) return denied;
+
     const officer = await db
       .select()
       .from(users)
@@ -27,10 +32,10 @@ export async function DELETE(request: NextRequest) {
       .limit(1);
 
     if (!officer.length) {
-      return NextResponse.json({
-        success: false,
-        message: 'Officer not found'
-      }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: 'Officer not found' },
+        { status: 404 },
+      );
     }
 
     const inviteStatus = (officer[0].inviteStatus || '').toLowerCase();
@@ -42,46 +47,37 @@ export async function DELETE(request: NextRequest) {
           message:
             'This officer is already active. Deactivate them instead of deleting.',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Delete user from Supabase Auth if exists (for pending invites)
+    const supabase = getSupabaseService();
     try {
       await supabase.auth.admin.deleteUser(officerId);
-    } catch (authError) {
-      // User might not exist in auth, which is fine for pending invites
-      console.log('User not found in auth (likely pending invite):', officerId);
+    } catch {
+      // User might not exist in auth for pending invites
     }
 
-    // Delete user-company relationship first
-    await db
-      .delete(userCompanies)
-      .where(eq(userCompanies.userId, officerId));
-
-    // Delete user from database
-    await db
-      .delete(users)
-      .where(eq(users.id, officerId));
+    await db.delete(userCompanies).where(eq(userCompanies.userId, officerId));
+    await db.delete(users).where(eq(users.id, officerId));
 
     return NextResponse.json({
       success: true,
-      message: 'Officer deleted successfully'
+      message: 'Officer deleted successfully',
     });
-
   } catch (error) {
     console.error('Error deleting officer:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, message: 'Invalid request data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, pageSettings, templates } from '@/lib/db';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { assertCanAccessOfficer, requireAuth } from '@/lib/api-auth';
+
+async function authorizeOfficer(request: NextRequest, officerId: string) {
+  const auth = await requireAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const denied = await assertCanAccessOfficer(auth.ctx, officerId);
+  if (denied) return denied;
+  return auth.ctx;
+}
 
 // GET /api/page-settings - Get user's page settings
 export async function GET(request: NextRequest) {
@@ -14,6 +23,9 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const access = await authorizeOfficer(request, officerId);
+    if (access instanceof NextResponse) return access;
 
     const settings = await db
       .select()
@@ -59,6 +71,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const access = await authorizeOfficer(request, officerId);
+    if (access instanceof NextResponse) return access;
 
     if (!templateId || !template || !settings) {
       return NextResponse.json(
@@ -149,6 +164,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const access = await authorizeOfficer(request, officerId);
+    if (access instanceof NextResponse) return access;
+
     if (!settings) {
       return NextResponse.json(
         { success: false, error: 'Settings are required' },
@@ -205,6 +223,9 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const access = await authorizeOfficer(request, officerId);
+    if (access instanceof NextResponse) return access;
 
     const result = await db
       .delete(pageSettings)

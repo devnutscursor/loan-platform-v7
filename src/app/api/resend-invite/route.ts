@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { companies } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { requireSuperAdmin } from '@/lib/api-auth';
 
 const resendInviteSchema = z.object({
   companyId: z.string().uuid('Valid company ID is required'),
@@ -11,6 +12,9 @@ const resendInviteSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
     const { companyId } = resendInviteSchema.parse(body);
 

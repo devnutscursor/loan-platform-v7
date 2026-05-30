@@ -134,7 +134,10 @@ export const userCompanies = pgTable('user_companies', {
 }, (table) => ({
   userIdx: index('user_company_user_idx').on(table.userId),
   companyIdx: index('user_company_company_idx').on(table.companyId),
-  userCompanyIdx: index('user_company_unique_idx').on(table.userId, table.companyId),
+  userCompanyUniqueIdx: uniqueIndex('user_companies_user_company_unique').on(
+    table.userId,
+    table.companyId,
+  ),
 }));
 
 // Templates table - Updated to match theme.ts structure with user ownership

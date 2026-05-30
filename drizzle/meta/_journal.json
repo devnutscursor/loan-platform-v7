@@ -113,6 +113,34 @@
       "when": 1777600000000,
       "tag": "0018_mortech_todays_rates_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1783120000000,
+      "tag": "0019_security_rls_helpers",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1783120001000,
+      "tag": "0020_security_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1783120002000,
+      "tag": "0021_security_storage_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1783120003000,
+      "tag": "0022_user_companies_unique_user_company",
+      "breakpoints": true
     }
   ]
 }

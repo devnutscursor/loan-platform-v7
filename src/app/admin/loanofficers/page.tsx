@@ -384,7 +384,11 @@ export default function LoanOfficersPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to create GHL user');
+        const err = new Error(result.error || 'Failed to create GHL user') as Error & {
+          reconnectRequired?: boolean;
+        };
+        err.reconnectRequired = Boolean(result.reconnectRequired);
+        throw err;
       }
 
       showNotification({
@@ -394,9 +398,14 @@ export default function LoanOfficersPage() {
       });
       fetchOfficers();
     } catch (error) {
+      const reconnectRequired =
+        error instanceof Error &&
+        'reconnectRequired' in error &&
+        Boolean((error as Error & { reconnectRequired?: boolean }).reconnectRequired);
+
       showNotification({
         type: 'error',
-        title: 'Create GHL User Failed',
+        title: reconnectRequired ? 'Reconnect to GHL' : 'Create GHL User Failed',
         message:
           error instanceof Error
             ? error.message

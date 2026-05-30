@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { db, manualRates, userCompanies, companies } from '@/lib/db';
 import { and, eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { validatePublicLeadTarget } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -52,6 +53,14 @@ export async function GET(request: NextRequest) {
     let officerId: string;
     if (officerIdParam) {
       officerId = officerIdParam;
+      const access = await getCompanyAccess(officerId);
+      if (!access) {
+        return NextResponse.json({ error: 'Officer not found' }, { status: 404 });
+      }
+      const publicCheck = await validatePublicLeadTarget(officerId, access.companyId);
+      if (!publicCheck.ok) {
+        return NextResponse.json({ error: publicCheck.message }, { status: publicCheck.status });
+      }
     } else {
       const authHeader = request.headers.get('authorization');
       if (!authHeader || !authHeader.startsWith('Bearer ')) {

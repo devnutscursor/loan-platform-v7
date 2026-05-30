@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { db, selectedRates, userCompanies, companies, manualRates } from '@/lib/db';
 import { getMortechMergedSelectedRatesForDisplay, type MortechMergedApiRateRow } from '@/lib/mortech/todaysRatesSnapshot';
 import { eq, and } from 'drizzle-orm';
+import { validatePublicLeadTarget } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -50,6 +51,11 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Officer not found' }, { status: 404 });
       }
       companyId = (ucRows[0] as any).company_id;
+
+      const publicCheck = await validatePublicLeadTarget(officerId, companyId);
+      if (!publicCheck.ok) {
+        return NextResponse.json({ error: publicCheck.message }, { status: publicCheck.status });
+      }
 
       const companyRows = await db
         .select({ hasMortechSubscription: companies.hasMortechSubscription })

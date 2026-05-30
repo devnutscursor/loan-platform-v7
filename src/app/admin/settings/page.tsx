@@ -95,8 +95,88 @@ interface CompanyProfile {
   company_version?: number;
 }
 
+const defaultCompanyFormNested = {
+  companySocialMedia: {
+    facebook: '',
+    twitter: '',
+    linkedin: '',
+    instagram: '',
+  },
+  companyBranding: {
+    primaryColor: '#3b82f6',
+    secondaryColor: '#1e40af',
+    logoVariations: [] as string[],
+  },
+  companyContactInfo: {
+    mainPhone: '',
+    mainEmail: '',
+    supportEmail: '',
+  },
+  companyBusinessHours: {
+    monday: '9:00 AM - 6:00 PM',
+    tuesday: '9:00 AM - 6:00 PM',
+    wednesday: '9:00 AM - 6:00 PM',
+    thursday: '9:00 AM - 6:00 PM',
+    friday: '9:00 AM - 6:00 PM',
+    saturday: '10:00 AM - 4:00 PM',
+    sunday: 'Closed',
+  },
+};
+
+function companyFormFromProfile(companyData: CompanyProfile) {
+  const sm = companyData.company_social_media;
+  const branding = companyData.company_branding;
+  const contact = companyData.company_contact_info;
+  const hours = companyData.company_business_hours;
+
+  return {
+    phone: companyData.phone || '',
+    email: companyData.email || '',
+    website: companyData.website || '',
+    logo: companyData.logo || '',
+    address: companyData.address || '',
+    license_number: companyData.license_number || '',
+    company_tagline: companyData.company_tagline || '',
+    company_description: companyData.company_description || '',
+    company_nmls_number: companyData.company_nmls_number || '',
+    companyEstablishedYear: companyData.company_established_year || new Date().getFullYear(),
+    companyTeamSize: companyData.company_team_size || '',
+    companySpecialties: companyData.company_specialties || [],
+    companySocialMedia: {
+      facebook: sm?.facebook ?? defaultCompanyFormNested.companySocialMedia.facebook,
+      twitter: sm?.twitter ?? defaultCompanyFormNested.companySocialMedia.twitter,
+      linkedin: sm?.linkedin ?? defaultCompanyFormNested.companySocialMedia.linkedin,
+      instagram: sm?.instagram ?? defaultCompanyFormNested.companySocialMedia.instagram,
+    },
+    companyBranding: {
+      primaryColor: branding?.primaryColor ?? defaultCompanyFormNested.companyBranding.primaryColor,
+      secondaryColor:
+        branding?.secondaryColor ?? defaultCompanyFormNested.companyBranding.secondaryColor,
+      logoVariations: branding?.logoVariations ?? [],
+    },
+    companyContactInfo: {
+      mainPhone: contact?.mainPhone ?? defaultCompanyFormNested.companyContactInfo.mainPhone,
+      mainEmail: contact?.mainEmail ?? defaultCompanyFormNested.companyContactInfo.mainEmail,
+      supportEmail:
+        contact?.supportEmail ?? defaultCompanyFormNested.companyContactInfo.supportEmail,
+    },
+    companyBusinessHours: {
+      monday: hours?.monday ?? defaultCompanyFormNested.companyBusinessHours.monday,
+      tuesday: hours?.tuesday ?? defaultCompanyFormNested.companyBusinessHours.tuesday,
+      wednesday: hours?.wednesday ?? defaultCompanyFormNested.companyBusinessHours.wednesday,
+      thursday: hours?.thursday ?? defaultCompanyFormNested.companyBusinessHours.thursday,
+      friday: hours?.friday ?? defaultCompanyFormNested.companyBusinessHours.friday,
+      saturday: hours?.saturday ?? defaultCompanyFormNested.companyBusinessHours.saturday,
+      sunday: hours?.sunday ?? defaultCompanyFormNested.companyBusinessHours.sunday,
+    },
+    companyServiceAreas: companyData.company_service_areas || [],
+    companyLanguages: companyData.company_languages || ['English'],
+    companyCertifications: companyData.company_certifications || [],
+  };
+}
+
 export default function AdminSettingsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, companyId, accessToken, loading: authLoading, roleLoading } = useAuth();
   const { showNotification } = useNotification();
   const router = useRouter();
   
@@ -252,116 +332,41 @@ export default function AdminSettingsPage() {
     fetchProfile();
   }, [user, showNotification]);
 
-  // Fetch company profile
+  // Fetch company profile via API (bypasses RLS; service role on server)
   useEffect(() => {
     const fetchCompanyProfile = async () => {
-      if (!user?.id) return;
-      
-      try {
-        // Get user's company ID
-        const { data: userCompany, error: userCompanyError } = await supabase
-          .from('user_companies')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
+      if (!user?.id || !companyId || !accessToken) return;
 
-        if (userCompanyError || !userCompany) {
-          console.log('User is not a company admin or no company found');
-          return;
+      try {
+        const res = await fetch('/api/companies/profile', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Failed to load company profile');
         }
 
-        // Fetch company profile data
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .select(`
-            id,
-            name,
-            phone,
-            email,
-            website,
-            logo,
-            address,
-            license_number,
-            company_tagline,
-            company_description,
-            company_nmls_number,
-            company_established_year,
-            company_team_size,
-            company_specialties,
-            company_awards,
-            company_testimonials,
-            company_social_media,
-            company_branding,
-            company_contact_info,
-            company_business_hours,
-            company_service_areas,
-            company_languages,
-            company_certifications
-          `)
-          .eq('id', userCompany.company_id)
-          .single();
-
-        if (companyError) throw companyError;
+        const companyData = json.data as CompanyProfile;
 
         setCompanyProfile(companyData);
-        setCompanyLogoPreview(companyData.logo);
-        setCompanyForm({
-          // Legacy fields (existing)
-          phone: companyData.phone || '',
-          email: companyData.email || '',
-          website: companyData.website || '',
-          logo: companyData.logo || '',
-          address: companyData.address || '',
-          license_number: companyData.license_number || '',
-          // New fields (non-redundant)
-          company_tagline: companyData.company_tagline || '',
-          company_description: companyData.company_description || '',
-          company_nmls_number: companyData.company_nmls_number || '',
-          companyEstablishedYear: companyData.company_established_year || new Date().getFullYear(),
-          companyTeamSize: companyData.company_team_size || '',
-          companySpecialties: companyData.company_specialties || [],
-          companySocialMedia: companyData.company_social_media || {
-            facebook: '',
-            twitter: '',
-            linkedin: '',
-            instagram: ''
-          },
-          companyBranding: companyData.company_branding || {
-            primaryColor: '#3b82f6',
-            secondaryColor: '#1e40af',
-            logoVariations: []
-          },
-          companyContactInfo: companyData.company_contact_info || {
-            mainPhone: '',
-            mainEmail: '',
-            supportEmail: ''
-          },
-          companyBusinessHours: companyData.company_business_hours || {
-            monday: '9:00 AM - 6:00 PM',
-            tuesday: '9:00 AM - 6:00 PM',
-            wednesday: '9:00 AM - 6:00 PM',
-            thursday: '9:00 AM - 6:00 PM',
-            friday: '9:00 AM - 6:00 PM',
-            saturday: '10:00 AM - 4:00 PM',
-            sunday: 'Closed'
-          },
-          companyServiceAreas: companyData.company_service_areas || [],
-          companyLanguages: companyData.company_languages || ['English'],
-          companyCertifications: companyData.company_certifications || []
-        });
+        setCompanyLogoPreview(companyData.logo ?? null);
+        setCompanyForm(companyFormFromProfile(companyData));
       } catch (error) {
-        console.error('Error fetching company profile:', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error fetching company profile:', message);
         showNotification({
           type: 'error',
           title: 'Error',
-          message: 'Failed to load company profile data'
+          message: 'Failed to load company profile data',
         });
       }
     };
 
-    fetchCompanyProfile();
-  }, [user, showNotification]);
+    if (!authLoading && !roleLoading) {
+      fetchCompanyProfile();
+    }
+  }, [user, companyId, accessToken, authLoading, roleLoading, showNotification]);
 
   // Handle personal info update
   const handlePersonalInfoUpdate = async (e: React.FormEvent) => {
@@ -544,22 +549,24 @@ export default function AdminSettingsPage() {
   // Handle company profile update
   const handleCompanyProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id || !companyProfile?.id) return;
+    if (!user?.id || !companyProfile?.id || !accessToken) return;
 
     try {
       setSaving(true);
-      
-      const { error } = await supabase
-        .from('companies')
-        .update({
-          // Legacy fields (existing)
+
+      const res = await fetch('/api/companies/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
           phone: companyForm.phone,
           email: companyForm.email,
           website: companyForm.website,
           logo: companyForm.logo,
           address: companyForm.address,
           license_number: companyForm.license_number,
-          // New fields (non-redundant)
           company_tagline: companyForm.company_tagline,
           company_description: companyForm.company_description,
           company_nmls_number: companyForm.company_nmls_number,
@@ -573,26 +580,29 @@ export default function AdminSettingsPage() {
           company_service_areas: companyForm.companyServiceAreas,
           company_languages: companyForm.companyLanguages,
           company_certifications: companyForm.companyCertifications,
-          company_last_updated_by: user.id,
-          company_version: (companyProfile.company_version || 1) + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', companyProfile.id);
+          company_version: companyProfile.company_version || 1,
+        }),
+      });
 
-      if (error) throw error;
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to update company profile');
+      }
+
+      setCompanyProfile(json.data);
 
       showNotification({
         type: 'success',
         title: 'Success',
-        message: 'Company profile updated successfully!'
+        message: 'Company profile updated successfully!',
       });
-      
     } catch (error) {
-      console.error('Error updating company profile:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error updating company profile:', message);
       showNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to update company profile'
+        message: 'Failed to update company profile',
       });
     } finally {
       setSaving(false);

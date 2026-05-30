@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cloudinary } from '@/lib/cloudinary';
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
+import { requireAuth } from '@/lib/api-auth';
 
 type CloudinaryRawUploadResult = {
   secure_url: string;
@@ -12,6 +13,9 @@ type CloudinaryRawUploadResult = {
 // POST /api/upload/guide - Upload guide file to Cloudinary
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+
     // Parse the form data
     const formData = await request.formData();
     const file = formData.get('guide') as File;

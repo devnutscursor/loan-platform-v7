@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cloudinary } from '@/lib/cloudinary';
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
+import { forbiddenResponse, requireAuth } from '@/lib/api-auth';
+import { getSupabaseService } from '@/lib/supabase/service';
 
 type CloudinaryUploadResult = {
   secure_url: string;
@@ -11,10 +13,14 @@ type CloudinaryUploadResult = {
 // POST /api/upload/avatar - Upload profile avatar image
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     // Parse the form data
     const formData = await request.formData();
     const file = formData.get('avatar') as File;
-    const folder = 'avatars';
+    const folder = `avatars/${ctx.userId}`;
     
     if (!file) {
       return NextResponse.json(
@@ -105,6 +111,10 @@ export async function POST(request: NextRequest) {
 // DELETE /api/upload/avatar - Delete profile avatar image
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { publicId } = await request.json();
     
     if (!publicId) {
@@ -112,6 +122,20 @@ export async function DELETE(request: NextRequest) {
         { success: false, error: 'publicId required' },
         { status: 400 }
       );
+    }
+
+    const ownedPrefix = `avatars/${ctx.userId}`;
+    if (!publicId.startsWith(ownedPrefix) && ctx.role !== 'super_admin') {
+      const supabase = getSupabaseService();
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('avatar')
+        .eq('id', ctx.userId)
+        .maybeSingle();
+      const avatarUrl = userRow?.avatar ?? '';
+      if (!avatarUrl.includes(publicId)) {
+        return forbiddenResponse('You cannot delete this asset');
+      }
     }
 
     console.log('🔍 Avatar Delete API: Deleting file:', {

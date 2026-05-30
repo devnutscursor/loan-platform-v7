@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseService } from '@/lib/supabase/service';
 import { z } from 'zod';
 import { generateBaseSlug, isValidSlug, normalizeSlug } from '@/lib/public-profile-slug';
+import {
+  assertCanAccessOfficer,
+  assertOwnsPublicLink,
+  requireAuth,
+} from '@/lib/api-auth';
 
 const createPublicLinkSchema = z.object({
   expiresAt: z.string().optional(),
@@ -23,6 +28,10 @@ function mapRow(row: any) {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const companyId = searchParams.get('companyId');
@@ -33,6 +42,9 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const denied = await assertCanAccessOfficer(ctx, userId);
+    if (denied) return denied;
 
     const supabase = getSupabaseService();
     const { data, error } = await supabase
@@ -69,6 +81,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const body = await request.json();
     const { userId, companyId, expiresAt, maxUses } = body;
 
@@ -78,6 +94,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const denied = await assertCanAccessOfficer(ctx, userId);
+    if (denied) return denied;
 
     const validatedData = createPublicLinkSchema.parse({ expiresAt, maxUses });
     const supabase = getSupabaseService();
@@ -198,6 +217,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const body = await request.json();
     const { linkId, isActive, expiresAt, maxUses, publicSlug: bodySlug } = body;
 
@@ -207,6 +230,9 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const linkDenied = await assertOwnsPublicLink(ctx, linkId);
+    if (linkDenied) return linkDenied;
 
     const validatedData = createPublicLinkSchema.parse({ expiresAt, maxUses });
     const supabase = getSupabaseService();
@@ -272,6 +298,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { searchParams } = new URL(request.url);
     const linkId = searchParams.get('linkId');
 
@@ -281,6 +311,9 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const linkDenied = await assertOwnsPublicLink(ctx, linkId);
+    if (linkDenied) return linkDenied;
 
     const supabase = getSupabaseService();
     const { data, error } = await supabase

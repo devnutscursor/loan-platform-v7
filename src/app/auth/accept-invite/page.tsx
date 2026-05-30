@@ -25,35 +25,69 @@ function AcceptInvitePageContent() {
       return;
     }
 
-    // Fetch company info
+    // Hydrate session from invite/magic link tokens if present in URL hash/query.
+    // Without this, supabase.auth.getUser() will be null and the flow stops.
+    const hydrateSessionFromUrl = async () => {
+      try {
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+        const accessToken = hashParams.get('access_token') ?? searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') ?? searchParams.get('refresh_token');
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error('[accept-invite] setSession error:', error);
+          } else {
+            // Strip tokens from URL ASAP (reduce leakage via history/screenshots).
+            try {
+              window.history.replaceState(
+                {},
+                document.title,
+                `${window.location.pathname}${window.location.search}`,
+              );
+            } catch {}
+          }
+        }
+      } catch (e) {
+        console.error('[accept-invite] hydrateSessionFromUrl error:', e);
+      }
+    };
+
+    // Fetch company info via public server API (avoids RLS on unauthenticated/new users)
     const fetchCompanyInfo = async () => {
       try {
-        const { data: company, error } = await supabase
-          .from('companies')
-          .select('name, admin_email, invite_status, invite_expires_at')
-          .eq('id', companyId)
-          .single();
+        await hydrateSessionFromUrl();
 
-        if (error || !company) {
-          setError('Company not found or invite is invalid.');
+        const res = await fetch(`/api/public/invite-info?companyId=${encodeURIComponent(companyId)}`);
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json.success) {
+          setError(json.error ?? 'Company not found or invite is invalid.');
           return;
         }
 
-        if (company.invite_status === 'accepted') {
+        const company = json.data;
+
+        if (company.inviteStatus === 'accepted') {
           setSuccess('This invite has already been accepted. You can login now.');
           setTimeout(() => router.push('/auth'), 3000);
           return;
         }
 
-        if (company.invite_status === 'expired' || 
-            (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
+        if (
+          company.inviteStatus === 'expired' ||
+          (company.inviteExpiresAt && new Date() > new Date(company.inviteExpiresAt))
+        ) {
           setError('This invite has expired. Please contact your administrator for a new invite.');
           return;
         }
 
         setCompanyInfo({
           name: company.name,
-          email: company.admin_email || 'Unknown'
+          email: company.adminEmail || 'Unknown',
         });
       } catch (error) {
         setError('Failed to load company information.');
@@ -98,42 +132,20 @@ function AcceptInvitePageContent() {
         throw updateError;
       }
 
-      // Update company status to accepted and activate
-      const { error: companyError } = await supabase
-        .from('companies')
-        .update({
-          invite_status: 'accepted',
-          admin_email_verified: true,
-          admin_user_id: user.id,
-          is_active: true, // Activate company when invite is accepted
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', companyId);
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
 
-      if (companyError) {
-        throw companyError;
+      const finalizeRes = await fetch('/api/auth/finalize-invite', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ companyId, isOfficerInvite: false }),
+      });
+      const finalizeJson = await finalizeRes.json().catch(() => ({}));
+      if (!finalizeRes.ok || !finalizeJson.success) {
+        throw new Error(finalizeJson?.error || 'Failed to finalize invite');
       }
-
-      // Add user to users table
-      await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email!,
-          first_name: '',
-          last_name: '',
-          role: 'company_admin',
-          is_active: true
-        });
-
-      // Link user to company
-      await supabase
-        .from('user_companies')
-        .upsert({
-          user_id: user.id,
-          company_id: companyId,
-          role: 'admin'
-        });
 
       setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard...');
       

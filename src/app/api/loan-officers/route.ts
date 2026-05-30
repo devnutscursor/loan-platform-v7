@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { assertCanManageCompany, requireCompanyAdminOrSuperAdmin } from '@/lib/api-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,10 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId');
 
@@ -17,6 +22,9 @@ export async function GET(request: NextRequest) {
         message: 'Company ID is required.'
       }, { status: 400 });
     }
+
+    const denied = await assertCanManageCompany(ctx, companyId);
+    if (denied) return denied;
 
     const { data, error } = await supabase
       .from('user_companies')

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, userCompanies } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getAppBaseUrl } from '@/lib/app-url';
 import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
+import {
+  assertCanManageOfficer,
+  requireCompanyAdminOrSuperAdmin,
+} from '@/lib/api-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,8 +22,19 @@ const resendInviteSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const body = await request.json();
     const { officerId } = resendInviteSchema.parse(body);
+
+    const denied = await assertCanManageOfficer(ctx, officerId);
+    if (denied) return denied;
+
+    const membershipFilter = ctx.companyId
+      ? and(eq(users.id, officerId), eq(userCompanies.companyId, ctx.companyId))
+      : eq(users.id, officerId);
 
     const officer = await db
       .select({
@@ -30,10 +45,12 @@ export async function POST(request: NextRequest) {
         isActive: users.isActive,
         deactivated: users.deactivated,
         companyId: userCompanies.companyId,
+        membershipActive: userCompanies.isActive,
       })
       .from(users)
       .innerJoin(userCompanies, eq(users.id, userCompanies.userId))
-      .where(eq(users.id, officerId))
+      .where(membershipFilter)
+      .orderBy(desc(userCompanies.isActive), desc(userCompanies.joinedAt))
       .limit(1);
 
     if (!officer.length) {
@@ -49,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (officerData.isActive) {
+    if (officerData.isActive && officerData.membershipActive) {
       return NextResponse.json(
         { success: false, message: 'Officer has already accepted the invite' },
         { status: 400 },

@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     JSON.stringify({
       redirectUri,
       state: oauthState,
+      returnTo: searchParams.get('returnTo') ?? 'admin',
       format: searchParams.get('format') ?? 'redirect',
     })
   );
@@ -71,6 +72,26 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.redirect(url.toString());
+  const returnTo = searchParams.get('returnTo') === 'super-admin' ? 'super-admin' : 'admin';
+  const dashboardPath =
+    returnTo === 'super-admin' ? '/super-admin/dashboard' : '/admin/dashboard';
+  const autoRedirect = returnTo === 'admin';
+
+  const response = NextResponse.redirect(url.toString());
+  response.cookies.set('ghl_oauth_return', dashboardPath, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  });
+  response.cookies.set('ghl_oauth_autoredirect', autoRedirect ? '1' : '0', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  });
+  return response;
 }
 

@@ -3,6 +3,8 @@ import { db, leads } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq } from 'drizzle-orm';
 import { companies, users } from '@/lib/db/schema';
+import { validatePublicLeadTarget } from '@/lib/api-auth';
+import { rateLimitByIp } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -314,6 +316,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limit = await rateLimitByIp(request, 'leads-create', 20, 3600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
+
     console.log('🚀 POST /api/leads - Starting request');
     
     const body = await request.json();
@@ -336,6 +346,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing user or company information' },
         { status: 400 }
+      );
+    }
+
+    const targetCheck = await validatePublicLeadTarget(userId, companyId);
+    if (!targetCheck.ok) {
+      return NextResponse.json(
+        { error: targetCheck.message },
+        { status: targetCheck.status },
       );
     }
 

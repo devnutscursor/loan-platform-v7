@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseService } from '@/lib/supabase/service';
+import { verifyPlainSecret } from '@/lib/api-auth';
 
 /**
  * GET /api/public-profile/active-slugs
@@ -18,7 +19,10 @@ export async function GET(request: NextRequest) {
 
     const keyQuery = request.nextUrl.searchParams.get('key');
     const keyHeader = request.headers.get('x-keep-warm-key');
-    if (keyQuery !== secret && keyHeader !== secret) {
+    const authorized =
+      verifyPlainSecret(keyQuery, 'KEEP_WARM_SECRET') ||
+      verifyPlainSecret(keyHeader, 'KEEP_WARM_SECRET');
+    if (!authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

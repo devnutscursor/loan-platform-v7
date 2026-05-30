@@ -261,7 +261,10 @@ export function useAuth() {
             .select('company_id')
             .eq('user_id', userId)
             .eq('role', 'admin')
-            .single();
+            .eq('is_active', true)
+            .order('joined_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
           if (userCompany) {
             console.log('🔍 useAuth: Found company ID:', userCompany.company_id);

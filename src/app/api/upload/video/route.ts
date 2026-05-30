@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cloudinary } from '@/lib/cloudinary';
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
+import { requireAuth } from '@/lib/api-auth';
 
 type CloudinaryVideoUploadResult = {
   secure_url: string;
@@ -14,6 +15,9 @@ type CloudinaryVideoUploadResult = {
 // POST /api/upload/video - Upload video to Cloudinary
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+
     // Parse the form data
     const formData = await request.formData();
     const videoFile = formData.get('video') as File;

@@ -1,138 +1,114 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { and, count, eq, sql } from 'drizzle-orm';
+import { requireSuperAdmin } from '@/lib/api-auth';
+import { apiCacheHeaders, getApiCache, setApiCache } from '@/lib/api-cache';
+import { db } from '@/lib/db';
+import { companies, leads, userCompanies } from '@/lib/db/schema';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, serviceKey);
 
+const CACHE_TTL = 30;
+
 export async function GET(req: NextRequest) {
   try {
-    console.log('🔄 Fetching enhanced companies data');
+    const auth = await requireSuperAdmin(req);
+    if (auth instanceof NextResponse) return auth;
 
-    // Get all companies with their basic info
-    const { data: companiesData, error: companiesError } = await supabase
-      .from('companies')
-      .select(`
-        id,
-        name,
-        slug,
-        email,
-        admin_email,
-        invite_status,
-        invite_sent_at,
-        invite_expires_at,
-        invite_token,
-        admin_user_id,
-        is_active,
-        deactivated,
-        company_metadata,
-        ghl_oauth_payload,
-        ghl_connected_at,
-        created_at,
-        updated_at
-      `)
-      .order('created_at', { ascending: false });
-
-    if (companiesError) {
-      console.error('❌ Error fetching companies:', companiesError);
-      return NextResponse.json({ 
-        success: false, 
-        error: companiesError.message 
-      }, { status: 500 });
+    const cacheKey = 'companies:enhanced';
+    const cached = getApiCache<unknown>(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, { headers: apiCacheHeaders(CACHE_TTL) });
     }
 
-    // Get all loan officers count for each company
-    const { data: officersData, error: officersError } = await supabase
-      .from('user_companies')
-      .select(`
-        company_id,
-        user_id,
-        users!inner(
+    const [companiesRes, officerStats, leadStats] = await Promise.all([
+      supabase
+        .from('companies')
+        .select(`
           id,
+          name,
+          slug,
           email,
-          first_name,
-          last_name,
-          is_active
+          admin_email,
+          invite_status,
+          invite_sent_at,
+          invite_expires_at,
+          invite_token,
+          admin_user_id,
+          is_active,
+          deactivated,
+          company_metadata,
+          ghl_oauth_payload,
+          ghl_connected_at,
+          created_at,
+          updated_at
+        `)
+        .order('created_at', { ascending: false }),
+      db
+        .select({
+          companyId: userCompanies.companyId,
+          totalOfficers: count(userCompanies.userId),
+        })
+        .from(userCompanies)
+        .where(
+          and(eq(userCompanies.role, 'employee'), eq(userCompanies.isActive, true)),
         )
-      `)
-      .eq('role', 'employee')
-      .eq('is_active', true);
+        .groupBy(userCompanies.companyId),
+      db
+        .select({
+          companyId: leads.companyId,
+          totalLeads: count(leads.id),
+          highPriorityLeads: sql<number>`count(*) filter (where ${leads.priority} = 'high')`,
+          urgentPriorityLeads: sql<number>`count(*) filter (where ${leads.priority} = 'urgent')`,
+          convertedLeads: sql<number>`count(*) filter (where ${leads.status} = 'converted')`,
+        })
+        .from(leads)
+        .groupBy(leads.companyId),
+    ]);
 
-    if (officersError) {
-      console.error('❌ Error fetching officers:', officersError);
-      return NextResponse.json({ 
-        success: false, 
-        error: officersError.message 
-      }, { status: 500 });
+    if (companiesRes.error) {
+      return NextResponse.json(
+        { success: false, error: companiesRes.error.message },
+        { status: 500 },
+      );
     }
 
-    // Get all leads count for each company
-    const { data: leadsData, error: leadsError } = await supabase
-      .from('leads')
-      .select(`
-        company_id,
-        id,
-        priority,
-        status
-      `);
+    const officersByCompany = new Map(
+      officerStats.map((row) => [row.companyId, Number(row.totalOfficers)]),
+    );
+    const leadsByCompany = new Map(
+      leadStats.map((row) => [
+        row.companyId,
+        {
+          totalLeads: Number(row.totalLeads),
+          highPriorityLeads: Number(row.highPriorityLeads),
+          urgentPriorityLeads: Number(row.urgentPriorityLeads),
+          convertedLeads: Number(row.convertedLeads),
+        },
+      ]),
+    );
 
-    if (leadsError) {
-      console.error('❌ Error fetching leads:', leadsError);
-      return NextResponse.json({ 
-        success: false, 
-        error: leadsError.message 
-      }, { status: 500 });
-    }
-
-    // Process the data to calculate counts
-    const enhancedCompanies = companiesData.map(company => {
-      // Count officers for this company
-      const companyOfficers = officersData.filter(officer => 
-        officer.company_id === company.id
-      );
-      const totalOfficers = companyOfficers.length;
-      const activeOfficers = companyOfficers.filter(officer => 
-        (officer.users as any).is_active === true
-      ).length;
-
-      // Count leads for this company
-      const companyLeads = leadsData.filter(lead => 
-        lead.company_id === company.id
-      );
-      const totalLeads = companyLeads.length;
-      const highPriorityLeads = companyLeads.filter(lead => 
-        lead.priority === 'high'
-      ).length;
-      const urgentPriorityLeads = companyLeads.filter(lead => 
-        lead.priority === 'urgent'
-      ).length;
-      const convertedLeads = companyLeads.filter(lead => 
-        lead.status === 'converted'
-      ).length;
-
+    const enhancedCompanies = (companiesRes.data ?? []).map((company) => {
+      const leadRow = leadsByCompany.get(company.id);
       return {
         ...company,
-        totalOfficers,
-        activeOfficers,
-        totalLeads,
-        highPriorityLeads,
-        urgentPriorityLeads,
-        convertedLeads
+        totalOfficers: officersByCompany.get(company.id) ?? 0,
+        activeOfficers: officersByCompany.get(company.id) ?? 0,
+        totalLeads: leadRow?.totalLeads ?? 0,
+        highPriorityLeads: leadRow?.highPriorityLeads ?? 0,
+        urgentPriorityLeads: leadRow?.urgentPriorityLeads ?? 0,
+        convertedLeads: leadRow?.convertedLeads ?? 0,
       };
     });
 
-    console.log(`✅ Enhanced companies data prepared for ${enhancedCompanies.length} companies`);
-
-    return NextResponse.json({ 
-      success: true, 
-      data: enhancedCompanies 
-    });
-
-  } catch (error: any) {
-    console.error('❌ Unexpected error fetching enhanced companies:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error?.message || 'Server error' 
-    }, { status: 500 });
+    const payload = { success: true, data: enhancedCompanies };
+    setApiCache(cacheKey, payload, CACHE_TTL);
+    return NextResponse.json(payload, { headers: apiCacheHeaders(CACHE_TTL) });
+  } catch (error: unknown) {
+    console.error('Unexpected error fetching enhanced companies:', error);
+    const message = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

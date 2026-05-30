@@ -1,14 +1,37 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  console.log('🚨 MIDDLEWARE RUNNING FOR:', request.nextUrl.pathname);
-  
-  const response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+const PROTECTED_PAGE_PREFIXES = ['/admin', '/super-admin', '/officers', '/customizer'];
+
+const PUBLIC_PAGE_PREFIXES = ['/auth', '/login', '/register', '/forgot-password'];
+
+/** API routes that do not require a logged-in session (method-specific where noted). */
+function isPublicApiRoute(pathname: string, method: string): boolean {
+  if (pathname.startsWith('/api/auth/')) return true;
+  if (pathname.startsWith('/api/public-profile/')) return true;
+  if (pathname.startsWith('/api/public-templates/')) return true;
+  if (pathname.startsWith('/api/public/')) return true;
+  if (pathname === '/api/contact/send' && method === 'POST') return true;
+  if (pathname === '/api/leads' && method === 'POST') return true;
+  if (pathname === '/api/officers/manual-rates' && method === 'GET') return true;
+  if (pathname === '/api/officers/selected-rates' && method === 'GET') return true;
+  if (pathname.startsWith('/api/mortech/')) return true;
+  if (pathname === '/api/health') return true;
+  if (pathname.startsWith('/api/widgets/')) return true;
+  if (pathname.startsWith('/api/cron/')) return true;
+  if (pathname === '/api/send-verification' && method === 'POST') return true;
+  if (pathname.startsWith('/api/oauth/')) return true;
+  if (pathname.startsWith('/api/ghl/oauth/')) return true;
+  if (pathname === '/api/auth/request-password-reset' && method === 'POST') return true;
+  if (pathname === '/api/auth/complete-password-reset' && method === 'POST') return true;
+  if (pathname === '/api/auth/password-reset-token' && method === 'POST') return true;
+  return false;
+}
+
+async function getSessionUser(request: NextRequest, response: NextResponse) {
+  const authHeader = request.headers.get('authorization');
+  const bearer =
+    authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : null;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,56 +48,56 @@ export async function middleware(request: NextRequest) {
           });
         },
       },
+    },
+  );
+
+  if (bearer) {
+    const { data, error } = await supabase.auth.getUser(bearer);
+    if (!error && data.user) return data.user;
+  }
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user;
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const method = request.method;
+
+  const response = NextResponse.next({
+    request: { headers: request.headers },
+  });
+
+  const isProtectedPage = PROTECTED_PAGE_PREFIXES.some((p) => pathname.startsWith(p));
+  const isPublicPage = PUBLIC_PAGE_PREFIXES.some((p) => pathname.startsWith(p));
+  const isApi = pathname.startsWith('/api/');
+  const needsAuth = isProtectedPage || (isApi && !isPublicApiRoute(pathname, method));
+
+  if (!needsAuth) {
+    return response;
+  }
+
+  const user = await getSessionUser(request, response);
+
+  if (!user) {
+    if (isApi) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-  );
+    const loginUrl = new URL('/auth', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-  // TEMPORARILY DISABLED - Using getSession() which requires Pro plan
-  // const {
-  //   data: { session },
-  // } = await supabase.auth.getSession();
-
-  // Protected routes
-  const protectedRoutes = ['/customizer', '/admin', '/api/auth'];
-  const isProtectedRoute = protectedRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  // Public routes that redirect authenticated users
-  const publicRoutes = ['/auth', '/login', '/register', '/forgot-password'];
-  const isPublicRoute = publicRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  // TEMPORARILY DISABLED - Let client-side handle auth
-  // Redirect unauthenticated users from protected routes
-  // if (isProtectedRoute && !session) {
-  //   return NextResponse.redirect(new URL('/auth', request.url));
-  // }
-
-  // // Redirect authenticated users from public auth routes
-  // if (isPublicRoute && session) {
-  //   return NextResponse.redirect(new URL('/dashboard', request.url));
-  // }
-
-  // API route protection - TEMPORARILY DISABLED
-  // if (request.nextUrl.pathname.startsWith('/api/') && !request.nextUrl.pathname.startsWith('/api/auth')) {
-  //   if (!session) {
-  //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  //   }
-  // }
+  if (isPublicPage && user) {
+    return response;
+  }
 
   return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

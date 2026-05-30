@@ -5,6 +5,7 @@ import { createPasswordResetToken } from '@/lib/password-reset-token';
 import { sendPasswordResetLinkEmail } from '@/lib/mortech/email-service';
 import { getAppBaseUrlFromRequest } from '@/lib/app-url';
 import { findAuthUserByEmail } from '@/lib/auth-admin-users';
+import { rateLimitByEmail, rateLimitByIp } from '@/lib/rate-limit';
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -12,7 +13,23 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const ipLimit = await rateLimitByIp(request, 'password-reset', 10, 3600);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
+
     const json = bodySchema.parse(await request.json());
+
+    const emailLimit = await rateLimitByEmail(json.email, 'password-reset', 3, 3600);
+    if (!emailLimit.allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !serviceKey) {

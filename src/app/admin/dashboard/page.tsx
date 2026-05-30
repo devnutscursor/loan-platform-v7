@@ -47,7 +47,7 @@ interface Lead {
 }
 
 export default function AdminDashboardPage() {
-  const { user, userRole, companyId, loading: authLoading } = useAuth();
+  const { user, userRole, companyId, accessToken, loading: authLoading, roleLoading } = useAuth();
   const router = useRouter();
 
   // State for dashboard data
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (authLoading || !user?.id || !companyId) {
+      if (authLoading || roleLoading || !user?.id || !companyId || !accessToken) {
         return;
       }
 
@@ -77,44 +77,18 @@ export default function AdminDashboardPage() {
         setLoading(true);
         setError(null);
 
-        console.log('🚀 Company Admin Dashboard: Starting data fetch for company:', companyId);
-        console.log('🔍 Company Admin Dashboard: User object:', { id: user.id, email: user.email });
-        console.log('🔍 Company Admin Dashboard: Company ID type:', typeof companyId, 'value:', companyId);
+        const authHeaders = { Authorization: `Bearer ${accessToken}` };
 
-        // Fetch officers data - need to join with user_companies table
-        console.log('🔍 Company Admin Dashboard: Fetching officers...');
-        const { data: officersData, error: officersError } = await supabase
-          .from('user_companies')
-          .select(`
-            user_id,
-            role,
-            users!inner(
-              id,
-              email,
-              first_name,
-              last_name,
-              created_at,
-              is_active
-            )
-          `)
-          .eq('company_id', companyId)
-          .eq('role', 'employee');
+        const officersResponse = await fetch(
+          `/api/officers/enhanced?companyId=${encodeURIComponent(companyId)}`,
+          { headers: authHeaders },
+        );
+        const officersResult = await officersResponse.json();
 
-        if (officersError) {
-          console.error('❌ Company Admin: Officers fetch error:', {
-            message: officersError.message,
-            details: officersError.details,
-            hint: officersError.hint,
-            code: officersError.code,
-            fullError: officersError
-          });
-          throw officersError;
+        if (!officersResponse.ok || !officersResult.success) {
+          throw new Error(officersResult.error || 'Failed to fetch officers');
         }
 
-        console.log('✅ Company Admin Dashboard: Fetched officers:', officersData?.length || 0);
-
-        // Fetch leads data
-        console.log('🔍 Company Admin Dashboard: Fetching leads...');
         const { data: leadsData, error: leadsError } = await supabase
           .from('leads')
           .select('*')
@@ -123,53 +97,67 @@ export default function AdminDashboardPage() {
           .limit(50);
 
         if (leadsError) {
-          console.error('❌ Company Admin: Leads fetch error:', {
-            message: leadsError.message,
-            details: leadsError.details,
-            hint: leadsError.hint,
-            code: leadsError.code,
-            fullError: leadsError
-          });
           throw leadsError;
         }
 
-        console.log('✅ Company Admin Dashboard: Fetched leads:', leadsData?.length || 0);
+        const processedOfficers: Officer[] = (officersResult.data || []).map(
+          (officer: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            createdAt: string;
+            isActive: boolean;
+          }) => {
+            const officerLeads =
+              leadsData?.filter((lead) => lead.officer_id === officer.id) || [];
+            const conversions = officerLeads.filter(
+              (lead) => lead.status === 'converted',
+            );
 
-        // Process officers data and calculate their lead counts
-        const processedOfficers: Officer[] = (officersData || []).map(officerCompany => {
-          const officer = Array.isArray(officerCompany.users) ? officerCompany.users[0] : officerCompany.users;
-          const officerLeads = leadsData?.filter(lead => lead.officer_id === officer.id) || [];
-          const conversions = officerLeads.filter(lead => lead.status === 'converted');
-          
-          return {
-            id: officer.id,
-            email: officer.email,
-            full_name: officer.first_name && officer.last_name 
-              ? `${officer.first_name} ${officer.last_name}` 
-              : officer.email.split('@')[0],
-            created_at: officer.created_at,
-            is_active: officer.is_active,
-            lead_count: officerLeads.length,
-            conversion_count: conversions.length
-          };
-        });
+            return {
+              id: officer.id,
+              email: officer.email,
+              full_name:
+                officer.firstName && officer.lastName
+                  ? `${officer.firstName} ${officer.lastName}`
+                  : officer.email.split('@')[0],
+              created_at: officer.createdAt,
+              is_active: officer.isActive,
+              lead_count: officerLeads.length,
+              conversion_count: conversions.length,
+            };
+          },
+        );
 
-        // Calculate statistics
+        processedOfficers.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+
         const now = new Date();
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
         const totalLeads = leadsData?.length || 0;
-        const convertedLeads = leadsData?.filter(lead => lead.status === 'converted').length || 0;
-        const thisWeekLeads = leadsData?.filter(lead => new Date(lead.created_at) >= oneWeekAgo).length || 0;
-        const thisMonthLeads = leadsData?.filter(lead => new Date(lead.created_at) >= oneMonthAgo).length || 0;
-        const activeOfficers = processedOfficers.filter(officer => officer.is_active).length;
-        const conversionRate = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
+        const convertedLeads =
+          leadsData?.filter((lead) => lead.status === 'converted').length || 0;
+        const thisWeekLeads =
+          leadsData?.filter((lead) => new Date(lead.created_at) >= oneWeekAgo)
+            .length || 0;
+        const thisMonthLeads =
+          leadsData?.filter((lead) => new Date(lead.created_at) >= oneMonthAgo)
+            .length || 0;
+        const activeOfficers = processedOfficers.filter(
+          (officer) => officer.is_active,
+        ).length;
+        const conversionRate =
+          totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
 
-        // Find top performing officer
-        const topOfficer = processedOfficers.reduce((top, current) => 
-          current.conversion_count > top.conversion_count ? current : top, 
-          processedOfficers[0] || { full_name: 'N/A', conversion_count: 0 }
+        const topOfficer = processedOfficers.reduce(
+          (top, current) =>
+            current.conversion_count > top.conversion_count ? current : top,
+          processedOfficers[0] || { full_name: 'N/A', conversion_count: 0 },
         );
 
         setCompanyStats({
@@ -180,34 +168,23 @@ export default function AdminDashboardPage() {
           thisMonthLeads,
           activeOfficers,
           topPerformingOfficer: topOfficer.full_name,
-          averageResponseTime: 2.5 // Mock data - would calculate from actual response times
+          averageResponseTime: 2.5,
         });
 
         setRecentOfficers(processedOfficers.slice(0, 3));
         setRecentLeads((leadsData || []).slice(0, 3));
-
-        console.log('✅ Company Admin Dashboard: Data loaded successfully');
-        console.log('📊 Company Admin Dashboard: Stats:', {
-          totalOfficers: processedOfficers.length,
-          totalLeads: leadsData?.length || 0,
-          conversionRate: totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0
-        });
-
       } catch (err) {
-        console.error('❌ Company Admin Dashboard data fetch error:', {
-          message: err instanceof Error ? err.message : 'Unknown error',
-          name: err instanceof Error ? err.name : 'Unknown',
-          stack: err instanceof Error ? err.stack : undefined,
-          fullError: err
-        });
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        console.error('Company Admin Dashboard data fetch error:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to load dashboard data',
+        );
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, [user?.id, companyId, authLoading]);
+  }, [user?.id, companyId, accessToken, authLoading, roleLoading]);
 
   // Show loading state
   if (authLoading || loading) {
@@ -435,7 +412,7 @@ export default function AdminDashboardPage() {
           {/* Quick Actions */}
           <QuickActions
             actions={[
-              { label: 'Company', icon: 'building', href: '/admin/companies' },
+              { label: 'GHL', icon: 'building', href: '/admin/companies' },
               { label: 'Loan Officers', icon: 'profile', href: '/admin/loanofficers' },
               { label: 'Leads Insights', icon: 'trendingUp', href: '/admin/insights' },
               { label: 'Conversion Stats', icon: 'calculator', href: '/admin/stats' },

@@ -27,6 +27,12 @@ const breadcrumbConfig: BreadcrumbConfig = {
     label: 'Dashboard',
     icon: 'home'
   },
+  '/admin/companies': {
+    path: '/admin/companies',
+    label: 'GHL',
+    icon: 'building',
+    parent: '/admin/dashboard'
+  },
   '/admin/loanofficers': {
     path: '/admin/loanofficers',
     label: 'Loan Officers',

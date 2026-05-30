@@ -2,14 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import {
+  assertCanManageOfficer,
+  requireCompanyAdminOrSuperAdmin,
+} from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { officerId } = await request.json();
 
     if (!officerId) {
       return NextResponse.json({ error: 'Officer ID is required' }, { status: 400 });
     }
+
+    const denied = await assertCanManageOfficer(ctx, officerId);
+    if (denied) return denied;
 
     // Check if officer exists
     const officer = await db

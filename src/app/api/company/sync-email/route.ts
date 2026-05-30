@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { redisCache } from '@/lib/redis';
+import { assertSelfOrAdmin, requireAuth } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -8,6 +9,10 @@ const supabase = createClient(supabaseUrl, serviceKey);
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { userId, newEmail } = await req.json();
 
     if (!userId || !newEmail) {
@@ -16,6 +21,9 @@ export async function POST(req: NextRequest) {
         error: 'Missing userId or newEmail' 
       }, { status: 400 });
     }
+
+    const denied = assertSelfOrAdmin(ctx, userId);
+    if (denied) return denied;
 
     console.log(`🔄 Syncing company email for user ${userId} with new email ${newEmail}`);
 

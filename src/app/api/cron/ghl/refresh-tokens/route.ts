@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { companies } from '@/lib/db/schema';
+import { verifyBearerSecret } from '@/lib/api-auth';
 
 type GhlOauthPayload = {
   access_token?: string;
@@ -16,9 +17,7 @@ type GhlOauthPayload = {
 };
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization') || '';
-  const expected = `Bearer ${process.env.CRON_SECRET_TOKEN}`;
-  if (!process.env.CRON_SECRET_TOKEN || authHeader !== expected) {
+  if (!verifyBearerSecret(req, 'CRON_SECRET_TOKEN')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -370,7 +370,7 @@ export default function CompaniesPage() {
 
   const handleConnectGhl = (company: Company) => {
     if (typeof window === 'undefined') return;
-    const url = `${window.location.origin}/api/oauth/choose-location?company=${encodeURIComponent(company.id)}`;
+    const url = `${window.location.origin}/api/oauth/choose-location?company=${encodeURIComponent(company.id)}&returnTo=super-admin`;
     window.location.href = url;
   };
 

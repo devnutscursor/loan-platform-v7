@@ -2,16 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import {
+  assertCanManageOfficer,
+  requireCompanyAdminOrSuperAdmin,
+} from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireCompanyAdminOrSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    const { ctx } = auth;
+
     const { officerId } = await request.json();
 
     if (!officerId) {
       return NextResponse.json({ error: 'Officer ID is required' }, { status: 400 });
     }
 
-    // Check if officer exists
+    const denied = await assertCanManageOfficer(ctx, officerId);
+    if (denied) return denied;
+
     const officer = await db
       .select()
       .from(users)
@@ -26,25 +36,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Officer is already deactivated' }, { status: 400 });
     }
 
-    // Deactivate the officer
     await db
       .update(users)
-      .set({ 
+      .set({
         deactivated: true,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(users.id, officerId));
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Officer deactivated successfully' 
+    return NextResponse.json({
+      success: true,
+      message: 'Officer deactivated successfully',
     });
-
   } catch (error) {
     console.error('Error deactivating officer:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

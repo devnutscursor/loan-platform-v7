@@ -1,143 +1,134 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardBody } from '@/components/ui/Card';
-import Icon from '@/components/ui/Icon';
-import { Input } from '@/components/ui/Input';
-import { colors, spacing, borderRadius, shadows, typography } from '@/theme/theme';
 import { LiquidChromeBackground } from '@/components/ui/LiquidChromeBackground';
 
+type PageState = 'loading' | 'setup' | 'no-token' | 'no-company' | 'already-accepted' | 'expired';
+
+function InviteLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+      <LiquidChromeBackground />
+      <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <Image src="/logonobg.png" alt="RateCaddy" width={180} height={48} className="h-8 w-auto" priority />
+            <button
+              onClick={() => (window.location.href = '/auth')}
+              className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </header>
+      <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        {children}
+      </main>
+    </div>
+  );
+}
+
 function InvitePageContent() {
+  const [pageState, setPageState] = useState<PageState>('loading');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [companyInfo, setCompanyInfo] = useState<{name: string, email: string} | null>(null);
-  const [user, setUser] = useState<any>(null);
-  
+  const [companyInfo, setCompanyInfo] = useState<{ name: string; email: string } | null>(null);
+  const [authedUser, setAuthedUser] = useState<any>(null);
+
+  const sessionHydratedRef = useRef(false);
+
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const companyId = searchParams.get('company');
   const isOfficerInvite = searchParams.get('officer') === 'true';
 
   useEffect(() => {
-    // Listen for auth state changes to handle invite flow
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-      
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-        setUser(session.user);
-        await fetchCompanyInfo(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setError('Please check your email and click the invite link to continue.');
-      }
-    });
-
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        await fetchCompanyInfo(user);
-      } else {
-        // If no user is logged in, show the password creation form
-        // This handles the case where someone clicks an invite link
-        setUser({ email: 'invite@example.com' } as any); // Temporary user object
-        await fetchCompanyInfo(null);
-      }
-    };
-
-    checkUser();
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchCompanyInfo = async (currentUser: any) => {
     if (!companyId) {
-      setError('Invalid invite link. Missing company ID.');
+      setPageState('no-company');
       return;
     }
 
-    try {
-      if (isOfficerInvite) {
-        // For loan officer invites, check if the company exists and get its info
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .select('name, admin_email')
-          .eq('id', companyId)
-          .single();
+    const run = async () => {
+      // 1. Hydrate session from invite URL tokens (hash or query params)
+      if (!sessionHydratedRef.current) {
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+        const accessToken = hashParams.get('access_token') ?? searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') ?? searchParams.get('refresh_token');
 
-        if (companyError || !company) {
-          setError('Company not found or invite is invalid.');
-          return;
-        }
-
-        // If user is logged in, check if they have access to this company
-        if (currentUser) {
-          const { data: userCompany, error: userError } = await supabase
-            .from('user_companies')
-            .select('is_active')
-            .eq('user_id', currentUser.id)
-            .eq('company_id', companyId)
-            .eq('role', 'employee')
-            .single();
-
-          if (userError || !userCompany) {
-            setError('You are not authorized to access this company.');
-            return;
-          }
-
-          if (userCompany.is_active) {
-            setError('You have already completed your setup. Please login to access your dashboard.');
-            return;
+        if (accessToken && refreshToken) {
+          sessionHydratedRef.current = true;
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!sessionError) {
+            // Strip tokens from the URL immediately after hydration
+            try {
+              window.history.replaceState(
+                {},
+                document.title,
+                `${window.location.pathname}${window.location.search}`,
+              );
+            } catch {}
           }
         }
+      }
 
-        setCompanyInfo({
-          name: company.name,
-          email: company.admin_email
-        });
-      } else {
-        // For company admin invites, check companies table
-        const { data: company, error } = await supabase
-          .from('companies')
-          .select('name, admin_email, invite_status, invite_expires_at')
-          .eq('id', companyId)
-          .single();
+      // 2. Verify we have a valid Supabase auth session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setPageState('no-token');
+        return;
+      }
+      setAuthedUser(user);
 
-        if (error || !company) {
-          setError('Company not found or invite is invalid.');
-          return;
-        }
+      // 3. Fetch company info via public server API (not direct Supabase — RLS blocks it here)
+      const res = await fetch(`/api/public/invite-info?companyId=${encodeURIComponent(companyId)}`);
+      const json = await res.json().catch(() => ({}));
 
-        if (company.invite_status === 'accepted') {
-          setSuccess('This invite has already been accepted. You can login now.');
+      if (!res.ok || !json.success) {
+        setError(json.error ?? 'Company not found or invite is invalid.');
+        setPageState('setup');
+        return;
+      }
+
+      const company = json.data;
+
+      if (!isOfficerInvite) {
+        if (company.inviteStatus === 'accepted') {
+          setPageState('already-accepted');
           setTimeout(() => router.push('/auth'), 3000);
           return;
         }
-
-        if (company.invite_status === 'expired' || 
-            (company.invite_expires_at && new Date() > new Date(company.invite_expires_at))) {
-          setError('This invite has expired. Please contact your administrator for a new invite.');
+        if (
+          company.inviteStatus === 'expired' ||
+          (company.inviteExpiresAt && new Date() > new Date(company.inviteExpiresAt))
+        ) {
+          setPageState('expired');
           return;
         }
-
-        setCompanyInfo({
-          name: company.name,
-          email: company.admin_email || (currentUser ? currentUser.email : '')
-        });
       }
-    } catch (error) {
-      setError('Failed to load company information.');
-    }
-  };
+
+      setCompanyInfo({ name: company.name, email: company.adminEmail });
+      setPageState('setup');
+    };
+
+    run().catch((e) => {
+      console.error('[invite] init error:', e);
+      setError('Failed to load invite. Please try again.');
+      setPageState('setup');
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,500 +139,313 @@ function InvitePageContent() {
       setError('Password must be at least 8 characters long.');
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
+    if (!companyId) {
+      setError('Missing company ID.');
+      return;
+    }
 
-    setLoading(true);
-
+    setSubmitting(true);
     try {
-      // For invite links, we need to handle the authentication differently
-      if (!user || user.email === 'invite@example.com') {
-        // This is an invite link - we need to get the user from the invite
-        const { data: { user: currentUser }, error: getUserError } = await supabase.auth.getUser();
-        
-        if (getUserError || !currentUser) {
-          setError('Please click the invite link from your email to continue.');
-          setLoading(false);
-          return;
-        }
-        
-        setUser(currentUser);
+      // Ensure we still have a valid session (tokens may have expired or the user
+      // navigated away and back). Re-fetch the current user.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Your session has expired. Please click the invite link again.');
+        return;
       }
 
-      // Update user password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
+      // Set the password via Supabase Auth (server-side, no RLS issue)
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+
+      // Get the current access token to authenticate the finalize-invite call
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      // All DB writes (public.users, user_companies, companies) happen server-side
+      // via the finalize-invite API which uses the service role key to bypass RLS.
+      const finalizeRes = await fetch('/api/auth/finalize-invite', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ companyId, isOfficerInvite }),
       });
-
-      if (updateError) {
-        throw updateError;
+      const finalizeJson = await finalizeRes.json().catch(() => ({}));
+      if (!finalizeRes.ok || !finalizeJson.success) {
+        throw new Error(finalizeJson?.error ?? 'Failed to finalize invite');
       }
 
+      // Fire-and-forget: create personal templates for loan officers
       if (isOfficerInvite) {
-        // Update user and user-company to active for loan officer
-        const { error: userError } = await supabase
-          .from('users')
-          .update({ is_active: true })
-          .eq('id', user.id);
-
-        if (userError) {
-          throw userError;
-        }
-
-        // Update user_companies entry to active
-        const { error: companyError } = await supabase
-          .from('user_companies')
-          .update({ is_active: true })
-          .eq('user_id', user.id)
-          .eq('company_id', companyId);
-
-        if (companyError) {
-          console.error('❌ Error updating user_companies:', companyError);
-          throw companyError;
-        }
-
-        console.log('✅ User-company relationship activated successfully');
-
-        // Run heavy post-activation setup asynchronously to keep invite completion snappy.
         void (async () => {
           try {
-            console.log('🎨 Creating personal templates for activated loan officer:', user.id);
-            const firstName = user.user_metadata?.first_name || '';
-            const lastName = user.user_metadata?.last_name || '';
-
-            // Validate user ID format
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-            if (!uuidRegex.test(user.id)) {
-              throw new Error(`Invalid user ID format: ${user.id}`);
-            }
-
-            const session = await supabase.auth.getSession();
-            const accessToken = session.data.session?.access_token;
             const authHeaders = {
               'Content-Type': 'application/json',
-              ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             };
-
-            // Call API to create personal templates
-            const response = await fetch('/api/templates/create-personal', {
+            const tplRes = await fetch('/api/templates/create-personal', {
               method: 'POST',
               headers: authHeaders,
               body: JSON.stringify({
                 userId: user.id,
-                firstName,
-                lastName
-              })
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              console.log('✅ Personal templates created successfully:', result.data.templatesCreated);
-            } else {
-              const errorText = await response.text();
-              console.error('❌ Error creating personal templates:', errorText);
-            }
-
-            // Upload default content if company has access enabled
-            console.log('📚 Checking default content access for company:', companyId);
-            const { data: company, error: companyFetchError } = await supabase
-              .from('companies')
-              .select('has_default_content_access')
-              .eq('id', companyId)
-              .single();
-
-            if (companyFetchError) {
-              console.error('❌ Error fetching company:', companyFetchError);
-              return;
-            }
-
-            if (company?.has_default_content_access) {
-              console.log('✅ Company has default content access enabled. Uploading content...');
-              const contentResponse = await fetch('/api/officers/content/upload-default', {
-                method: 'POST',
-                headers: authHeaders,
-              });
-
-              if (contentResponse.ok) {
-                const contentResult = await contentResponse.json();
-                if (contentResult.success) {
-                  console.log(`✅ Default content uploaded: ${contentResult.data.faqsCount} FAQs, ${contentResult.data.guidesCount} guides, ${contentResult.data.videosCount} videos`);
-                } else {
-                  console.error('❌ Error uploading default content:', contentResult.error);
-                }
-              } else {
-                const errorText = await contentResponse.text();
-                console.error('❌ Error uploading default content:', errorText);
-              }
-            } else {
-              console.log('ℹ️ Company does not have default content access enabled. Skipping upload.');
-            }
-          } catch (postSetupError) {
-            console.error('❌ Async officer post-setup failed:', postSetupError);
-          }
-        })();
-      } else {
-        // Update company status to accepted and activate for company admin
-        const { error: companyError } = await supabase
-          .from('companies')
-          .update({
-            invite_status: 'accepted',
-            admin_email_verified: true,
-            admin_user_id: user.id,
-            is_active: true, // Activate company when invite is accepted
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', companyId);
-
-        if (companyError) {
-          throw companyError;
-        }
-      }
-
-      // Add user to users table with correct role
-      await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email!,
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || '',
-          role: isOfficerInvite ? 'employee' : 'company_admin',
-          is_active: true
-        });
-
-      // Link user to company with correct role
-      await supabase
-        .from('user_companies')
-        .upsert({
-          user_id: user.id,
-          company_id: companyId,
-          role: isOfficerInvite ? 'employee' : 'admin',
-          is_active: true
-        });
-
-      if (isOfficerInvite && companyId) {
-        void (async () => {
-          try {
-            const ghlResponse = await fetch('/api/ghl/users/create-officer', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                officerId: user.id,
-                companyId,
+                firstName: user.user_metadata?.first_name ?? '',
+                lastName: user.user_metadata?.last_name ?? '',
               }),
             });
-            const ghlResult = await ghlResponse.json().catch(() => ({}));
-            if (!ghlResponse.ok || !ghlResult.success) {
-              console.warn(
-                '⚠️ GHL user auto-create skipped/failed:',
-                ghlResult?.error || ghlResult
-              );
-            } else {
-              console.log('✅ GHL user auto-created for loan officer:', user.email);
+            if (!tplRes.ok) console.warn('[invite] template creation failed:', await tplRes.text());
+          } catch (err) {
+            console.warn('[invite] template creation error:', err);
+          }
+
+          try {
+            const ghlRes = await fetch('/api/ghl/users/create-officer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ officerId: user.id, companyId }),
+            });
+            if (!ghlRes.ok) {
+              const ghlErr = await ghlRes.json().catch(() => ({}));
+              console.warn('[invite] GHL create-officer failed:', ghlErr);
             }
           } catch (ghlError) {
-            console.warn('⚠️ GHL user auto-create error:', ghlError);
+            console.warn('[invite] GHL create-officer error:', ghlError);
           }
         })();
       }
 
-      setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard...');
-      
+      setSuccess('🎉 Welcome! Your account has been set up successfully. Redirecting to your dashboard…');
       setTimeout(() => {
-        if (isOfficerInvite) {
-          router.push('/officers/dashboard');
-        } else {
-          router.push('/admin/dashboard');
-        }
+        router.push(isOfficerInvite ? '/officers/dashboard' : '/admin/dashboard');
       }, 2000);
-
-    } catch (error) {
-      console.error('Error accepting invite:', error);
-      setError(error instanceof Error ? error.message : 'Failed to accept invite. Please try again.');
+    } catch (err) {
+      console.error('[invite] handleSubmit error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to accept invite. Please try again.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (!user || user.email === 'invite@example.com') {
+  // ---------- loading ----------
+  if (pageState === 'loading') {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
-        <LiquidChromeBackground />
-        
-        {/* Header */}
-        <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Image
-                  src="/logonobg.png"
-                  alt="RateCaddy"
-                  width={180}
-                  height={48}
-                  className="h-8 w-auto"
-                  priority
-                />
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => window.location.href = '/auth'}
-                  className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
-                >
-                  Back to Login
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md w-full">
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">Check Your Email</h2>
-                <p className="text-[#005b7c]/80 text-lg mb-6">Please check your email and click the invite link to continue with the setup.</p>
-                <p className="text-sm text-[#005b7c]/60 mb-6">If you don't see the email, check your spam folder.</p>
-                <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-                  <p className="text-sm text-yellow-800 font-medium">
-                    <strong>Note:</strong> Make sure to click the invite link from your email. The link will automatically sign you in.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+      <InviteLayout>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-white/30 border-t-white" />
+          <p className="text-white font-medium text-lg">Loading your invite…</p>
+        </div>
+      </InviteLayout>
     );
   }
 
-  if (!companyId) {
+  // ---------- no token in URL / session ----------
+  if (pageState === 'no-token') {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
-        <LiquidChromeBackground />
-        
-        {/* Header */}
-        <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Image
-                  src="/logonobg.png"
-                  alt="RateCaddy"
-                  width={180}
-                  height={48}
-                  className="h-8 w-auto"
-                  priority
-                />
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => window.location.href = '/auth'}
-                  className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
-                >
-                  Back to Login
-                </button>
-              </div>
+      <InviteLayout>
+        <div className="max-w-md w-full">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
+            <h2 className="text-3xl font-bold text-[#005b7c] mb-4">Check Your Email</h2>
+            <p className="text-[#005b7c]/80 text-lg mb-4">
+              Please click the invite link in your email to continue setup.
+            </p>
+            <p className="text-sm text-[#005b7c]/60">If you don't see the email, check your spam folder.</p>
           </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md w-full">
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">Invalid Invite Link</h2>
-                <p className="text-[#005b7c]/80 text-lg">This invite link is invalid or missing required information.</p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+        </div>
+      </InviteLayout>
     );
   }
 
+  // ---------- missing company ID ----------
+  if (pageState === 'no-company') {
+    return (
+      <InviteLayout>
+        <div className="max-w-md w-full">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-[#005b7c] mb-4">Invalid Invite Link</h2>
+            <p className="text-[#005b7c]/80">This invite link is missing required information.</p>
+          </div>
+        </div>
+      </InviteLayout>
+    );
+  }
+
+  // ---------- already accepted ----------
+  if (pageState === 'already-accepted') {
+    return (
+      <InviteLayout>
+        <div className="max-w-md w-full">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-[#005b7c] mb-4">Already Accepted</h2>
+            <p className="text-[#005b7c]/80">This invite has already been accepted. Redirecting to login…</p>
+          </div>
+        </div>
+      </InviteLayout>
+    );
+  }
+
+  // ---------- expired ----------
+  if (pageState === 'expired') {
+    return (
+      <InviteLayout>
+        <div className="max-w-md w-full">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-[#005b7c] mb-4">Invite Expired</h2>
+            <p className="text-[#005b7c]/80">This invite has expired. Please contact your administrator for a new invite.</p>
+          </div>
+        </div>
+      </InviteLayout>
+    );
+  }
+
+  // ---------- setup form ----------
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
-      <LiquidChromeBackground />
-      
-      {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#F7F1E9]/30 relative z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Image
-                src="/logonobg.png"
-                alt="RateCaddy"
-                width={180}
-                height={48}
-                className="h-8 w-auto"
-                priority
-              />
+    <InviteLayout>
+      <div className="max-w-md w-full space-y-8">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => window.location.href = '/auth'}
-                className="text-[#005b7c] hover:text-[#01bcc6] font-medium transition-colors duration-200"
-              >
-                Back to Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Setup Card */}
-          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-[#F7F1E9]/40">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#01bcc6] to-[#008eab] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-4xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">
-                Complete Your Setup
-              </h2>
-              <p className="text-[#005b7c]/80 text-lg">
-                {isOfficerInvite 
-                  ? 'Create a password to access your loan officer dashboard.' 
-                  : 'Create a password to access your company dashboard.'
-                }
-              </p>
-              {companyInfo && (
-                <div className="mt-6 p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-[#01bcc6]/20">
-                  <p className="text-[#005b7c] font-medium">
-                    <strong>Company:</strong> {companyInfo.name}<br />
-                    <strong>Email:</strong> {companyInfo.email}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <div className="mb-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-red-700 font-medium">{error}</p>
-                </div>
+            <h2 className="text-4xl font-bold text-[#005b7c] mb-4 drop-shadow-lg">Complete Your Setup</h2>
+            <p className="text-[#005b7c]/80 text-lg">
+              {isOfficerInvite
+                ? 'Create a password to access your loan officer dashboard.'
+                : 'Create a password to access your company dashboard.'}
+            </p>
+            {companyInfo && (
+              <div className="mt-6 p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-[#01bcc6]/20">
+                <p className="text-[#005b7c] font-medium">
+                  <strong>Company:</strong> {companyInfo.name}
+                  <br />
+                  <strong>Email:</strong> {companyInfo.email}
+                </p>
               </div>
             )}
+          </div>
 
-            {success && (
-              <div className="mb-6 bg-green-50 border-2 border-green-200 p-4 rounded-xl shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-green-700 font-medium">{success}</p>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-semibold text-[#005b7c] mb-3">
-                  Create Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <svg className="w-5 h-5 text-[#008eab]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
-                    placeholder="Enter your password"
-                    required
-                    minLength={8}
-                    disabled={loading}
-                  />
-                </div>
-                <p className="text-xs text-[#005b7c]/60 mt-2">Password must be at least 8 characters long</p>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#005b7c] mb-3">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <svg className="w-5 h-5 text-[#008eab]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
-                    placeholder="Confirm your password"
-                    required
-                    minLength={8}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#01bcc6] to-[#008eab] hover:from-[#008eab] hover:to-[#005b7c] text-white py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading ? 'Setting up account...' : 'Complete Setup & Go to Dashboard'}
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-[#005b7c]/70">
-                Need help?{' '}
-                <a href="mailto:support@syncly360.com" className="text-[#01bcc6] hover:text-[#008eab] font-medium transition-colors duration-200">
-                  Contact Support
-                </a>
-              </p>
+          {error && (
+            <div className="mb-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl">
+              <p className="text-red-700 font-medium">{error}</p>
             </div>
+          )}
+          {success && (
+            <div className="mb-6 bg-green-50 border-2 border-green-200 p-4 rounded-xl">
+              <p className="text-green-700 font-medium">{success}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-[#005b7c] mb-3">
+                Create Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <svg className="w-5 h-5 text-[#008eab]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
+                  placeholder="Enter your password"
+                  required
+                  minLength={8}
+                  disabled={submitting}
+                />
+              </div>
+              <p className="text-xs text-[#005b7c]/60 mt-2">Password must be at least 8 characters long</p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#005b7c] mb-3">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <svg className="w-5 h-5 text-[#008eab]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 border-2 border-[#01bcc6]/20 rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#01bcc6]/20 focus:border-[#01bcc6] transition-all duration-300 bg-white/50 backdrop-blur-sm text-[#005b7c] font-medium placeholder-[#005b7c]/50"
+                  placeholder="Confirm your password"
+                  required
+                  minLength={8}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-gradient-to-r from-[#01bcc6] to-[#008eab] hover:from-[#008eab] hover:to-[#005b7c] text-white py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {submitting ? 'Setting up account…' : 'Complete Setup & Go to Dashboard'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-[#005b7c]/70">
+              Need help?{' '}
+              <a href="mailto:support@syncly360.com" className="text-[#01bcc6] hover:text-[#008eab] font-medium">
+                Contact Support
+              </a>
+            </p>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </InviteLayout>
   );
 }
 
 export default function InvitePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
-        <LiquidChromeBackground />
-        <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#01bcc6]"></div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#005b7c] via-[#008eab] to-[#01bcc6]">
+          <LiquidChromeBackground />
+          <div className="relative z-10 min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white/30 border-t-white" />
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <InvitePageContent />
     </Suspense>
   );

@@ -36,7 +36,7 @@ interface SimpleLeadsData {
 }
 
 export default function SimpleLeadsInsights({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
-  const { user, accessToken } = useAuth();
+  const { accessToken, companyId } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<SimpleLeadsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,66 +87,68 @@ export default function SimpleLeadsInsights({ isSuperAdmin = false }: { isSuperA
           throw new Error(result.error || 'Failed to fetch data');
         }
       } else {
-        // For Company Admin, directly fetch officers data
-        const response = await fetch('/api/analytics/simple-leads-insights', {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+        if (!companyId) {
+          throw new Error('Company not found');
+        }
+
+        const response = await fetch(
+          `/api/analytics/simple-leads-insights?companyId=${encodeURIComponent(companyId)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
           },
-        });
-        
+        );
+
         if (!response.ok) {
           throw new Error('Failed to fetch leads data');
         }
 
         const result = await response.json();
-        console.log('Company Admin API Response:', result);
-        
-        if (result.success) {
-          // For Company Admin, we need to get the company info and officers
-          const company = result.companies[0]; // Company Admin only has one company
-          if (company) {
-            // Fetch officers for this company
-            const officersResponse = await fetch(`/api/analytics/simple-leads-insights?companyId=${company.id}`, {
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
+
+        if (result.success && result.officers) {
+          const officers = result.officers as Array<{
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+            companyName: string;
+            totalLeads: number;
+            convertedLeads: number;
+            conversionRate: number;
+          }>;
+
+          const totalLeads = officers.reduce((sum, o) => sum + o.totalLeads, 0);
+          const totalConverted = officers.reduce((sum, o) => sum + o.convertedLeads, 0);
+          const companyName = officers[0]?.companyName || 'My Company';
+
+          setData({
+            companies: [
+              {
+                id: companyId,
+                name: companyName,
+                loanOfficers: officers.map((officer) => ({
+                  id: officer.id,
+                  name: `${officer.firstName} ${officer.lastName}`.trim(),
+                  email: officer.email,
+                  totalLeads: officer.totalLeads,
+                  convertedLeads: officer.convertedLeads,
+                  conversionRate: officer.conversionRate,
+                  lastActivity: 'Recent',
+                })),
+                totalLeads,
+                totalConverted,
+                conversionRate: totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0,
+                showOfficers: true,
               },
-            });
-            
-            if (officersResponse.ok) {
-              const officersResult = await officersResponse.json();
-              console.log('Officers API Response:', officersResult);
-              
-              if (officersResult.success && officersResult.officers) {
-                const transformedData: SimpleLeadsData = {
-                  companies: [{
-                    id: company.id,
-                    name: company.name,
-                    loanOfficers: officersResult.officers.map((officer: any) => ({
-                      id: officer.id,
-                      name: `${officer.firstName} ${officer.lastName}`.trim(),
-                      email: officer.email,
-                      totalLeads: officer.totalLeads,
-                      convertedLeads: officer.convertedLeads,
-                      conversionRate: officer.conversionRate,
-                      lastActivity: 'Recent'
-                    })),
-                    totalLeads: company.totalLeads || 0,
-                    totalConverted: company.convertedLeads || 0,
-                    conversionRate: company.conversionRate || 0,
-                    showOfficers: true // Auto-expand for Company Admin
-                  }],
-                  totalCompanies: 1,
-                  totalLoanOfficers: officersResult.officers.length,
-                  totalLeads: company.totalLeads || 0,
-                  totalConverted: company.convertedLeads || 0,
-                  overallConversionRate: company.conversionRate || 0
-                };
-                setData(transformedData);
-              }
-            }
-          }
+            ],
+            totalCompanies: 1,
+            totalLoanOfficers: officers.length,
+            totalLeads,
+            totalConverted,
+            overallConversionRate: totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0,
+          });
         } else {
           throw new Error(result.error || 'Failed to fetch data');
         }
@@ -206,7 +208,7 @@ export default function SimpleLeadsInsights({ isSuperAdmin = false }: { isSuperA
 
   useEffect(() => {
     fetchData();
-  }, [accessToken]);
+  }, [accessToken, companyId, isSuperAdmin]);
 
   const companyColumns = [
     {

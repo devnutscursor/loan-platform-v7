@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshAllSelectedRates } from '@/lib/mortech/refreshSelectedRates';
+import { verifyBearerSecret } from '@/lib/api-auth';
 
 /**
  * POST /api/cron/mortech/refresh-selected-rates
@@ -8,9 +9,7 @@ import { refreshAllSelectedRates } from '@/lib/mortech/refreshSelectedRates';
  * Secured by CRON_SECRET_TOKEN. Invoke from AWS Lambda 3× daily.
  */
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization') || '';
-  const expected = `Bearer ${process.env.CRON_SECRET_TOKEN}`;
-  if (!process.env.CRON_SECRET_TOKEN || authHeader !== expected) {
+  if (!verifyBearerSecret(req, 'CRON_SECRET_TOKEN')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

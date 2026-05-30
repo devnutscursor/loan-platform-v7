@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { companies } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSuperAdmin } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireSuperAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+
     const { companyId } = await request.json();
 
     if (!companyId) {
