@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
-import { getPublicProfileData } from '@/lib/public-profile';
+import { getPublicProfileData, getPublicSelectedRatesServer } from '@/lib/public-profile';
 import { PROGRAM_BUCKETS } from '@/lib/mortech/programBuckets';
+import type { SelectedRateRow } from '@/lib/mortech/mapRatesToDisplayProducts';
 import PublicProfileClient from '../public/profile/[slug]/PublicProfileClient';
 import type { PublicProfileData, PublicTemplateData } from '../public/profile/[slug]/PublicProfileClient';
 
@@ -41,12 +42,27 @@ export default async function RootSlugPublicProfilePage({
     label: bucket.label,
   }));
 
+  let initialSelectedRates: SelectedRateRow[] | undefined;
+  if (initialProfileData) {
+    try {
+      initialSelectedRates = await getPublicSelectedRatesServer(
+        initialProfileData.user.id,
+        initialProfileData.company.id,
+        initialProfileData.company.has_mortech_subscription !== false,
+      );
+    } catch {
+      // Client will fetch if SSR rates fail
+      initialSelectedRates = undefined;
+    }
+  }
+
   return (
     <PublicProfileClient
       initialProfileData={initialProfileData}
       initialTemplateData={initialTemplateData}
       initialSlug={slug}
       initialProductCategoryOptions={initialProductCategoryOptions}
+      initialSelectedRates={initialSelectedRates}
     />
   );
 }

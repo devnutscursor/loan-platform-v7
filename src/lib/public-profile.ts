@@ -1,4 +1,11 @@
 import { getSupabaseService } from '@/lib/supabase/service';
+import { and, eq } from 'drizzle-orm';
+import { db, manualRates } from '@/lib/db';
+import {
+  getMortechMergedSelectedRatesForDisplay,
+  type MortechMergedApiRateRow,
+} from '@/lib/mortech/todaysRatesSnapshot';
+import type { SelectedRateRow } from '@/lib/mortech/mapRatesToDisplayProducts';
 
 const PROFILE_CACHE_TTL_MS = 120_000;
 const profileCache = new Map<string, { data: any; fetchedAt: number }>();
@@ -206,4 +213,39 @@ export async function getPublicProfileData(slug: string): Promise<{ success: tru
   }
 
   return promise;
+}
+
+function serializeMortechMergedRow(r: MortechMergedApiRateRow): SelectedRateRow {
+  return {
+    id: r.id,
+    rateData: (r.rateData ?? null) as Record<string, unknown> | null,
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
+    updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : r.updatedAt,
+    ...(r.isGlobalSnapshot ? { isGlobalSnapshot: true as const } : {}),
+  };
+}
+
+/** Server-side selected rates for public profile SSR (same data as GET /api/officers/selected-rates). */
+export async function getPublicSelectedRatesServer(
+  officerId: string,
+  companyId: string,
+  hasMortechSubscription: boolean,
+): Promise<SelectedRateRow[]> {
+  if (!hasMortechSubscription) {
+    const manualRows = await db
+      .select()
+      .from(manualRates)
+      .where(and(eq(manualRates.officerId, officerId), eq(manualRates.companyId, companyId)))
+      .orderBy(manualRates.createdAt);
+
+    return manualRows.map((row) => ({
+      id: row.id,
+      rateData: row.rateData as Record<string, unknown>,
+      createdAt: row.createdAt ?? undefined,
+      updatedAt: row.updatedAt ?? undefined,
+    }));
+  }
+
+  const merged = await getMortechMergedSelectedRatesForDisplay(officerId, companyId);
+  return merged.map(serializeMortechMergedRow);
 }

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import PublicProfileContent from '@/components/public/PublicProfileContent';
+import type { SelectedRateRow } from '@/lib/mortech/mapRatesToDisplayProducts';
 
 export interface PublicProfileData {
   user: {
@@ -78,11 +79,13 @@ export default function PublicProfileClient({
   initialTemplateData,
   initialSlug,
   initialProductCategoryOptions,
+  initialSelectedRates,
 }: {
   initialProfileData: PublicProfileData | null;
   initialTemplateData: PublicTemplateData | null;
   initialSlug: string | null;
   initialProductCategoryOptions?: { value: string; label: string }[];
+  initialSelectedRates?: SelectedRateRow[];
 }) {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -297,6 +300,7 @@ export default function PublicProfileClient({
       templateData={templateData}
       isPreview={false}
       initialProductCategoryOptions={initialProductCategoryOptions}
+      initialSelectedRates={initialSelectedRates}
     />
   );
 }

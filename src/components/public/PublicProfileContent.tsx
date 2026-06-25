@@ -3,11 +3,12 @@
 import { useState, useRef, lazy, Suspense, useEffect } from 'react';
 import Icon, { icons } from '@/components/ui/Icon';
 import type { TabId } from '@/components/landingPage/LandingPageTabs';
+import LandingPageTabs from '@/components/landingPage/LandingPageTabs';
+import type { SelectedRateRow } from '@/lib/mortech/mapRatesToDisplayProducts';
 import SynclyFooter from '../ui/SynclyFooter';
 
-// Lazy load unified components
+// Lazy load hero only — tabs eager-loaded so Today's Rates paints immediately with SSR data
 const UnifiedHeroSection = lazy(() => import('@/components/landingPage/UnifiedHeroSection'));
-const LandingPageTabs = lazy(() => import('@/components/landingPage/LandingPageTabs'));
 
 interface PublicProfileContentProps {
   profileData: {
@@ -56,6 +57,8 @@ interface PublicProfileContentProps {
   forceMobileViewport?: boolean; // Force mobile viewport simulation
   /** Preloaded Product Category options (SSR). */
   initialProductCategoryOptions?: { value: string; label: string }[];
+  /** Preloaded Today's Rates (SSR). */
+  initialSelectedRates?: SelectedRateRow[];
 }
 
 // Skeleton Loading Component
@@ -115,6 +118,7 @@ export default function PublicProfileContent({
   companyName,
   forceMobileViewport = false,
   initialProductCategoryOptions,
+  initialSelectedRates,
 }: PublicProfileContentProps) {
   // Get active tab from template customization if available, otherwise use initialActiveTab
   const bodyMods = profileData?.template?.bodyModifications || 
@@ -467,6 +471,7 @@ export default function PublicProfileContent({
                           hideTabNavigation={true}
                           forceMobileView={forceMobileViewport}
                           initialProductCategoryOptions={initialProductCategoryOptions}
+                          initialSelectedRates={initialSelectedRates}
                         />
                       </div>
                     </div>
@@ -493,6 +498,7 @@ export default function PublicProfileContent({
                         hasMortechSubscription={profileData.company.has_mortech_subscription}
                           forceMobileView={forceMobileViewport}
                           initialProductCategoryOptions={initialProductCategoryOptions}
+                          initialSelectedRates={initialSelectedRates}
                         />
                       </div>
                     </div>
