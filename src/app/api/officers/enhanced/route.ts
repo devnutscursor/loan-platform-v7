@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { apiCacheHeaders, getApiCache, setApiCache } from '@/lib/api-cache';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, serviceKey);
-
 const CACHE_TTL = 30;
 
 export async function GET(req: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const { searchParams } = new URL(req.url);
     const companyId = searchParams.get('companyId');

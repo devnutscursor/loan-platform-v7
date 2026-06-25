@@ -5,10 +5,6 @@ import { and, eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { validatePublicLeadTarget } from '@/lib/api-auth';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 function mapRateRow(row: any) {
   return {
     id: row.id,
@@ -46,6 +42,7 @@ async function getCompanyAccess(officerId: string) {
  * - Auth mode: bearer token
  */
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const { searchParams } = new URL(request.url);
     const officerIdParam = searchParams.get('officerId');
@@ -105,6 +102,7 @@ export async function GET(request: NextRequest) {
  * Add a new manual rate (non-Mortech companies only)
  */
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -161,6 +159,7 @@ export async function POST(request: NextRequest) {
  * Delete a manual rate by id (non-Mortech companies only)
  */
 export async function DELETE(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

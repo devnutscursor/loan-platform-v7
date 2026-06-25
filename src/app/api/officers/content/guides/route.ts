@@ -4,12 +4,9 @@ import { db } from '@/lib/db';
 import { officerContentGuides } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 // GET /api/officers/content/guides - Get all guides for logged-in officer
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
@@ -57,6 +54,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/officers/content/guides - Create guide
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');

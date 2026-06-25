@@ -5,24 +5,13 @@ import postgres from 'postgres';
 import { eq, and } from 'drizzle-orm';
 import { leads } from '@/lib/db/schema';
 
-// Database connection
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not defined');
-}
-
-const sql = postgres(connectionString);
-const db = drizzle(sql);
-
-// Initialize Supabase client for server-side operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const _pgClient = postgres(process.env.DATABASE_URL!);
+  const db = drizzle(_pgClient);
   try {
     // Get the authorization header
     const authHeader = request.headers.get('authorization');

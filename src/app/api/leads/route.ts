@@ -6,10 +6,6 @@ import { companies, users } from '@/lib/db/schema';
 import { validatePublicLeadTarget } from '@/lib/api-auth';
 import { rateLimitByIp } from '@/lib/rate-limit';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 const LEADS_CACHE_TTL_MS = 30000;
 const leadsCache = new Map<
   string,
@@ -254,6 +250,7 @@ function mapLeadRow(row: any) {
 }
 
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -315,6 +312,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const limit = await rateLimitByIp(request, 'leads-create', 20, 3600);
     if (!limit.allowed) {

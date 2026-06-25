@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { db, leads, users, companies, templates, publicLinkUsage, loanOfficerPublicLinks, userCompanies } from '@/lib/db';
 import { eq, desc, and, gte, sql } from 'drizzle-orm';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 const RECENT_ACTIVITY_CACHE_TTL_MS = 30000;
 const RECENT_ACTIVITY_DAYS = 7;
 const recentActivityCache = new Map<
@@ -40,6 +36,7 @@ interface ActivityItem {
 }
 
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -5,10 +5,6 @@ import { getMortechMergedSelectedRatesForDisplay, type MortechMergedApiRateRow }
 import { eq, and } from 'drizzle-orm';
 import { validatePublicLeadTarget } from '@/lib/api-auth';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 const SELECTED_RATES_CACHE_TTL_MS = 30000;
 const selectedRatesCache = new Map<
   string,
@@ -31,6 +27,7 @@ function serializeMortechMergedRow(r: MortechMergedApiRateRow) {
  * Fetch all selected rates for the authenticated officer or by officerId query param (for public access)
  */
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const { searchParams } = new URL(request.url);
     const officerIdParam = searchParams.get('officerId');
@@ -193,6 +190,7 @@ export async function GET(request: NextRequest) {
  * Add a new rate to selected rates
  */
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
