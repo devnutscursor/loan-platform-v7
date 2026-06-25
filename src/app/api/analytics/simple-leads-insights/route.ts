@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { apiCacheHeaders, getApiCache, setApiCache } from '@/lib/api-cache';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 const CACHE_TTL = 30;
 
 type OfficerRow = {
@@ -57,6 +53,7 @@ function buildOfficerStats(
 }
 
 async function buildInsightsForCompanies(companyIds: string[]) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   if (!companyIds.length) return [];
 
   const [companiesRes, ucRes, leadsRes] = await Promise.all([
@@ -128,6 +125,7 @@ async function buildInsightsForCompanies(companyIds: string[]) {
 }
 
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {

@@ -6,13 +6,10 @@ import { apiCacheHeaders, getApiCache, setApiCache } from '@/lib/api-cache';
 import { db } from '@/lib/db';
 import { companies, leads, userCompanies } from '@/lib/db/schema';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, serviceKey);
-
 const CACHE_TTL = 30;
 
 export async function GET(req: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const auth = await requireSuperAdmin(req);
     if (auth instanceof NextResponse) return auth;

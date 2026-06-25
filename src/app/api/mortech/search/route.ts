@@ -171,11 +171,8 @@ function pickThreeQuotesByPrice(quotes: MortechQuote[]): { quote: MortechQuote; 
   return ordered;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -211,6 +208,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     console.log('🚀 GET /api/mortech/search - Starting Mortech rate search');
 
@@ -403,6 +401,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     console.log('🚀 POST /api/mortech/search - Starting Mortech rate search');
 

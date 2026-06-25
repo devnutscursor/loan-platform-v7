@@ -3,10 +3,6 @@ import { createRouteClient } from '@/lib/supabase/server';
 import { createClient } from '@/lib/supabase/client';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const serviceSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
-
 const DASHBOARD_CACHE_TTL_MS = 30000;
 const dashboardCache = new Map<
   string,
@@ -21,6 +17,7 @@ const dashboardFetchPromises = new Map<
 >();
 
 export async function GET(request: NextRequest) {
+  const serviceSupabase = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;

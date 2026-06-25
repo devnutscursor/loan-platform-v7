@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, memo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, memo, useRef } from 'react';
 import { spacing, borderRadius, shadows, typography } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import Icon, { icons } from '@/components/ui/Icon';
@@ -134,23 +134,21 @@ function RateResults({
   };
 
   const resultsContainerRef = useRef<HTMLDivElement>(null);
-  // Mobile-first: render cards only until container width is known (avoids building hidden table DOM on phones).
-  const [useCardsView, setUseCardsView] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.matchMedia('(max-width: 900px)').matches;
-  });
-
-  useEffect(() => {
-    const el = resultsContainerRef.current;
-    if (!el) return;
-
-    const update = () => setUseCardsView(el.clientWidth <= 900);
-    update();
-
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const ratesTimestamp = useMemo(
+    () => ({
+      date: new Date().toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      time: new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }),
+    }),
+    [],
+  );
   const [sortBy, setSortBy] = useState<'rate' | 'payment' | 'fees'>('rate');
   const [selectedTerm, setSelectedTerm] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<RateProduct | null>(null);
@@ -460,15 +458,7 @@ function RateResults({
               marginTop: spacing[1],
               lineHeight: typography.lineHeight.relaxed
             }}>
-              Rates current as of {new Date().toLocaleDateString('en-US', { 
-                month: 'numeric', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}, {new Date().toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit',
-                hour12: true 
-              })}
+              Rates current as of {ratesTimestamp.date}, {ratesTimestamp.time}
             </p>
           </div>
         </div>
@@ -477,30 +467,29 @@ function RateResults({
       {/* Results */}
       <div className="p-0 pt-2 @md:p-4">
         <div ref={resultsContainerRef} className="w-full min-w-0">
-          {useCardsView ? (
-            <div>
-              <div className="space-y-4">
-                {filteredAndSortedProducts.map((product, index) => (
-                  <RateProductCard
-                    key={`${product.id}-${index}-${product.interestRate}-${product.apr}`}
-                    product={product}
-                    colors={colors}
-                    layout={layout}
-                    onGetStarted={handleGetStarted}
-                    onViewDetails={handleViewDetails}
-                    formatRate={formatRate}
-                    formatCurrency={formatCurrency}
-                    formatPoints={formatPoints}
-                  />
-                ))}
-              </div>
-              <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
-                * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
-              </p>
+          {/* Mobile: cards only. Desktop: table only. CSS breakpoints — no ResizeObserver flash. */}
+          <div className="max-[900px]:block min-[901px]:hidden">
+            <div className="space-y-4">
+              {filteredAndSortedProducts.map((product, index) => (
+                <RateProductCard
+                  key={`${product.id}-${index}`}
+                  product={product}
+                  colors={colors}
+                  layout={layout}
+                  onGetStarted={handleGetStarted}
+                  onViewDetails={handleViewDetails}
+                  formatRate={formatRate}
+                  formatCurrency={formatCurrency}
+                  formatPoints={formatPoints}
+                />
+              ))}
             </div>
-          ) : (
-            <div>
-              <div className="overflow-x-auto">
+            <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+              * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
+            </p>
+          </div>
+          <div className="hidden min-[901px]:block">
+            <div className="overflow-x-auto">
               <table className="w-full">
                 <thead 
                   className="border-b"
@@ -687,8 +676,7 @@ function RateResults({
             <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
               * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
             </p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 

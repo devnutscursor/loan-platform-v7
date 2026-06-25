@@ -80,6 +80,8 @@ interface LandingPageTabsProps {
   forceMobileView?: boolean;
   /** Preloaded Product Category options (SSR). Pass from server when available. */
   initialProductCategoryOptions?: { value: string; label: string }[];
+  /** Preloaded Today's Rates rows (SSR). */
+  initialSelectedRates?: import('@/lib/mortech/mapRatesToDisplayProducts').SelectedRateRow[];
 }
 
 const tabs: Tab[] = [
@@ -163,6 +165,7 @@ export default function LandingPageTabs({
   // Force mobile view
   forceMobileView = false,
   initialProductCategoryOptions,
+  initialSelectedRates,
 }: LandingPageTabsProps) {
   const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
@@ -278,6 +281,7 @@ export default function LandingPageTabs({
           userId={userId}
           companyId={companyId}
           hasMortechSubscription={hasMortechSubscription}
+          initialSelectedRates={initialSelectedRates}
         />;
       
       case 'get-custom-rate':
@@ -291,6 +295,7 @@ export default function LandingPageTabs({
               userId={userId}
               companyId={companyId}
               hasMortechSubscription={hasMortechSubscription}
+              initialSelectedRates={initialSelectedRates}
             />
           );
         }
@@ -376,6 +381,7 @@ export default function LandingPageTabs({
           userId={userId}
           companyId={companyId}
           hasMortechSubscription={hasMortechSubscription}
+          initialSelectedRates={initialSelectedRates}
         />;
     }
   };

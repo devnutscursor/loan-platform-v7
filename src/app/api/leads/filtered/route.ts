@@ -4,11 +4,8 @@ import { db } from '@/lib/db';
 import { leads, users, companies, userCompanies } from '@/lib/db/schema';
 import { eq, and, or, like, desc, count } from 'drizzle-orm';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 export async function GET(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     console.log('🚀 GET /api/leads/filtered - Starting request');
     

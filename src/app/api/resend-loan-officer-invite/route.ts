@@ -11,16 +11,12 @@ import {
   requireCompanyAdminOrSuperAdmin,
 } from '@/lib/api-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
 const resendInviteSchema = z.object({
   officerId: z.string().uuid('Valid officer ID is required'),
 });
 
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const auth = await requireCompanyAdminOrSuperAdmin(request);
     if (auth instanceof NextResponse) return auth;

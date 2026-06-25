@@ -9,11 +9,6 @@ import {
   requireCompanyAdminOrSuperAdmin,
 } from '@/lib/api-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
 export interface LoanOfficerInviteData {
   email: string;
   firstName: string;
@@ -31,6 +26,7 @@ export interface LoanOfficerInviteResult {
 const INVITE_EXPIRES_MS = 24 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     const auth = await requireCompanyAdminOrSuperAdmin(request);
     if (auth instanceof NextResponse) return auth;

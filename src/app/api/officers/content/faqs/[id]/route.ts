@@ -4,15 +4,12 @@ import { db } from '@/lib/db';
 import { officerContentFaqs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 // PUT /api/officers/content/faqs/[id] - Update FAQ
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
@@ -102,6 +99,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
