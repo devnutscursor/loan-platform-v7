@@ -444,13 +444,12 @@ export default function LandingPageTabs({
                   className={`
                     relative flex-shrink-0 flex items-center justify-center space-x-1.5 @sm:space-x-3 px-2 @sm:px-4 py-3 rounded-xl
                     transition-all duration-300 ease-out transform
-                    backdrop-blur-sm border shadow-sm
+                    border shadow-sm
                     hover:shadow-lg active:scale-95
                     group font-medium whitespace-nowrap
                   `}
                   title={tab.description}
                   style={{
-                    backdropFilter: 'blur(10px)',
                     borderRadius: `${layout.borderRadius}px`,
                     backgroundColor: isActive ? colors.primary : colors.background,
                     color: isActive ? colors.background : colors.text,
