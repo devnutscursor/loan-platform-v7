@@ -284,17 +284,31 @@ export default function PublicProfileContent({
             max-width: 100vw;
           }
           
-          /* Ensure all child elements respect container width */
-          .public-profile-container * {
-            max-width: 100%;
-            box-sizing: border-box;
-          }
-          
-          /* Allow specific elements to overflow horizontally with scroll */
+          /*
+           * Prevent horizontal overflow without a universal selector.
+           * A wildcard rule under a container-type element forces WebKit (iOS
+           * Safari and Chrome) to re-resolve max-width for every node on each
+           * layout pass, causing the rate cards to paint in one by one.
+           * box-sizing border-box is already applied globally by Tailwind
+           * preflight, so it is not repeated here.
+           */
+          .public-profile-container img,
+          .public-profile-container svg,
+          .public-profile-container video,
+          .public-profile-container canvas,
+          .public-profile-container table,
+          .public-profile-container pre,
+          .public-profile-container iframe,
           .public-profile-container input,
           .public-profile-container select,
           .public-profile-container textarea {
             max-width: 100%;
+          }
+
+          /* Let long unbroken text wrap instead of forcing overflow */
+          .public-profile-container {
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
         }
         
