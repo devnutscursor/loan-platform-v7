@@ -4,7 +4,7 @@ import { getAppBaseUrl } from '@/lib/app-url';
 import { normalizeInviteEmail } from '@/lib/auth-admin-users';
 import { assertEmailCanReceiveInvite, sendSupabaseInviteOrResend } from '@/lib/invite-auth';
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -49,7 +49,7 @@ export async function sendCompanyAdminInvite(
     }
 
     // Check if company with this email already exists in our database
-    const { data: existingCompany } = await supabase
+    const { data: existingCompany } = await getSupabase()
       .from('companies')
       .select('id, invite_status, deactivated')
       .eq('admin_email', normalizedEmail)
@@ -72,7 +72,7 @@ export async function sendCompanyAdminInvite(
 
     if (existingCompany) {
       // Update existing company record
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('companies')
         .update({
           name: companyName,
@@ -97,7 +97,7 @@ export async function sendCompanyAdminInvite(
       companyError = error;
     } else {
       // Create new company with pending status
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('companies')
         .insert({
           name: companyName,
@@ -124,19 +124,19 @@ export async function sendCompanyAdminInvite(
       throw companyError;
     }
 
-    const guard = await assertEmailCanReceiveInvite(supabase, normalizedEmail, 'company_admin', {
+    const guard = await assertEmailCanReceiveInvite(getSupabase(), normalizedEmail, 'company_admin', {
       existingCompanyId: existingCompany?.id,
     });
     if (!guard.ok) {
       if (!existingCompany) {
-        await supabase.from('companies').delete().eq('id', companyData.id);
+        await getSupabase().from('companies').delete().eq('id', companyData.id);
       }
       return { success: false, message: guard.message };
     }
 
     let inviteUserId: string;
     try {
-      const inviteResult = await sendSupabaseInviteOrResend(supabase, normalizedEmail, {
+      const inviteResult = await sendSupabaseInviteOrResend(getSupabase(), normalizedEmail, {
         redirectTo: `${getAppBaseUrl()}/auth/invite?company=${companyData.id}`,
         data: {
           company_id: companyData.id,
@@ -147,14 +147,14 @@ export async function sendCompanyAdminInvite(
       inviteUserId = inviteResult.userId;
     } catch (inviteError) {
       if (!existingCompany) {
-        await supabase.from('companies').delete().eq('id', companyData.id);
+        await getSupabase().from('companies').delete().eq('id', companyData.id);
       }
       throw inviteError;
     }
 
     // Update company with invite token and status
     const inviteToken = crypto.randomBytes(32).toString('hex');
-    await supabase
+    await getSupabase()
       .from('companies')
       .update({
         invite_status: 'sent',
@@ -184,7 +184,7 @@ export async function sendCompanyAdminInvite(
  */
 export async function getCompaniesWithInviteStatus(): Promise<CompanyInviteStatus[]> {
   try {
-    const { data: companies, error } = await supabase
+    const { data: companies, error } = await getSupabase()
       .from('companies')
       .select('id, name, admin_email, invite_status, invite_sent_at, invite_expires_at, created_at')
       .order('created_at', { ascending: false });
@@ -204,7 +204,7 @@ export async function getCompaniesWithInviteStatus(): Promise<CompanyInviteStatu
 export async function resendCompanyInvite(companyId: string): Promise<InviteResult> {
   try {
     // Get company details
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await getSupabase()
       .from('companies')
       .select('*')
       .eq('id', companyId)
@@ -232,14 +232,14 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
     }
 
     const normalizedEmail = normalizeInviteEmail(company.admin_email);
-    const guard = await assertEmailCanReceiveInvite(supabase, normalizedEmail, 'company_admin', {
+    const guard = await assertEmailCanReceiveInvite(getSupabase(), normalizedEmail, 'company_admin', {
       existingCompanyId: companyId,
     });
     if (!guard.ok) {
       return { success: false, message: guard.message };
     }
 
-    const { userId: inviteUserId } = await sendSupabaseInviteOrResend(supabase, normalizedEmail, {
+    const { userId: inviteUserId } = await sendSupabaseInviteOrResend(getSupabase(), normalizedEmail, {
       redirectTo: `${getAppBaseUrl()}/auth/invite?company=${company.id}`,
       data: {
         company_id: company.id,
@@ -250,7 +250,7 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
 
     // Update company with new invite details
     const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    await supabase
+    await getSupabase()
       .from('companies')
       .update({
         invite_status: 'sent',
@@ -282,7 +282,7 @@ export async function resendCompanyInvite(companyId: string): Promise<InviteResu
 export async function deleteCompanyAndCancelInvite(companyId: string): Promise<InviteResult> {
   try {
     // Get company details (need invite_status to enforce rule)
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await getSupabase()
       .from('companies')
       .select('admin_user_id, invite_status')
       .eq('id', companyId)
@@ -305,11 +305,11 @@ export async function deleteCompanyAndCancelInvite(companyId: string): Promise<I
 
     // Delete user from Supabase Auth if exists
     if (company.admin_user_id) {
-      await supabase.auth.admin.deleteUser(company.admin_user_id);
+      await getSupabase().auth.admin.deleteUser(company.admin_user_id);
     }
 
     // Delete company from database (single row by id)
-    await supabase.from('companies').delete().eq('id', companyId);
+    await getSupabase().from('companies').delete().eq('id', companyId);
 
     return {
       success: true,

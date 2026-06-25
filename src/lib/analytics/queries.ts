@@ -3,14 +3,16 @@ import postgres from 'postgres';
 import { eq, and, gte, lte, sql, desc, asc, count, sum, avg, inArray } from 'drizzle-orm';
 import { leads, users, companies, userCompanies } from '@/lib/db/schema';
 
-// Database connection
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not defined');
-}
+let _db: ReturnType<typeof drizzle> | undefined;
 
-const sqlClient = postgres(connectionString);
-const db = drizzle(sqlClient);
+function getDb() {
+  if (!_db) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) throw new Error('DATABASE_URL is not defined');
+    _db = drizzle(postgres(connectionString));
+  }
+  return _db;
+}
 
 // Types for analytics data
 export interface LeadInsightsData {
@@ -104,7 +106,7 @@ export async function getCompanyLeadsInsights(
     whereConditions.push(inArray(leads.source, filters.sources));
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       totalLeads: count(),
       convertedLeads: count(sql`CASE WHEN ${leads.status} = 'converted' THEN 1 END`),
@@ -154,7 +156,7 @@ export async function getCompanyOfficerPerformance(
     );
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       officerId: leads.officerId,
       officerName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
@@ -217,7 +219,7 @@ export async function getLeadVolumeTrends(
     whereConditions.push(inArray(leads.officerId, filters.officerIds));
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       date: sql<string>`DATE(${leads.createdAt})`,
       totalLeads: count(),
@@ -259,7 +261,7 @@ export async function getLeadSourceData(
     );
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       source: leads.source,
       count: count(),
@@ -301,7 +303,7 @@ export async function getConversionFunnelData(
     );
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       stage: leads.conversionStage,
       count: count(),
@@ -338,7 +340,7 @@ export async function getAllCompaniesData(
     whereConditions.push(inArray(leads.companyId, filters.companyIds));
   }
 
-  const baseQuery = db
+  const baseQuery = getDb()
     .select({
       officerId: leads.officerId,
       officerName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
@@ -427,7 +429,7 @@ export async function getLeadsData(
     whereConditions.push(inArray(leads.conversionStage, filters.conversionStages));
   }
 
-  const result = await db
+  const result = await getDb()
     .select({
       id: leads.id,
       firstName: leads.firstName,
@@ -495,7 +497,7 @@ export async function getLeadsCount(
     whereConditions.push(inArray(leads.conversionStage, filters.conversionStages));
   }
 
-  const result = await db
+  const result = await getDb()
     .select({ count: count() })
     .from(leads)
     .where(and(...whereConditions));

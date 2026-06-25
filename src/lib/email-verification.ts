@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -27,7 +27,7 @@ export async function sendVerificationEmail(
     const verificationToken = crypto.randomBytes(32).toString('hex');
     
     // Create new user with email confirmation required
-    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+    const { data: newUser, error: createError } = await getSupabase().auth.admin.createUser({
       email: email,
       email_confirm: false, // Require email confirmation
       user_metadata: {
@@ -84,7 +84,7 @@ export async function verifyCompanyAdmin(
 ): Promise<EmailVerificationResult> {
   try {
     // Get company details
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await getSupabase()
       .from('companies')
       .select('*')
       .eq('id', companyId)
@@ -107,7 +107,7 @@ export async function verifyCompanyAdmin(
 
     // Update user password and confirm email
     if (company.admin_user_id) {
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
+      const { error: updateError } = await getSupabase().auth.admin.updateUserById(
         company.admin_user_id,
         {
           password: password,
@@ -120,7 +120,7 @@ export async function verifyCompanyAdmin(
       }
 
       // Update company verification status
-      await supabase
+      await getSupabase()
         .from('companies')
         .update({
           admin_email_verified: true,
@@ -130,7 +130,7 @@ export async function verifyCompanyAdmin(
         .eq('id', companyId);
 
       // Add user to users table with company_admin role
-      await supabase
+      await getSupabase()
         .from('users')
         .upsert({
           id: company.admin_user_id,
@@ -142,7 +142,7 @@ export async function verifyCompanyAdmin(
         });
 
       // Link user to company
-      await supabase
+      await getSupabase()
         .from('user_companies')
         .upsert({
           user_id: company.admin_user_id,
@@ -176,7 +176,7 @@ export async function verifyCompanyAdmin(
  */
 export async function checkVerificationStatus(companyId: string) {
   try {
-    const { data: company, error } = await supabase
+    const { data: company, error } = await getSupabase()
       .from('companies')
       .select('admin_email, admin_email_verified, admin_user_id')
       .eq('id', companyId)
