@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { icons } from '@/components/ui/Icon';
 
 interface RateProduct {
@@ -45,7 +45,7 @@ interface RateProductCardProps {
   formatPoints: (points: number) => string;
 }
 
-export default function RateProductCard({
+function RateProductCard({
   product,
   colors,
   layout,
@@ -198,3 +198,4 @@ export default function RateProductCard({
   );
 }
 
+export default memo(RateProductCard);
