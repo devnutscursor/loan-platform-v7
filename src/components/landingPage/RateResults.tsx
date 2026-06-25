@@ -71,6 +71,46 @@ interface ApiProduct {
   lastUpdate?: string;
 }
 
+// Pure formatters hoisted to module scope so their references are stable.
+// Stable refs let the memoized RateProductCard skip re-rendering when the
+// parent re-renders (e.g. the post-SSR silent refetch), which removes the
+// "cards repaint one by one" jank on low-power mobile devices.
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+const formatRate = (rate: number) => `${rate.toFixed(3)}%`;
+
+const formatExecutionPrice = (price?: number) => {
+  if (typeof price !== 'number' || !Number.isFinite(price)) return '—';
+  return price.toFixed(3);
+};
+
+// Marksman integration guidance:
+// - Use <quote_detail price="..."> as the primary "Price" display value.
+// - Display it as 100.000 + price.
+// We store that delta as `product.points`.
+const formatParDisplayPrice = (points?: number, executionPrice?: number) => {
+  if (typeof points === 'number' && Number.isFinite(points)) {
+    return (100 + points).toFixed(3);
+  }
+  // Fallback to old behavior when points are missing
+  return formatExecutionPrice(executionPrice);
+};
+
+const formatPoints = (points: number) => {
+  if (points > 0) {
+    return `${points.toFixed(3)} Points`;
+  } else if (points < 0) {
+    return `${Math.abs(points).toFixed(3)} Credit`;
+  }
+  return '0 Points';
+};
+
 interface RateResultsProps {
   products: RateProduct[];
   loading: boolean;
@@ -118,20 +158,30 @@ function RateResults({
     ? publicTemplateData 
     : getTemplateSync(template);
   
-  const colors = templateData?.template?.colors || {
-    primary: '#ec4899',
-    secondary: '#01bcc6',
-    background: '#ffffff',
-    text: '#111827',
-    textSecondary: '#6b7280',
-    border: '#e5e7eb'
-  };
-  const layout = templateData?.template?.layout || {
-    alignment: 'center',
-    spacing: 18,
-    borderRadius: 8,
-    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
-  };
+  // Memoized so the object identity stays stable across renders — this keeps
+  // the memoized RateProductCard from re-rendering (and repainting) needlessly.
+  const colors = useMemo(
+    () =>
+      templateData?.template?.colors || {
+        primary: '#ec4899',
+        secondary: '#01bcc6',
+        background: '#ffffff',
+        text: '#111827',
+        textSecondary: '#6b7280',
+        border: '#e5e7eb',
+      },
+    [templateData],
+  );
+  const layout = useMemo(
+    () =>
+      templateData?.template?.layout || {
+        alignment: 'center',
+        spacing: 18,
+        borderRadius: 8,
+        padding: { small: 8, medium: 16, large: 24, xlarge: 32 },
+      },
+    [templateData],
+  );
 
   const resultsContainerRef = useRef<HTMLDivElement>(null);
   const ratesTimestamp = useMemo(
@@ -307,45 +357,6 @@ function RateResults({
   // }, [products]);
 
   // Use memoized filtered and sorted products
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatRate = (rate: number) => {
-    return `${rate.toFixed(3)}%`;
-  };
-
-  const formatExecutionPrice = (price?: number) => {
-    if (typeof price !== 'number' || !Number.isFinite(price)) return '—';
-    return price.toFixed(3);
-  };
-
-  // Marksman integration guidance:
-  // - Use <quote_detail price="..."> as the primary "Price" display value.
-  // - Display it as 100.000 + price.
-  // We store that delta as `product.points`.
-  const formatParDisplayPrice = (points?: number, executionPrice?: number) => {
-    if (typeof points === 'number' && Number.isFinite(points)) {
-      return (100 + points).toFixed(3);
-    }
-    // Fallback to old behavior when points are missing
-    return formatExecutionPrice(executionPrice);
-  };
-
-  const formatPoints = (points: number) => {
-    if (points > 0) {
-      return `${points.toFixed(3)} Points`;
-    } else if (points < 0) {
-      return `${Math.abs(points).toFixed(3)} Credit`;
-    }
-    return '0 Points';
-  };
 
   // Loan term filter options for SmartDropdown
   const loanTermOptions: SmartDropdownOption[] = useMemo(() => [
