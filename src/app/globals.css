@@ -230,8 +230,16 @@ select.text-white {
   animation: slideInFromRight 0.5s ease-out;
 }
 
-/* Smooth transitions for all interactive elements */
-* {
+/* Smooth transitions for interactive elements only.
+   NOTE: this used to be a universal `* { transition }` rule, which forced
+   iOS WebKit (Safari/Chrome) to track box-shadow/transform transitions on
+   every node in the document. On hydration/re-render that made content
+   (e.g. the rate cards) paint in one element at a time. Scoping it to
+   interactive elements removes that cost; components that need other
+   transitions already declare them via Tailwind utility classes. */
+a,
+button,
+[role="button"] {
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
@@ -923,6 +931,16 @@ button[class*="hover:"]:not([style*="border-radius"]) {
   opacity: 0.4;
   animation: hero-orb-float 25s ease-in-out infinite;
   pointer-events: none;
+}
+
+/* On phones, three 100px-blur layers animating forever saturate the GPU and
+   make the whole page (including the rate cards) janky. Stop the animation
+   and lighten the blur so the orbs stay static and cheap to composite. */
+@media (max-width: 768px) {
+  .hero-gradient-orb {
+    animation: none;
+    filter: blur(60px);
+  }
 }
 
 .hero-gradient-orb-1 {
