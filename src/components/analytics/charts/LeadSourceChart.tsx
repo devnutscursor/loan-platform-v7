@@ -85,8 +85,8 @@ const LeadSourceChart: React.FC<LeadSourceChartProps> = ({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={(props: { payload?: LeadSourceData }) => {
-                const p = props.payload;
+              label={(props) => {
+                const p = props.payload as LeadSourceData | undefined;
                 return p ? `${p.source}: ${p.count}` : '';
               }}
               outerRadius={120}

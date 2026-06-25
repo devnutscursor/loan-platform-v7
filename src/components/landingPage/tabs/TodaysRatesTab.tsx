@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 import RateResults from '@/components/landingPage/RateResults';
@@ -453,6 +453,11 @@ export default function TodaysRatesTab({
     });
   };
 
+  const rateProducts = useMemo(
+    () => transformRatesToRateResults(),
+    [selectedRates, resolvedHasMortechSubscription, isPublic],
+  );
+
   return (
     <div 
       className={`w-full space-y-6 ${className}`}
@@ -565,7 +570,7 @@ export default function TodaysRatesTab({
       {/* Rate Results Component - Only show if we have rates */}
       {!isLoading && selectedRates.length > 0 && (
         <RateResults
-          products={transformRatesToRateResults()}
+          products={rateProducts}
           loading={false}
           rawData={[]}
           template={selectedTemplate}

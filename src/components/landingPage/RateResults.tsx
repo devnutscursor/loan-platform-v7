@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo, useRef, useEffect } from 'react';
 import { spacing, borderRadius, shadows, typography } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import Icon, { icons } from '@/components/ui/Icon';
@@ -118,18 +118,6 @@ function RateResults({
     ? publicTemplateData 
     : getTemplateSync(template);
   
-  // Comprehensive debugging for template data
-  console.log('🔍 RateResults Debug:', {
-    template,
-    templateData,
-    hasTemplateData: !!templateData,
-    colors: templateData?.template?.colors,
-    classes: templateData?.template?.classes,
-    primaryColor: templateData?.template?.colors?.primary,
-    buttonPrimary: templateData?.template?.classes?.button?.primary,
-    timestamp: new Date().toISOString()
-  });
-  
   const colors = templateData?.template?.colors || {
     primary: '#ec4899',
     secondary: '#01bcc6',
@@ -144,6 +132,25 @@ function RateResults({
     borderRadius: 8,
     padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
   };
+
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  // Mobile-first: render cards only until container width is known (avoids building hidden table DOM on phones).
+  const [useCardsView, setUseCardsView] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(max-width: 900px)').matches;
+  });
+
+  useEffect(() => {
+    const el = resultsContainerRef.current;
+    if (!el) return;
+
+    const update = () => setUseCardsView(el.clientWidth <= 900);
+    update();
+
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [sortBy, setSortBy] = useState<'rate' | 'payment' | 'fees'>('rate');
   const [selectedTerm, setSelectedTerm] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<RateProduct | null>(null);
@@ -469,33 +476,31 @@ function RateResults({
 
       {/* Results */}
       <div className="p-0 pt-2 @md:p-4">
-        <style jsx>{`
-          .rate-results-container {
-            container-type: inline-size;
-            container-name: rate-results;
-          }
-          
-          .table-view {
-            display: block;
-          }
-          
-          .cards-view {
-            display: none;
-          }
-          
-          @container rate-results (max-width: 900px) {
-            .table-view {
-              display: none;
-            }
-            .cards-view {
-              display: block;
-            }
-          }
-        `}</style>
-        <div className="rate-results-container">
-          {/* Table View - Desktop */}
-          <div className="table-view">
-            <div className="overflow-x-auto">
+        <div ref={resultsContainerRef} className="w-full min-w-0">
+          {useCardsView ? (
+            <div>
+              <div className="space-y-4">
+                {filteredAndSortedProducts.map((product, index) => (
+                  <RateProductCard
+                    key={`${product.id}-${index}-${product.interestRate}-${product.apr}`}
+                    product={product}
+                    colors={colors}
+                    layout={layout}
+                    onGetStarted={handleGetStarted}
+                    onViewDetails={handleViewDetails}
+                    formatRate={formatRate}
+                    formatCurrency={formatCurrency}
+                    formatPoints={formatPoints}
+                  />
+                ))}
+              </div>
+              <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+                * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="overflow-x-auto">
               <table className="w-full">
                 <thead 
                   className="border-b"
@@ -682,29 +687,8 @@ function RateResults({
             <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
               * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
             </p>
-          </div>
-
-          {/* Cards View - Mobile */}
-          <div className="cards-view">
-            <div className="space-y-4">
-              {filteredAndSortedProducts.map((product, index) => (
-                <RateProductCard
-                  key={`${product.id}-${index}-${product.interestRate}-${product.apr}`}
-                  product={product}
-                  colors={colors}
-                  layout={layout}
-                  onGetStarted={handleGetStarted}
-                  onViewDetails={handleViewDetails}
-                  formatRate={formatRate}
-                  formatCurrency={formatCurrency}
-                  formatPoints={formatPoints}
-                />
-              ))}
             </div>
-            <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
-              * P&I = Principal and interest only. Does not include taxes, insurance, or HOA.
-            </p>
-          </div>
+          )}
         </div>
       </div>
 
