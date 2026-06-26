@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { icons } from '@/components/ui/Icon';
 
 interface RateProduct {
@@ -43,6 +43,8 @@ interface RateProductCardProps {
   formatRate: (rate: number) => string;
   formatCurrency: (amount: number) => string;
   formatPoints: (points: number) => string;
+  /** When true the card starts expanded (used for the first row). */
+  defaultExpanded?: boolean;
 }
 
 function RateProductCard({
@@ -53,147 +55,107 @@ function RateProductCard({
   onViewDetails,
   formatRate,
   formatCurrency,
-  formatPoints
+  formatPoints,
+  defaultExpanded = false,
 }: RateProductCardProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
   return (
-    <div 
-      className="border rounded-lg p-4 transition-colors hover:opacity-90"
-      style={{ 
+    <div
+      className="border p-3 transition-colors"
+      style={{
         borderColor: colors.border,
-        borderRadius: `${layout.borderRadius}px`
+        borderRadius: `${layout.borderRadius}px`,
       }}
     >
-      {/* Two-column grid layout */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Column 1 */}
-        <div className="space-y-3">
-          {/* Loan Type */}
-          <div>
-            <div className="mb-1">
-              <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
-                Loan Type
-              </span>
-            </div>
-            <span className="text-lg font-bold" style={{ color: colors.primary }}>
-              {product.loanProgram || `${product.loanTerm}-Year Fixed`}
-            </span>
+      {/* Header row — always visible, taps to expand/collapse */}
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        className="w-full flex items-center justify-between gap-3 text-left"
+      >
+        <span className="text-base font-bold leading-tight" style={{ color: colors.primary }}>
+          {product.loanProgram || `${product.loanTerm}-Year Fixed`}
+        </span>
+        <span className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-base font-bold whitespace-nowrap" style={{ color: colors.text }}>
+            {formatRate(product.interestRate)}
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={colors.textSecondary}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{
+              transform: expanded ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+
+      {/* Expanded content — only rendered when open */}
+      {expanded && (
+        <>
+          {/* APR · P&I · points (muted summary) */}
+          <div className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+            APR {formatRate(product.apr)}
+            <span className="mx-1.5">·</span>
+            P&amp;I* {formatCurrency(product.monthlyPayment)}
+            <span className="mx-1.5">·</span>
+            {formatPoints(product.points)}
           </div>
 
-          {/* Interest Rate */}
-          <div>
-            <span className="text-xs font-medium block mb-1" style={{ color: colors.textSecondary }}>
-              Interest Rate
-            </span>
-            <span className="text-base font-semibold" style={{ color: colors.text }}>
-              {formatRate(product.interestRate)}
-            </span>
+          {/* Actions */}
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              onClick={() => onGetStarted(product)}
+              className="flex items-center justify-center space-x-1.5 px-3 py-1.5 text-sm font-medium transition-colors flex-1"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.background,
+                borderRadius: `${layout.borderRadius}px`,
+                border: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.secondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primary;
+              }}
+            >
+              {React.createElement(icons.arrowRight, { size: 15, color: colors.background })}
+              <span>Get Started</span>
+            </button>
+            <button
+              onClick={() => onViewDetails(product)}
+              className="flex items-center justify-center px-3 py-1.5 text-sm font-medium transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: colors.background,
+                color: colors.text,
+                border: `1px solid ${colors.border}`,
+                borderRadius: `${layout.borderRadius}px`
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.background;
+              }}
+            >
+              Details
+            </button>
           </div>
-
-          {/* APR */}
-          <div>
-            <span className="text-xs font-medium block mb-1" style={{ color: colors.textSecondary }}>
-              APR
-            </span>
-            <span className="text-sm" style={{ color: colors.textSecondary }}>
-              {formatRate(product.apr)}
-            </span>
-          </div>
-        </div>
-
-        {/* Column 2 */}
-        <div className="space-y-3">
-          {/* Points */}
-          <div>
-            <span className="text-xs font-medium block mb-1" style={{ color: colors.textSecondary }}>
-              Points
-            </span>
-            <span className="text-sm" style={{ color: colors.textSecondary }}>
-              {formatPoints(product.points)}
-            </span>
-          </div>
-
-          {/* P&I */}
-          <div>
-            <span className="text-xs font-medium block mb-1" style={{ color: colors.textSecondary }}>
-              P&I*
-            </span>
-            <span className="text-base font-semibold" style={{ color: colors.text }}>
-              {formatCurrency(product.monthlyPayment)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Parameters */}
-      {product.searchParams && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.purchasePrice !== undefined && (
-              <div>
-                <span style={{ color: colors.textSecondary }}>Purchase Price: </span>
-                <span style={{ color: colors.text }} className="font-medium">
-                  {formatCurrency(product.searchParams.purchasePrice)}
-                </span>
-              </div>
-            )}
-            {product.searchParams.loanPurpose === 'Purchase' && product.searchParams.downPayment !== undefined && (
-              <div>
-                <span style={{ color: colors.textSecondary }}>Down Payment: </span>
-                <span style={{ color: colors.text }} className="font-medium">
-                  {formatCurrency(product.searchParams.downPayment)}
-                </span>
-              </div>
-            )}
-            <div>
-              <span style={{ color: colors.textSecondary }}>Loan Amount: </span>
-              <span style={{ color: colors.text }} className="font-medium">
-                {formatCurrency(product.searchParams.loanAmount)}
-              </span>
-            </div>
-          </div>
-        </div>
+        </>
       )}
-
-      {/* Action Buttons - Stack vertically on mobile, horizontal on larger screens */}
-      <div className="flex flex-col @sm:flex-row gap-2 mt-4">
-        <button
-          onClick={() => onGetStarted(product)}
-          className="flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium transition-colors w-full sm:w-auto"
-          style={{
-            backgroundColor: colors.primary,
-            color: colors.background,
-            borderRadius: `${layout.borderRadius}px`,
-            border: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.secondary;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = colors.primary;
-          }}
-        >
-          {React.createElement(icons.arrowRight, { size: 16, color: colors.background })}
-          <span>Get Started</span>
-        </button>
-        <button 
-          onClick={() => onViewDetails(product)}
-          className="flex items-center justify-center px-4 py-2 text-sm font-medium transition-colors w-full sm:w-auto"
-          style={{
-            backgroundColor: colors.background,
-            color: colors.text,
-            border: `1px solid ${colors.border}`,
-            borderRadius: `${layout.borderRadius}px`
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f9fafb';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = colors.background;
-          }}
-        >
-          View Details
-        </button>
-      </div>
     </div>
   );
 }

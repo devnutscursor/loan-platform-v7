@@ -180,8 +180,6 @@ export default function PublicProfileContent({
     }
   }, [profileData?.company?.has_mortech_subscription, activeTab]);
 
-  // Debug: Log force mobile viewport state
-  console.log('🔍 PublicProfileContent: forceMobileViewport =', forceMobileViewport);
 
   // Get the selected template from the fetched data
   const selectedTemplate = templateData?.template?.slug === 'template2' ? 'template2' : 'template1';
@@ -222,12 +220,18 @@ export default function PublicProfileContent({
   }
 
   return (
-    <div className={`min-h-screen bg-white overflow-x-auto overflow-y-auto ${forceMobileViewport ? 'mobile-viewport-simulator' : ''}`}>
+    <div className={`min-h-screen bg-white ${forceMobileViewport ? 'mobile-viewport-simulator overflow-auto' : ''}`}>
       {/* Scroll bar styling with template border radius */}
       <style jsx global>{`
         .public-profile-container {
           container-type: inline-size;
           container-name: profile;
+          /* iOS WebKit defers painting of content inside a tall container-type
+             element until a scroll forces a repaint (content "loads as you
+             scroll"). Promoting it to its own compositing layer makes WebKit
+             paint the full contained subtree eagerly. */
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
         }
 
         /* Hide scrollbars but keep functionality */
@@ -274,12 +278,14 @@ export default function PublicProfileContent({
         .mobile-viewport-simulator .xl\\:col-span-1 { grid-column: auto !important; width: 100% !important; }
         .mobile-viewport-simulator .xl\\:sticky { position: static !important; }
         
-        /* Ensure mobile responsiveness */
+        /* Ensure mobile responsiveness.
+           NOTE: this used to set overflow-x/y: auto and
+           -webkit-overflow-scrolling: touch, turning the whole profile into a
+           nested momentum-scroll container. On iOS WebKit that defers painting
+           of off-screen content, so the rate cards only rendered as you
+           scrolled. Letting the document scroll instead fixes that. */
         @media (max-width: 768px) {
           .public-profile-container {
-            overflow-x: auto;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             width: 100%;
             max-width: 100vw;
           }
@@ -321,20 +327,22 @@ export default function PublicProfileContent({
         }
       `}</style>
       
-      {/* Unified Template Rendering with Suspense - PUBLIC MODE */}
-      <Suspense fallback={<SkeletonLoader />}>
-        {/* Main Content Area (container that wraps hero, content, footer) */}
+      {/* Unified Template Rendering - PUBLIC MODE */}
+      {/* Main Content Area (container that wraps hero, content, footer) */}
         <div className={`w-full min-w-0 public-profile-container`}>
-          <div 
-            className="overflow-auto w-full"
-            style={{ 
+          <div
+            className="w-full"
+            style={{
               minWidth: '300px'
             }}
           >
-            {/* Hero Section - rounded top corners */}
-            <div 
+            {/* Hero Section - rounded top corners.
+                Wrapped in its OWN Suspense so the lazy hero chunk does not
+                block the SSR'd tabs/rate cards below from rendering. */}
+            <div
               className="overflow-hidden"
             >
+              <Suspense fallback={<div style={{ minHeight: '300px' }} />}>
                 <UnifiedHeroSection
                 isPublic={true}
                 publicUserData={{
@@ -363,11 +371,12 @@ export default function PublicProfileContent({
                 onApplyNowRequest={handleHeroApplyNow}
                 onGetRates={handleHeroGetRates}
               />
+              </Suspense>
             </div>
 
             {/* Content Area - reduced padding and visible side borders */}
-            <div 
-              className={`p-2 border-x overflow-auto w-full ${forceMobileViewport ? '' : '@[48rem]:p-3'}`}
+            <div
+              className={`p-2 border-x w-full ${forceMobileViewport ? '' : '@[48rem]:p-3'}`}
               style={{ 
                 borderColor: templateData?.template?.colors?.border || '#e5e7eb',
                 minWidth: '300px'
@@ -471,7 +480,7 @@ export default function PublicProfileContent({
                       </div>
                       
                       {/* Right Content Area - Selected Tab Details */}
-                      <div className="flex-1 min-w-0 w-full overflow-auto" ref={tabsSectionRef}>
+                      <div className="flex-1 min-w-0 w-full" ref={tabsSectionRef}>
                         <LandingPageTabs
                           isPublic={true}
                           publicTemplateData={templateData}
@@ -499,7 +508,7 @@ export default function PublicProfileContent({
                   // Grid Layout (Template1) - Responsive: Flex column on mobile, full width on desktop
                   return (
                     <div className={`flex flex-col gap-4 w-full ${gridLayoutClasses}`}>
-                      <div className={`w-full overflow-x-auto`} ref={tabsSectionRef}>
+                      <div className={`w-full`} ref={tabsSectionRef}>
                         <LandingPageTabs
                           isPublic={true}
                           publicTemplateData={templateData}
@@ -532,7 +541,6 @@ export default function PublicProfileContent({
             </div>
           </div>
         </div>
-      </Suspense>
     </div>
   );
 }
