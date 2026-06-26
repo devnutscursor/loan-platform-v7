@@ -480,7 +480,26 @@ function RateResults({
         <div ref={resultsContainerRef} className="w-full min-w-0">
           {/* Mobile: cards only. Desktop: table only. CSS breakpoints — no ResizeObserver flash. */}
           <div className="max-[900px]:block min-[901px]:hidden">
-            <div className="space-y-4">
+            {/* Shared loan basis shown once (identical across all rate rows),
+                instead of repeating it inside every compact card. */}
+            {(() => {
+              const sp = filteredAndSortedProducts.find((p) => p.searchParams)?.searchParams;
+              if (!sp) return null;
+              const parts: string[] = [];
+              if (sp.loanPurpose === 'Purchase' && sp.purchasePrice !== undefined) {
+                parts.push(`${formatCurrency(sp.purchasePrice)} purchase`);
+              }
+              if (sp.loanPurpose === 'Purchase' && sp.downPayment !== undefined) {
+                parts.push(`${formatCurrency(sp.downPayment)} down`);
+              }
+              parts.push(`${formatCurrency(sp.loanAmount)} loan`);
+              return (
+                <p className="mb-3 text-xs" style={{ color: colors.textSecondary }}>
+                  Based on {parts.join(' · ')}
+                </p>
+              );
+            })()}
+            <div className="space-y-2">
               {filteredAndSortedProducts.map((product, index) => (
                 <RateProductCard
                   key={`${product.id}-${index}`}
@@ -492,6 +511,7 @@ function RateResults({
                   formatRate={formatRate}
                   formatCurrency={formatCurrency}
                   formatPoints={formatPoints}
+                  defaultExpanded={index === 0}
                 />
               ))}
             </div>

@@ -143,9 +143,16 @@ export default function TodaysRatesTab({
       return;
     }
 
+    // SSR already provided fresh rates from the same source the client
+    // endpoint uses (getMortechMergedSelectedRatesForDisplay). Skip the client
+    // refetch entirely — it only triggers a redundant re-render of every card
+    // (time-sliced via startTransition), which on a slow mobile CPU makes the
+    // cards visibly re-render in as you scroll. Server data is authoritative on
+    // first load.
     if (initialNormalized?.length) {
       setSelectedRates(initialNormalized);
       setIsLoading(false);
+      return;
     }
 
     const stored = getStoredSelectedRates(userId);

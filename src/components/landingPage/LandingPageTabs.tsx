@@ -532,23 +532,24 @@ export default function LandingPageTabs({
           forceMobileView
             ? ''
             : isTodaysRatesTab
-              ? 'md:min-w-[800px] overflow-x-auto lg:ml-0 lg:mx-0 lg:w-full lg:max-w-none'
-              : 'md:min-w-[800px] md:max-w-7xl overflow-x-auto'
+              ? 'md:min-w-[800px] md:overflow-x-auto lg:ml-0 lg:mx-0 lg:w-full lg:max-w-none'
+              : 'md:min-w-[800px] md:max-w-7xl md:overflow-x-auto'
         }`}
       >
-        <div 
-          className={`bg-white shadow-xl ${
-            forceMobileView || selectedTemplate === 'template2' ? '' : 'overflow-x-auto'
+        <div
+          className={`bg-white md:shadow-xl ${
+            forceMobileView || selectedTemplate === 'template2' ? '' : 'md:overflow-x-auto'
           } ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl'}`}
-          style={{ 
+          style={{
             backgroundColor: colors.background,
             borderColor: colors.border,
-            borderRadius: hideTabNavigation 
-              ? `${layout.borderRadius}px` 
+            borderRadius: hideTabNavigation
+              ? `${layout.borderRadius}px`
               : `0 0 ${layout.borderRadius}px ${layout.borderRadius}px`,
-            
+
             minHeight: 'auto',
-            boxShadow: `0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)`
+            // Large box-shadow over this tall wrapper is repainted during scroll
+            // on iOS WebKit; apply it only on desktop (md+) via the className.
           }}
         >
           <div 
