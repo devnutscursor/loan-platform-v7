@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef, lazy, Suspense, useEffect } from 'react';
-import Icon, { icons } from '@/components/ui/Icon';
+import { useRef, lazy, Suspense } from 'react';
 import type { TabId } from '@/components/landingPage/LandingPageTabs';
-import LandingPageTabs from '@/components/landingPage/LandingPageTabs';
+import PublicProfileTabsSection, {
+  type PublicProfileTabsHandle,
+} from '@/components/public/PublicProfileTabsSection';
 import type { SelectedRateRow } from '@/lib/mortech/mapRatesToDisplayProducts';
 import SynclyFooter from '../ui/SynclyFooter';
 
@@ -136,76 +137,17 @@ export default function PublicProfileContent({
     ? templateActiveTab 
     : initialActiveTab;
 
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab as TabId);
-  const tabsSectionRef = useRef<HTMLDivElement | null>(null);
-
-  // Update activeTab when template data loads (for public profile view only, not in preview mode)
-  useEffect(() => {
-    // Skip in preview mode - customizer manages tab state via onTabChange
-    if (isPreview) return;
-    
-    // Only run if templateData is available
-    if (!templateData) return;
-    
-    const bodyMods = profileData?.template?.bodyModifications || 
-                     profileData?.template?.body_modifications ||
-                     templateData?.template?.bodyModifications ||
-                     templateData?.template?.body_modifications ||
-                     {};
-
-    const templateActiveTab = bodyMods?.activeTab || bodyMods?.active_tab;
-    // Handle both camelCase and snake_case for enabledTabs
-    const enabledTabsFromEffect = bodyMods?.enabledTabs || bodyMods?.enabled_tabs || ['todays-rates', 'get-custom-rate', 'document-checklist', 'my-home-value', 'find-my-home', 'schedule-call', 'learning-center', 'neighborhood-reports', 'calculators'];
-    
-    // Debug logging
-    console.log('🔍 PublicProfileContent: Enabled tabs check:', {
-      bodyMods,
-      enabledTabsFromEffect,
-      enabledTabs,
-      templateActiveTab,
-      profileDataTemplate: profileData?.template,
-      templateDataTemplate: templateData?.template
-    });
-    
-    // Only update if we have a template activeTab and it's enabled, and it's different from current
-    if (templateActiveTab && enabledTabsFromEffect.includes(templateActiveTab) && templateActiveTab !== activeTab) {
-      setActiveTab(templateActiveTab as TabId);
-    }
-  }, [templateData, profileData?.template, isPreview, enabledTabs]);
-
-  // When company has no Mortech subscription, switch away from Get Custom Rate tab
-  useEffect(() => {
-    if (profileData?.company?.has_mortech_subscription === false && activeTab === 'get-custom-rate') {
-      setActiveTab('todays-rates');
-    }
-  }, [profileData?.company?.has_mortech_subscription, activeTab]);
-
-
-  // Get the selected template from the fetched data
+  const tabsSectionRef = useRef<PublicProfileTabsHandle | null>(null);
   const selectedTemplate = templateData?.template?.slug === 'template2' ? 'template2' : 'template1';
 
-  // Tab change handler
-  const handleTabChange = (tabId: TabId) => {
-    setActiveTab(tabId);
-    if (onTabChange) {
-      onTabChange(tabId);
-    }
-  };
-
-  const scrollTabsIntoView = () => {
-    if (tabsSectionRef.current) {
-      tabsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   const handleHeroApplyNow = () => {
-    handleTabChange('apply-now');
-    scrollTabsIntoView();
+    tabsSectionRef.current?.selectTab('apply-now');
+    tabsSectionRef.current?.scrollIntoView();
   };
 
   const handleHeroGetRates = () => {
-    handleTabChange('todays-rates');
-    scrollTabsIntoView();
+    tabsSectionRef.current?.selectTab('todays-rates');
+    tabsSectionRef.current?.scrollIntoView();
   };
 
   // Memoize user information
@@ -224,14 +166,18 @@ export default function PublicProfileContent({
       {/* Scroll bar styling with template border radius */}
       <style jsx global>{`
         .public-profile-container {
-          container-type: inline-size;
-          container-name: profile;
-          /* iOS WebKit defers painting of content inside a tall container-type
-             element until a scroll forces a repaint (content "loads as you
-             scroll"). Promoting it to its own compositing layer makes WebKit
-             paint the full contained subtree eagerly. */
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
+          /* container-type on iOS WebKit makes every in-container layout change
+             (e.g. tab switch) repaint the whole profile subtree — desktop is fine,
+             mobile feels laggy. Scope it to desktop only. */
+        }
+
+        @media (min-width: 769px) {
+          .public-profile-container {
+            container-type: inline-size;
+            container-name: profile;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+          }
         }
 
         /* Hide scrollbars but keep functionality */
@@ -382,152 +328,19 @@ export default function PublicProfileContent({
                 minWidth: '300px'
               }}
             >
-              {(() => {
-                // Get layout configuration
-                const layoutConfig = templateData?.template?.layoutConfig;
-                const isSidebarLayout = layoutConfig?.mainContentLayout?.type === 'sidebar';
-                
-                if (isSidebarLayout) {
-                  // Sidebar Layout (Template2) - Stack vertically on mobile, horizontal on large screens
-                  return (
-                    <div className={`flex flex-col gap-4 w-full ${forceMobileViewport ? '' : '@[64rem]:flex-row @[64rem]:gap-6'}`}>
-                      {/* Left Sidebar - Tabs List */}
-                      <div className={`w-full overflow-x-auto ${forceMobileViewport ? '' : '@[64rem]:w-64 @[64rem]:flex-shrink-0'}`}>
-                        <div className={forceMobileViewport ? '' : 'sticky top-6 @[64rem]:top-8'}>
-                          <div 
-                            className="rounded-lg shadow-sm border p-4"
-                            style={{
-                              backgroundColor: templateData?.template?.colors?.background || '#ffffff',
-                              borderColor: templateData?.template?.colors?.border || '#e5e7eb',
-                              borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`
-                            }}
-                          >
-                            <h3 
-                              className="text-lg font-semibold mb-4"
-                              style={{
-                                color: templateData?.template?.colors?.text || '#111827',
-                                fontFamily: (templateData?.template?.typography?.fontFamily && (templateData?.template?.typography?.fontFamily.body || templateData?.template?.typography?.fontFamily)) || undefined
-                              }}
-                            >
-                              Navigation
-                            </h3>
-                            <nav className="space-y-1">
-                              {(() => {
-                                // Define all available tabs (excluding apply-now from navigation)
-                                const allTabs = [
-                                  { id: 'todays-rates', label: "Today's Rates", icon: 'rates' },
-                                  { id: 'get-custom-rate', label: 'Get My Custom Rate', icon: 'custom' },
-                                  { id: 'document-checklist', label: 'Document Checklist', icon: 'document' },
-                                  { id: 'my-home-value', label: 'My Home Value', icon: 'home' },
-                                  { id: 'find-my-home', label: 'Find My Home', icon: 'home' },
-                                  { id: 'schedule-call', label: 'Schedule a Call', icon: 'calendar' },
-                                  { id: 'learning-center', label: 'Learning Center', icon: 'about' },
-                                  { id: 'neighborhood-reports', label: 'Neighborhood Reports', icon: 'location' }
-                                ];
-
-                                // Filter to only show enabled tabs; hide Get Custom Rate for non–Mortech companies
-                                const hideGetCustomRate = profileData?.company?.has_mortech_subscription === false;
-                                const navigationTabs = allTabs.filter(
-                                  tab => enabledTabs.includes(tab.id) && !(tab.id === 'get-custom-rate' && hideGetCustomRate)
-                                );
-
-                                return navigationTabs.map((tab) => (
-                                <button
-                                  key={tab.id}
-                                  onClick={() => handleTabChange(tab.id as TabId)}
-                                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
-                                    activeTab === tab.id
-                                      ? 'shadow-sm'
-                                      : 'hover:bg-gray-50'
-                                  }`}
-                                  style={{
-                                    backgroundColor: activeTab === tab.id 
-                                      ? (selectedTemplate === 'template2' 
-                                          ? templateData?.template?.colors?.primary || '#3b82f6'
-                                          : `${templateData?.template?.colors?.primary || '#3b82f6'}25`)
-                                      : 'transparent',
-                                    color: activeTab === tab.id 
-                                      ? (selectedTemplate === 'template2' 
-                                          ? templateData?.template?.colors?.background || '#ffffff'
-                                          : templateData?.template?.colors?.primary || '#3b82f6')
-                                      : templateData?.template?.colors?.textSecondary || '#6b7280',
-                                    border: activeTab === tab.id 
-                                      ? (selectedTemplate === 'template2' 
-                                          ? `1px solid ${templateData?.template?.colors?.primary || '#3b82f6'}`
-                                          : `1px solid ${templateData?.template?.colors?.primary || '#3b82f6'}50`)
-                                      : '1px solid transparent',
-                                    borderRadius: `${templateData?.template?.layout?.borderRadius || 8}px`,
-                                    fontFamily: (templateData?.template?.typography?.fontFamily && (templateData?.template?.typography?.fontFamily.body || templateData?.template?.typography?.fontFamily)) || undefined
-                                  }}
-                                >
-                                  <Icon 
-                                    name={tab.icon as keyof typeof icons} 
-                                    className={`w-3 h-3 @[20rem]:w-4 @[20rem]:h-4 @[48rem]:w-5 @[48rem]:h-5 mr-3`}
-                                    color={activeTab === tab.id 
-                                      ? (selectedTemplate === 'template2' 
-                                          ? templateData?.template?.colors?.background || '#ffffff'
-                                          : templateData?.template?.colors?.primary || '#3b82f6')
-                                      : templateData?.template?.colors?.textSecondary || '#6b7280'
-                                    }
-                                  />
-                                  {tab.label}
-                                </button>
-                                ));
-                              })()}
-                            </nav>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Right Content Area - Selected Tab Details */}
-                      <div className="flex-1 min-w-0 w-full" ref={tabsSectionRef}>
-                        <LandingPageTabs
-                          isPublic={true}
-                          publicTemplateData={templateData}
-                          activeTab={activeTab}
-                          onTabChange={handleTabChange}
-                          selectedTemplate={selectedTemplate}
-                          templateCustomization={profileData.template}
-                          userId={profileData.user.id}
-                          companyId={profileData.company.id}
-                          hasMortechSubscription={profileData.company.has_mortech_subscription}
-                          hideTabNavigation={true}
-                          forceMobileView={forceMobileViewport}
-                          initialProductCategoryOptions={initialProductCategoryOptions}
-                          initialSelectedRates={initialSelectedRates}
-                        />
-                      </div>
-                    </div>
-                  );
-                } else {
-                  const gridLayoutClasses = forceMobileViewport
-                    ? ''
-                    : selectedTemplate === 'template2'
-                      ? '@[48rem]:gap-6'
-                      : '@[48rem]:gap-6';
-                  // Grid Layout (Template1) - Responsive: Flex column on mobile, full width on desktop
-                  return (
-                    <div className={`flex flex-col gap-4 w-full ${gridLayoutClasses}`}>
-                      <div className={`w-full`} ref={tabsSectionRef}>
-                        <LandingPageTabs
-                          isPublic={true}
-                          publicTemplateData={templateData}
-                          activeTab={activeTab}
-                          onTabChange={handleTabChange}
-                          selectedTemplate={selectedTemplate}
-                          templateCustomization={profileData.template}
-                          userId={profileData.user.id}
-                          companyId={profileData.company.id}
-                        hasMortechSubscription={profileData.company.has_mortech_subscription}
-                          forceMobileView={forceMobileViewport}
-                          initialProductCategoryOptions={initialProductCategoryOptions}
-                          initialSelectedRates={initialSelectedRates}
-                        />
-                      </div>
-                    </div>
-                  );
-                }
-              })()}
+              <PublicProfileTabsSection
+                ref={tabsSectionRef}
+                profileData={profileData}
+                templateData={templateData}
+                selectedTemplate={selectedTemplate}
+                enabledTabs={enabledTabs}
+                initialTab={initialTab as TabId}
+                isPreview={isPreview}
+                forceMobileViewport={forceMobileViewport}
+                initialProductCategoryOptions={initialProductCategoryOptions}
+                initialSelectedRates={initialSelectedRates}
+                onTabChange={onTabChange}
+              />
             </div>
 
             <div className="relative z-10">

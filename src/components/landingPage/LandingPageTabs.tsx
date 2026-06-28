@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, lazy, Suspense, useEffect } from 'react';
+import React, { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
-import { useAuth } from '@/hooks/use-auth';
 import { icons } from '@/components/ui/Icon';
 
 // Lazy load heavy components
@@ -167,7 +166,6 @@ export default function LandingPageTabs({
   initialProductCategoryOptions,
   initialSelectedRates,
 }: LandingPageTabsProps) {
-  const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
   
   // Template data fetching - support both public and auth modes
@@ -203,18 +201,29 @@ export default function LandingPageTabs({
   // which already handle initialization from template customization
   const effectiveActiveTab = activeTab || templateActiveTab;
 
-  // Today’s Rates tab: left blank space kam karke zyada left par lana
-  const isTodaysRatesTab = effectiveActiveTab === 'todays-rates';
+  // Instant tab + content switch; parent sync without deferred transition
+  // Optimistic tab for instant UI; cleared when parent prop catches up
+  const [optimisticTab, setOptimisticTab] = useState<TabId | null>(null);
+  const displayTab = optimisticTab ?? effectiveActiveTab;
 
-  // Debug template customization
-  React.useEffect(() => {
-    console.log('🔄 LandingPageTabs: Template customization updated:', {
-      templateCustomization,
-      enabledTabs,
-      effectiveActiveTab,
-      timestamp: new Date().toISOString()
-    });
-  }, [templateCustomization, enabledTabs, effectiveActiveTab]);
+  const [mountedTabs, setMountedTabs] = useState<Set<TabId>>(() => new Set([effectiveActiveTab]));
+  if (!mountedTabs.has(displayTab)) {
+    const next = new Set(mountedTabs);
+    next.add(displayTab);
+    setMountedTabs(next);
+  }
+
+  useEffect(() => {
+    setOptimisticTab(null);
+  }, [effectiveActiveTab]);
+
+  const handleTabClick = useCallback((tabId: TabId) => {
+    if (tabId === displayTab) return;
+    setOptimisticTab(tabId);
+    onTabChange(tabId);
+  }, [displayTab, onTabChange]);
+
+  const isTodaysRatesTab = displayTab === 'todays-rates';
 
   
   // Comprehensive template data usage
@@ -271,8 +280,8 @@ export default function LandingPageTabs({
     }
   };
   
-  const renderTabContent = () => {
-    switch (effectiveActiveTab) {
+  const renderTabContent = (tabId: TabId) => {
+    switch (tabId) {
       case 'todays-rates':
         return <TodaysRatesTab 
           selectedTemplate={selectedTemplate} 
@@ -311,7 +320,7 @@ export default function LandingPageTabs({
               userId={userId}
               companyId={companyId}
               initialProductCategoryOptions={initialProductCategoryOptions}
-              onNavigateToTodaysRates={() => onTabChange('todays-rates')}
+              onNavigateToTodaysRates={() => handleTabClick('todays-rates')}
             />
           </Suspense>
         );
@@ -430,23 +439,35 @@ export default function LandingPageTabs({
                 display: 'flex',
                 flexWrap: 'nowrap',
                 alignItems: 'center',
-                scrollBehavior: 'smooth',
                 WebkitOverflowScrolling: 'touch',
                 minHeight: '70px'
               }}
             >
-            {navigationTabs.map((tab, index) => {
-              const isActive = effectiveActiveTab === tab.id;
+            {navigationTabs.map((tab) => {
+              const isActive = displayTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
+                  type="button"
+                  onPointerDown={(e) => {
+                    if (e.pointerType === 'mouse' && e.button !== 0) return;
+                    if (e.pointerType === 'touch') {
+                      e.preventDefault();
+                      handleTabClick(tab.id);
+                    }
+                  }}
+                  onClick={() => handleTabClick(tab.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTabClick(tab.id);
+                    }
+                  }}
                   className={`
                     relative flex-shrink-0 flex items-center justify-center space-x-1.5 @sm:space-x-3 px-2 @sm:px-4 py-3 rounded-xl
-                    transition-all duration-300 ease-out transform
                     border shadow-sm
-                    hover:shadow-lg active:scale-95
-                    group font-medium whitespace-nowrap
+                    md:hover:shadow-lg
+                    group font-medium whitespace-nowrap touch-manipulation select-none
                   `}
                   title={tab.description}
                   style={{
@@ -463,7 +484,7 @@ export default function LandingPageTabs({
                   {/* Enhanced active indicator */}
                   {isActive && (
                     <>
-                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full shadow-lg transition-all duration-300 ease-out" style={{ backgroundColor: colors.primary, boxShadow: `0 0 20px ${colors.primary}50` }} />
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full shadow-lg" style={{ backgroundColor: colors.primary, boxShadow: `0 0 20px ${colors.primary}50` }} />
                     </>
                   )}
                   
@@ -559,22 +580,34 @@ export default function LandingPageTabs({
             }}
           >
             <div className="space-y-8">
-              {isTodaysRatesTab ? (
-                <div className="flex flex-col lg:flex-row gap-6 items-start">
-                  <div className="w-full lg:w-[20%] lg:shrink-0">
-                    <LoanFinderWidget
-                      colors={colors}
-                      borderRadiusPx={layout.borderRadius}
-                      fontFamily={typography.fontFamily}
-                    />
+              {Array.from(mountedTabs).map((tabId) => {
+                const isActive = tabId === displayTab;
+                const isTodayTab = tabId === 'todays-rates';
+
+                return (
+                  <div
+                    key={tabId}
+                    hidden={!isActive}
+                    className={isActive ? undefined : 'hidden'}
+                    style={isActive ? undefined : { contentVisibility: 'hidden' }}
+                  >
+                    {isTodayTab ? (
+                      <div className="flex flex-col lg:flex-row gap-6 items-start">
+                        <div className="w-full lg:w-[20%] lg:shrink-0">
+                          <LoanFinderWidget
+                            colors={colors}
+                            borderRadiusPx={layout.borderRadius}
+                            fontFamily={typography.fontFamily}
+                          />
+                        </div>
+                        <div className="w-full lg:w-[80%]">{renderTabContent(tabId)}</div>
+                      </div>
+                    ) : (
+                      renderTabContent(tabId)
+                    )}
                   </div>
-                  <div className="w-full lg:w-[80%]">
-                    {renderTabContent()}
-                  </div>
-                </div>
-              ) : (
-                renderTabContent()
-              )}
+                );
+              })}
             </div>
           </div>
         </div>

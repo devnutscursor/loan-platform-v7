@@ -160,12 +160,8 @@ export default function ScheduleCallTab({
       )}
 
       <div
-        className="w-full relative"
-        style={{
-          height: '860px',
-          overflow: 'hidden',
-          backgroundColor: colors.background,
-        }}
+        className="w-full relative overflow-hidden max-md:overflow-y-auto max-md:min-h-[780px] h-[860px]"
+        style={{ backgroundColor: colors.background }}
       >
         {!widgetLoaded && (
           <div
@@ -185,18 +181,15 @@ export default function ScheduleCallTab({
         <iframe
           src={scheduleCallWidgetUrl}
           title="Schedule a Call Widget"
-          className="w-full border-0"
+          className="w-full border-0 block max-md:mt-0 max-md:h-[880px] md:-mt-[70px] md:h-[930px]"
           style={{
-            height: '930px',
             width: '100%',
             border: 'none',
-            display: 'block',
-            marginTop: '-70px',
             opacity: widgetLoaded ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
             pointerEvents: widgetLoaded ? 'auto' : 'none',
           }}
-          scrolling="no"
+          scrolling="auto"
           onLoad={() => setWidgetLoaded(true)}
           onError={() => setWidgetLoaded(true)}
         />
