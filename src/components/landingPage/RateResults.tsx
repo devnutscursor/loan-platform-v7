@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, memo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { spacing, borderRadius, shadows, typography } from '@/theme/theme';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import Icon, { icons } from '@/components/ui/Icon';
@@ -711,21 +712,25 @@ function RateResults({
         </div>
       </div>
 
-      {/* Product Details Modal */}
-      {isModalOpen && selectedProduct && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      {/* Product Details — centered below top; rates stay visible underneath */}
+      {isModalOpen && selectedProduct && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[10dvh] px-4 pointer-events-none">
           <div
-            className="bg-white max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
-            style={{ borderRadius: `${layout.borderRadius}px` }}
+            className="pointer-events-auto w-full max-w-4xl max-h-[62dvh] sm:max-h-[72vh] bg-white border border-gray-200 shadow-xl flex flex-col overflow-hidden rounded-lg"
+            style={{
+              borderRadius: layout.borderRadius ? `${layout.borderRadius}px` : undefined,
+            }}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">
+            {/* Panel Header */}
+            <div className="flex shrink-0 items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                 Loan Product Details
               </h3>
               <button
+                type="button"
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                aria-label="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -733,8 +738,8 @@ function RateResults({
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Panel Content — scroll inside fixed height */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column - Basic Info */}
                 <div>
@@ -918,8 +923,11 @@ function RateResults({
             </div>
 
             {/* Action Buttons */}
-            <div className="border-t border-gray-200 p-6 bg-white flex flex-col sm:flex-row gap-4">
+            <div
+              className="shrink-0 border-t border-gray-200 p-4 sm:p-6 bg-white flex flex-col sm:flex-row gap-3 sm:gap-4"
+            >
               <button
+                type="button"
                 onClick={() => handleGetStarted(selectedProduct)}
                 className="flex-1 flex items-center justify-center text-white py-3 px-6 font-medium transition-colors"
                 style={{ 
@@ -937,6 +945,7 @@ function RateResults({
                 Get Started with This Loan
               </button>
               <button
+                type="button"
                 onClick={handleCloseModal}
                 className="flex-1 flex items-center justify-center border border-gray-300 text-gray-700 py-3 px-6 font-medium hover:bg-gray-50 transition-colors"
                 style={{ borderRadius: `${layout.borderRadius}px` }}
@@ -945,7 +954,8 @@ function RateResults({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Lead Capture Modal */}
