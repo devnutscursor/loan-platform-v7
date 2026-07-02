@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, lazy, Suspense, useEffect, useCallback } from 'react';
+import React, { useState, lazy, Suspense, useEffect, useCallback, useDeferredValue } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 
@@ -206,12 +206,21 @@ export default function LandingPageTabs({
   const [optimisticTab, setOptimisticTab] = useState<TabId | null>(null);
   const displayTab = optimisticTab ?? effectiveActiveTab;
 
+  // The tab highlight updates from `displayTab` (urgent = instant). The heavy
+  // tab CONTENT mounts from `deferredTab` (low priority), so the switch paints
+  // first and the content mounts right after instead of blocking the click.
+  const deferredTab = useDeferredValue(displayTab);
+
   const [mountedTabs, setMountedTabs] = useState<Set<TabId>>(() => new Set([effectiveActiveTab]));
-  if (!mountedTabs.has(displayTab)) {
+  if (!mountedTabs.has(deferredTab)) {
     const next = new Set(mountedTabs);
-    next.add(displayTab);
+    next.add(deferredTab);
     setMountedTabs(next);
   }
+
+  // While switching to a not-yet-mounted tab, show a lightweight skeleton so the
+  // switch feels instant while the real content mounts in the background.
+  const showSwitchSkeleton = deferredTab !== displayTab && !mountedTabs.has(displayTab);
 
   useEffect(() => {
     setOptimisticTab(null);
@@ -580,8 +589,11 @@ export default function LandingPageTabs({
             }}
           >
             <div className="space-y-8">
+              {showSwitchSkeleton && (
+                <TabLoadingSkeleton selectedTemplate={selectedTemplate} />
+              )}
               {Array.from(mountedTabs).map((tabId) => {
-                const isActive = tabId === displayTab;
+                const isActive = !showSwitchSkeleton && tabId === deferredTab;
                 const isTodayTab = tabId === 'todays-rates';
 
                 return (
