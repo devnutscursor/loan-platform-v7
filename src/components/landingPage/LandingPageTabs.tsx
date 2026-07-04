@@ -4,22 +4,21 @@ import React, { useState, lazy, Suspense, useEffect, useCallback, useDeferredVal
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 
-// Lazy load heavy components
-const MortgageRateComparison = lazy(() => import('./mortgage/MortgageRateComparison'));
-
-// Import lightweight tab components
-import {
-  TodaysRatesTab,
-  DocumentChecklistTab,
-  ApplyNowTab,
-  MyHomeValueTab,
-  FindMyHomeTab,
-  LearningCenterTab,
-  NeighborhoodReportsTab,
-  CalculatorsTab,
-  ScheduleCallTab
-} from './tabs';
+// Today's Rates stays eager: it's the default tab and paints instantly from SSR
+// data. Every other tab is lazy so its (often 1000-2000 line) component is not
+// in the initial bundle and only downloads when the user opens that tab.
+import { TodaysRatesTab } from './tabs';
 import LoanFinderWidget from './LoanFinderWidget';
+
+const MortgageRateComparison = lazy(() => import('./mortgage/MortgageRateComparison'));
+const DocumentChecklistTab = lazy(() => import('./tabs/DocumentChecklistTab'));
+const ApplyNowTab = lazy(() => import('./tabs/ApplyNowTab'));
+const MyHomeValueTab = lazy(() => import('./tabs/MyHomeValueTab'));
+const FindMyHomeTab = lazy(() => import('./tabs/FindMyHomeTab'));
+const LearningCenterTab = lazy(() => import('./tabs/LearningCenterTab'));
+const NeighborhoodReportsTab = lazy(() => import('./tabs/NeighborhoodReportsTab'));
+const CalculatorsTab = lazy(() => import('./tabs/CalculatorsTab'));
+const ScheduleCallTab = lazy(() => import('./tabs/ScheduleCallTab'));
 
 export type TabId = 
   | 'todays-rates'
@@ -211,16 +210,12 @@ export default function LandingPageTabs({
   // first and the content mounts right after instead of blocking the click.
   const deferredTab = useDeferredValue(displayTab);
 
-  const [mountedTabs, setMountedTabs] = useState<Set<TabId>>(() => new Set([effectiveActiveTab]));
-  if (!mountedTabs.has(deferredTab)) {
-    const next = new Set(mountedTabs);
-    next.add(deferredTab);
-    setMountedTabs(next);
-  }
-
-  // While switching to a not-yet-mounted tab, show a lightweight skeleton so the
-  // switch feels instant while the real content mounts in the background.
-  const showSwitchSkeleton = deferredTab !== displayTab && !mountedTabs.has(displayTab);
+  // Only the active tab is rendered; inactive tabs unmount so the page stays
+  // light on slow mobile browsers (full Safari/Chrome carry extra overhead that
+  // a heavy always-mounted tab tree pushes over the edge). While the deferred
+  // value catches up to the just-clicked tab, show a lightweight skeleton so the
+  // switch feels instant while the new tab mounts.
+  const isTabSwitching = deferredTab !== displayTab;
 
   useEffect(() => {
     setOptimisticTab(null);
@@ -589,21 +584,12 @@ export default function LandingPageTabs({
             }}
           >
             <div className="space-y-8">
-              {showSwitchSkeleton && (
+              {isTabSwitching ? (
                 <TabLoadingSkeleton selectedTemplate={selectedTemplate} />
-              )}
-              {Array.from(mountedTabs).map((tabId) => {
-                const isActive = !showSwitchSkeleton && tabId === deferredTab;
-                const isTodayTab = tabId === 'todays-rates';
-
-                return (
-                  <div
-                    key={tabId}
-                    hidden={!isActive}
-                    className={isActive ? undefined : 'hidden'}
-                    style={isActive ? undefined : { contentVisibility: 'hidden' }}
-                  >
-                    {isTodayTab ? (
+              ) : (
+                <Suspense fallback={<TabLoadingSkeleton selectedTemplate={selectedTemplate} />}>
+                  <div key={deferredTab}>
+                    {deferredTab === 'todays-rates' ? (
                       <div className="flex flex-col lg:flex-row gap-6 items-start">
                         <div className="w-full lg:w-[20%] lg:shrink-0">
                           <LoanFinderWidget
@@ -612,14 +598,14 @@ export default function LandingPageTabs({
                             fontFamily={typography.fontFamily}
                           />
                         </div>
-                        <div className="w-full lg:w-[80%]">{renderTabContent(tabId)}</div>
+                        <div className="w-full lg:w-[80%]">{renderTabContent(deferredTab)}</div>
                       </div>
                     ) : (
-                      renderTabContent(tabId)
+                      renderTabContent(deferredTab)
                     )}
                   </div>
-                );
-              })}
+                </Suspense>
+              )}
             </div>
           </div>
         </div>

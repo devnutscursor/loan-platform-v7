@@ -179,6 +179,7 @@ export default function ScheduleCallTab({
         )}
 
         <iframe
+          loading="lazy"
           src={scheduleCallWidgetUrl}
           title="Schedule a Call Widget"
           className="w-full border-0 block max-md:mt-0 max-md:h-[880px] md:-mt-[70px] md:h-[930px]"

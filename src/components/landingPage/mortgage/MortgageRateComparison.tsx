@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import MortgageSearchForm from '@/components/landingPage/MortgageSearchForm';
-import RateResults from '@/components/landingPage/RateResults';
+// Lazy: these only render in the final "search form + results" phase, not on the
+// landing/questionnaire views. Loading them on demand keeps the initial
+// Get-Custom-Rate chunk small so opening the tab is fast.
+const MortgageSearchForm = lazy(() => import('@/components/landingPage/MortgageSearchForm'));
+const RateResults = lazy(() => import('@/components/landingPage/RateResults'));
 import { Button } from '@/components/ui/Button';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
@@ -1681,16 +1684,18 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
       <main className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-8">
         {/* Search Form */}
         <div className="pb-24">
-          <MortgageSearchForm 
-            onSearch={handleSearch} 
-            loading={loading} 
-            template={template}
-            isPublic={isPublic}
-            publicTemplateData={publicTemplateData}
-            initialValues={questionnaireFormData}
-            verifiedEmail={verifiedEmail || undefined}
-            initialProductCategoryOptions={initialProductCategoryOptions}
-          />
+          <Suspense fallback={<div className="py-10 text-center text-sm text-gray-400">Loading…</div>}>
+            <MortgageSearchForm
+              onSearch={handleSearch}
+              loading={loading}
+              template={template}
+              isPublic={isPublic}
+              publicTemplateData={publicTemplateData}
+              initialValues={questionnaireFormData}
+              verifiedEmail={verifiedEmail || undefined}
+              initialProductCategoryOptions={initialProductCategoryOptions}
+            />
+          </Suspense>
         </div>
 
         {/* Validation Message */}
@@ -1730,20 +1735,22 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         )}
 
         {/* Results */}
-        <RateResults 
-          products={products} 
-          loading={loading} 
-          rawData={rawData} 
-          template={template}
-          isMockData={false}
-          dataSource="mortech"
-          isPublic={isPublic}
-          publicTemplateData={publicTemplateData}
-          userId={userId}
-          companyId={companyId}
-          loanAmount={loanAmount}
-          downPayment={downPayment}
-        />
+        <Suspense fallback={<div className="py-10 text-center text-sm text-gray-400">Loading…</div>}>
+          <RateResults
+            products={products}
+            loading={loading}
+            rawData={rawData}
+            template={template}
+            isMockData={false}
+            dataSource="mortech"
+            isPublic={isPublic}
+            publicTemplateData={publicTemplateData}
+            userId={userId}
+            companyId={companyId}
+            loanAmount={loanAmount}
+            downPayment={downPayment}
+          />
+        </Suspense>
       </main>
 
       {/* Disclaimer */}

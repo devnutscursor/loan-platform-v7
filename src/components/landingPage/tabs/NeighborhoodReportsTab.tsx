@@ -416,6 +416,7 @@ export default function NeighborhoodReportsTab({
           }}
         >
           <iframe
+            loading="lazy"
             src={reportBlobUrl}
             width="100%"
             height="800px"

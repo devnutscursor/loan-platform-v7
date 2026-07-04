@@ -162,7 +162,7 @@ export default function PublicProfileContent({
   }
 
   return (
-    <div className={`min-h-screen bg-white ${forceMobileViewport ? 'mobile-viewport-simulator overflow-auto' : ''}`}>
+    <div className={`min-h-[100dvh] bg-white ${forceMobileViewport ? 'mobile-viewport-simulator overflow-auto' : ''}`}>
       {/* Scroll bar styling with template border radius */}
       <style jsx global>{`
         .public-profile-container {
