@@ -1062,6 +1062,7 @@ button: {
                   return (
                     <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                       <iframe
+                        loading="lazy"
                         src={embedUrl}
                         frameBorder="0"
                         allowFullScreen

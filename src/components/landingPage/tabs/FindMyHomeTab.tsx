@@ -523,6 +523,7 @@ button: {
                 </button>
               </div>
               <iframe
+                loading="lazy"
                 src={detailsUrl}
                 title="Property Details"
                 className="w-full border-0 flex-1"
@@ -546,6 +547,7 @@ button: {
             />
           ) : (
             <iframe
+              loading="lazy"
               src={trimmedFindMyHomeUrl}
               title="Home AI Search Widget"
               className="w-full border-0 flex-1"
@@ -598,6 +600,7 @@ button: {
           </div>
         )}
         <iframe
+          loading="lazy"
           id="idxwidget-iframe-122191"
           ref={widgetIframeRef}
           src="/api/widgets/idx"

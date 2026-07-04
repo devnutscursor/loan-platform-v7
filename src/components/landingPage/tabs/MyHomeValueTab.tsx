@@ -279,6 +279,7 @@ button: {
         
         {hasValidUrl && (
           <iframe
+            loading="lazy"
             src={cloudCmaWidgetUrl}
             title="Home Value Estimator"
             className="w-full h-full border-0"
