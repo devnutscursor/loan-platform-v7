@@ -95,9 +95,6 @@ const tabs: Tab[] = [
     icon: 'custom',
     description: 'Get personalized rate quotes'
   },
-  // ===== TEMP TESTING: baaki tabs comment out — sirf Today's Rates + Get Custom Rate.
-  // Wapas laane ke liye neeche wale block comment ko hata do (opening + closing).
-  /*
   {
     id: 'document-checklist',
     label: 'Document Checklist',
@@ -146,8 +143,6 @@ const tabs: Tab[] = [
     icon: 'calculator',
     description: 'Mortgage and loan calculators'
   }
-  */
-  // ===== END TEMP =====
 ];
 
 export default function LandingPageTabs({

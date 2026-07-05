@@ -923,6 +923,24 @@ button[class*="hover:"]:not([style*="border-radius"]) {
   }
 }
 
+/* Hero decorative glow orbs (UnifiedHeroSection). filter: blur() is applied on
+   DESKTOP ONLY. On mobile GPUs blur() is very expensive to rasterize, and having
+   these blur layers on the page made every repaint — including tab switches and
+   scrolling — laggy. On mobile the orbs keep their soft radial gradient but no
+   live blur, so they are cheap to composite. */
+.hero-glow-orb {
+  filter: none;
+  pointer-events: none;
+}
+@media (min-width: 769px) {
+  .hero-glow-orb {
+    filter: blur(80px);
+  }
+}
+.mobile-viewport-simulator .hero-glow-orb {
+  filter: none !important;
+}
+
 /* Hero orb base styles */
 .hero-gradient-orb {
   position: absolute;
