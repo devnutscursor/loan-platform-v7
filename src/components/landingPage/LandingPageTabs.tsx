@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, lazy, Suspense, useEffect, useCallback, useDeferredValue } from 'react';
+import React, { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { icons } from '@/components/ui/Icon';
 
@@ -95,6 +95,9 @@ const tabs: Tab[] = [
     icon: 'custom',
     description: 'Get personalized rate quotes'
   },
+  // ===== TEMP TESTING: baaki tabs comment out — sirf Today's Rates + Get Custom Rate.
+  // Wapas laane ke liye neeche wale block comment ko hata do (opening + closing).
+  /*
   {
     id: 'document-checklist',
     label: 'Document Checklist',
@@ -143,6 +146,8 @@ const tabs: Tab[] = [
     icon: 'calculator',
     description: 'Mortgage and loan calculators'
   }
+  */
+  // ===== END TEMP =====
 ];
 
 export default function LandingPageTabs({
@@ -200,26 +205,36 @@ export default function LandingPageTabs({
   // which already handle initialization from template customization
   const effectiveActiveTab = activeTab || templateActiveTab;
 
-  // Instant tab + content switch; parent sync without deferred transition
-  // Optimistic tab for instant UI; cleared when parent prop catches up
+  // Optimistic tab for an instant highlight; cleared when the parent prop catches up.
   const [optimisticTab, setOptimisticTab] = useState<TabId | null>(null);
   const displayTab = optimisticTab ?? effectiveActiveTab;
 
-  // The tab highlight updates from `displayTab` (urgent = instant). The heavy
-  // tab CONTENT mounts from `deferredTab` (low priority), so the switch paints
-  // first and the content mounts right after instead of blocking the click.
-  const deferredTab = useDeferredValue(displayTab);
-
-  // Only the active tab is rendered; inactive tabs unmount so the page stays
-  // light on slow mobile browsers (full Safari/Chrome carry extra overhead that
-  // a heavy always-mounted tab tree pushes over the edge). While the deferred
-  // value catches up to the just-clicked tab, show a lightweight skeleton so the
-  // switch feels instant while the new tab mounts.
-  const isTabSwitching = deferredTab !== displayTab;
+  // KEEP-ALIVE for INSTANT switching. The active tab renders on first paint;
+  // every other enabled tab is mounted (but hidden) once the browser goes idle.
+  // After that, switching a tab is a pure CSS `display` toggle between two
+  // already-mounted trees — no mount, no chunk download, no re-render — so it is
+  // instant even the first time you open a tab.
+  const [mountHiddenTabs, setMountHiddenTabs] = useState(false);
 
   useEffect(() => {
     setOptimisticTab(null);
   }, [effectiveActiveTab]);
+
+  useEffect(() => {
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const run = () => setMountHiddenTabs(true);
+    if (w.requestIdleCallback) idleId = w.requestIdleCallback(run, { timeout: 1500 });
+    else timeoutId = setTimeout(run, 600);
+    return () => {
+      if (w.cancelIdleCallback && idleId) w.cancelIdleCallback(idleId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
   const handleTabClick = useCallback((tabId: TabId) => {
     if (tabId === displayTab) return;
@@ -584,28 +599,41 @@ export default function LandingPageTabs({
             }}
           >
             <div className="space-y-8">
-              {isTabSwitching ? (
-                <TabLoadingSkeleton selectedTemplate={selectedTemplate} />
-              ) : (
-                <Suspense fallback={<TabLoadingSkeleton selectedTemplate={selectedTemplate} />}>
-                  <div key={deferredTab}>
-                    {deferredTab === 'todays-rates' ? (
-                      <div className="flex flex-col lg:flex-row gap-6 items-start">
-                        <div className="w-full lg:w-[20%] lg:shrink-0">
-                          <LoanFinderWidget
-                            colors={colors}
-                            borderRadiusPx={layout.borderRadius}
-                            fontFamily={typography.fontFamily}
-                          />
-                        </div>
-                        <div className="w-full lg:w-[80%]">{renderTabContent(deferredTab)}</div>
-                      </div>
-                    ) : (
-                      renderTabContent(deferredTab)
-                    )}
-                  </div>
-                </Suspense>
-              )}
+              {(() => {
+                // Stable-order keep-alive: active tab always mounted; the rest
+                // mount (hidden) once idle. Switching = CSS display toggle between
+                // already-mounted trees → instant. Stable order avoids remounts.
+                const baseIds = mountHiddenTabs ? filteredTabs.map((t) => t.id) : [];
+                const ids = baseIds.includes(displayTab) ? baseIds : [displayTab, ...baseIds];
+                return ids.map((tabId) => {
+                  const isActive = displayTab === tabId;
+                  const isTodayTab = tabId === 'todays-rates';
+                  return (
+                    <div key={tabId} style={{ display: isActive ? undefined : 'none' }}>
+                      <Suspense
+                        fallback={
+                          isActive ? <TabLoadingSkeleton selectedTemplate={selectedTemplate} /> : null
+                        }
+                      >
+                        {isTodayTab ? (
+                          <div className="flex flex-col lg:flex-row gap-6 items-start">
+                            <div className="w-full lg:w-[20%] lg:shrink-0">
+                              <LoanFinderWidget
+                                colors={colors}
+                                borderRadiusPx={layout.borderRadius}
+                                fontFamily={typography.fontFamily}
+                              />
+                            </div>
+                            <div className="w-full lg:w-[80%]">{renderTabContent(tabId)}</div>
+                          </div>
+                        ) : (
+                          renderTabContent(tabId)
+                        )}
+                      </Suspense>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>

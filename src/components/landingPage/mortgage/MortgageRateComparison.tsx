@@ -1327,16 +1327,16 @@ const MortgageRateComparison = React.memo(function MortgageRateComparison({
         )}
 
         {/* Hero Section */}
-        <main className="max-w-7xl sm:max-w-full mx-auto px-3 sm:px-4 py-16">
+        <main className="max-w-7xl sm:max-w-full mx-auto px-4 py-8 @sm:py-12 @xl:py-16">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-black mb-6">
+            <h1 className="text-xl @sm:text-2xl font-bold text-black mb-4 @sm:mb-6">
               {getTemplateContent().title}
               <span style={{ color: colors.primary }}> Mortgage</span>
             </h1>
-            <p className="text-base mb-8 w-[700px]  mx-auto" style={{ color: colors.text }}>
+            <p className="text-sm @sm:text-base mb-6 @sm:mb-8 w-full max-w-[700px] mx-auto" style={{ color: colors.text }}>
               {getTemplateContent().description}
             </p>
-            
+
             <div className="flex flex-col @xl:flex-row gap-4 justify-center items-center">
               <button 
                 onClick={() => {
