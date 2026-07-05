@@ -147,7 +147,7 @@ const PublicProfileTabsSection = forwardRef<
 
     return (
       <div
-        className={`flex flex-col gap-4 w-full ${forceMobileViewport ? '' : '@[64rem]:flex-row @[64rem]:gap-6'}`}
+        className={`flex flex-col gap-4 w-full min-w-0 max-w-full ${forceMobileViewport ? '' : '@[64rem]:flex-row @[64rem]:gap-6'}`}
       >
         <div
           className={`w-full overflow-x-auto ${forceMobileViewport ? '' : '@[64rem]:w-64 @[64rem]:flex-shrink-0'}`}
@@ -236,7 +236,7 @@ const PublicProfileTabsSection = forwardRef<
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 w-full" ref={tabsSectionRef}>
+        <div className="flex-1 min-w-0 w-full max-w-full" ref={tabsSectionRef}>
           {landingTabs}
         </div>
       </div>
@@ -250,8 +250,8 @@ const PublicProfileTabsSection = forwardRef<
       : '@[48rem]:gap-6';
 
   return (
-    <div className={`flex flex-col gap-4 w-full ${gridLayoutClasses}`}>
-      <div className="w-full" ref={tabsSectionRef}>
+    <div className={`flex flex-col gap-4 w-full min-w-0 max-w-full ${gridLayoutClasses}`}>
+      <div className="w-full min-w-0 max-w-full" ref={tabsSectionRef}>
         {landingTabs}
       </div>
     </div>

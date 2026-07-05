@@ -1,39 +1,38 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
-import { useAuth } from '@/hooks/use-auth';
 
 interface ScheduleCallTabProps {
   selectedTemplate: 'template1' | 'template2';
   className?: string;
-  // Public mode props
   isPublic?: boolean;
   publicTemplateData?: any;
+  /** When false (keep-alive hidden tab), defer iframe until user opens this tab. */
+  isActive?: boolean;
 }
 
 export default function ScheduleCallTab({
   selectedTemplate,
   className = '',
   isPublic = false,
-  publicTemplateData
+  publicTemplateData,
+  isActive = true,
 }: ScheduleCallTabProps) {
-  const { user } = useAuth();
   const { getTemplateSync } = useEfficientTemplates();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Template data fetching - support both public and auth modes
   const templateData = isPublic && publicTemplateData
     ? publicTemplateData
     : getTemplateSync(selectedTemplate);
 
-  // Comprehensive template data usage (mirrors FindMyHomeTab for visual consistency)
   const colors = templateData?.template?.colors || {
     primary: '#ec4899',
     secondary: '#01bcc6',
     background: '#ffffff',
     text: '#111827',
     textSecondary: '#6b7280',
-    border: '#e5e7eb'
+    border: '#e5e7eb',
   };
 
   const typography = templateData?.template?.typography || {
@@ -44,30 +43,30 @@ export default function ScheduleCallTab({
       base: 16,
       lg: 18,
       xl: 20,
-      '2xl': 24
+      '2xl': 24,
     },
     fontWeight: {
       normal: 400,
       medium: 500,
       semibold: 600,
-      bold: 700
-    }
+      bold: 700,
+    },
   };
 
   const layout = templateData?.template?.layout || {
     alignment: 'center',
     spacing: 18,
     borderRadius: 8,
-    padding: { small: 8, medium: 16, large: 24, xlarge: 32 }
+    padding: { small: 8, medium: 16, large: 24, xlarge: 32 },
   };
 
   const defaultClasses = {
     heading: {
-      h2: 'text-2xl font-bold text-gray-900 mb-3'
+      h2: 'text-2xl font-bold text-gray-900 mb-3',
     },
     body: {
-      base: 'text-base text-gray-700 leading-relaxed'
-    }
+      base: 'text-base text-gray-700 leading-relaxed',
+    },
   };
 
   const templateClasses = templateData?.template?.classes;
@@ -77,28 +76,45 @@ export default function ScheduleCallTab({
     ...safeTemplateClasses,
     heading: {
       ...defaultClasses.heading,
-      ...(safeTemplateClasses?.heading || {})
+      ...(safeTemplateClasses?.heading || {}),
     },
     body: {
       ...defaultClasses.body,
-      ...(safeTemplateClasses?.body || {})
-    }
+      ...(safeTemplateClasses?.body || {}),
+    },
   };
 
-  // Schedule Call: custom widget URL from customizer (e.g. LoanStar)
+  const bodyMods =
+    templateData?.template?.bodyModifications ||
+    templateData?.template?.body_modifications ||
+    {};
+
   const defaultScheduleCallWidgetUrl = 'https://app.theloanstar.com/widget/booking/4qMtgrD6DzYAIrSwxV4L';
-  const scheduleCallWidgetUrl =
-    templateData?.template?.bodyModifications?.scheduleCallWidgetUrl ?? defaultScheduleCallWidgetUrl;
-  const scheduleCallHeader = templateData?.template?.bodyModifications?.scheduleCallHeader ?? '';
-  const scheduleCallBody = templateData?.template?.bodyModifications?.scheduleCallBody ?? '';
+  const rawScheduleCallWidgetUrl =
+    bodyMods.scheduleCallWidgetUrl ??
+    bodyMods.schedule_call_widget_url ??
+    '';
+  const scheduleCallWidgetUrl = String(rawScheduleCallWidgetUrl).trim() || defaultScheduleCallWidgetUrl;
+  const scheduleCallHeader =
+    bodyMods.scheduleCallHeader ?? bodyMods.schedule_call_header ?? '';
+  const scheduleCallBody =
+    bodyMods.scheduleCallBody ?? bodyMods.schedule_call_body ?? '';
 
   const hasValidCustomUrl =
-    scheduleCallWidgetUrl?.trim() !== '' &&
+    scheduleCallWidgetUrl.trim() !== '' &&
     (scheduleCallWidgetUrl.startsWith('http://') || scheduleCallWidgetUrl.startsWith('https://'));
 
   const [widgetLoaded, setWidgetLoaded] = useState(false);
+  const [shouldMountIframe, setShouldMountIframe] = useState(isActive);
 
-  // Load LoanStar form_embed.js when using a theloanstar.com widget URL
+  useEffect(() => {
+    if (isActive) setShouldMountIframe(true);
+  }, [isActive]);
+
+  useEffect(() => {
+    if (shouldMountIframe) setWidgetLoaded(false);
+  }, [scheduleCallWidgetUrl, shouldMountIframe]);
+
   useEffect(() => {
     if (!hasValidCustomUrl || typeof document === 'undefined') return;
     if (!scheduleCallWidgetUrl.includes('theloanstar.com')) return;
@@ -108,11 +124,25 @@ export default function ScheduleCallTab({
     script.src = 'https://app.theloanstar.com/js/form_embed.js';
     script.type = 'text/javascript';
     document.body.appendChild(script);
+  }, [hasValidCustomUrl, scheduleCallWidgetUrl]);
+
+  useEffect(() => {
+    if (!shouldMountIframe || !hasValidCustomUrl) return;
+
+    const iframe = iframeRef.current;
+    const markLoaded = () => setWidgetLoaded(true);
+
+    if (iframe) {
+      iframe.addEventListener('load', markLoaded);
+    }
+
+    const timeout = setTimeout(markLoaded, 3000);
 
     return () => {
-      script.remove();
+      if (iframe) iframe.removeEventListener('load', markLoaded);
+      clearTimeout(timeout);
     };
-  }, [hasValidCustomUrl, scheduleCallWidgetUrl]);
+  }, [shouldMountIframe, hasValidCustomUrl, scheduleCallWidgetUrl]);
 
   if (!hasValidCustomUrl) {
     return (
@@ -124,7 +154,7 @@ export default function ScheduleCallTab({
           className="w-full mt-6 p-6 border rounded-lg bg-gray-50 text-sm text-gray-600"
           style={{
             borderColor: colors.border,
-            borderRadius: `${layout.borderRadius}px`
+            borderRadius: `${layout.borderRadius}px`,
           }}
         >
           Please configure a valid Schedule Call widget URL in the customizer to display your calendar.
@@ -178,24 +208,25 @@ export default function ScheduleCallTab({
           </div>
         )}
 
-        <iframe
-          loading="lazy"
-          src={scheduleCallWidgetUrl}
-          title="Schedule a Call Widget"
-          className="w-full border-0 block max-md:mt-0 max-md:h-[880px] md:-mt-[70px] md:h-[930px]"
-          style={{
-            width: '100%',
-            border: 'none',
-            opacity: widgetLoaded ? 1 : 0,
-            transition: 'opacity 0.3s ease-in-out',
-            pointerEvents: widgetLoaded ? 'auto' : 'none',
-          }}
-          scrolling="auto"
-          onLoad={() => setWidgetLoaded(true)}
-          onError={() => setWidgetLoaded(true)}
-        />
+        {shouldMountIframe && (
+          <iframe
+            ref={iframeRef}
+            src={scheduleCallWidgetUrl}
+            title="Schedule a Call Widget"
+            className="w-full border-0 block max-md:mt-0 max-md:h-[880px] md:-mt-[70px] md:h-[930px]"
+            style={{
+              width: '100%',
+              border: 'none',
+              opacity: widgetLoaded ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out',
+              pointerEvents: widgetLoaded ? 'auto' : 'none',
+            }}
+            scrolling="auto"
+            onLoad={() => setWidgetLoaded(true)}
+            onError={() => setWidgetLoaded(true)}
+          />
+        )}
       </div>
     </div>
   );
 }
-

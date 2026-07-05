@@ -316,23 +316,26 @@ export default function UnifiedHeroSection({
           backgroundColor: colors.primary
         }}
       >
-        {/* Stationary Secondary Color Blobs for dynamic look */}
-        <div 
-          className="absolute"
+        {/* Stationary Secondary Color Blobs for dynamic look.
+            NOTE: filter: blur() is applied via the .hero-glow-orb class on
+            DESKTOP ONLY. On mobile GPUs blur() is very expensive to rasterize
+            and made every repaint (including tab switches) laggy, so it is
+            disabled there — the radial gradient already looks like a soft glow. */}
+        <div
+          className="absolute hero-glow-orb"
           style={{
             width: forceMobileView ? '300px' : '400px',
             height: forceMobileView ? '300px' : '400px',
             background: `radial-gradient(circle, ${colors.secondary || colors.primary} 0%, ${colors.secondary || colors.primary}90 20%, ${colors.secondary || colors.primary}40 50%, transparent 70%)`,
             top: '-20%',
             right: '-10%',
-            filter: forceMobileView ? 'blur(60px)' : 'blur(100px)',
             opacity: 0.8,
             borderRadius: '50%'
           }}
         />
 
-        <div 
-          className="absolute"
+        <div
+          className="absolute hero-glow-orb"
           style={{
             width: forceMobileView ? '300px' : '400px',
             height: forceMobileView ? '300px' : '400px',
@@ -340,13 +343,12 @@ export default function UnifiedHeroSection({
             top: '90%',
             left: '60%',
             transform: 'translate(-50%, -50%)',
-            filter: forceMobileView ? 'blur(40px)' : 'blur(70px)',
             opacity: 0.5,
             borderRadius: '50%'
           }}
         />
-        <div 
-          className="absolute"
+        <div
+          className="absolute hero-glow-orb"
           style={{
             width: forceMobileView ? '300px' : '400px',
             height: forceMobileView ? '300px' : '400px',
@@ -354,7 +356,6 @@ export default function UnifiedHeroSection({
             top: '-10%',
             left: '20%',
             transform: 'translate(-50%, -50%)',
-            filter: forceMobileView ? 'blur(40px)' : 'blur(70px)',
             opacity: 0.5,
             borderRadius: '50%'
           }}

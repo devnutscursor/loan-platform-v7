@@ -95,9 +95,6 @@ const tabs: Tab[] = [
     icon: 'custom',
     description: 'Get personalized rate quotes'
   },
-  // ===== TEMP TESTING: baaki tabs comment out — sirf Today's Rates + Get Custom Rate.
-  // Wapas laane ke liye neeche wale block comment ko hata do (opening + closing).
-  /*
   {
     id: 'document-checklist',
     label: 'Document Checklist',
@@ -146,8 +143,6 @@ const tabs: Tab[] = [
     icon: 'calculator',
     description: 'Mortgage and loan calculators'
   }
-  */
-  // ===== END TEMP =====
 ];
 
 export default function LandingPageTabs({
@@ -299,7 +294,7 @@ export default function LandingPageTabs({
     }
   };
   
-  const renderTabContent = (tabId: TabId) => {
+  const renderTabContent = (tabId: TabId, isActive = true) => {
     switch (tabId) {
       case 'todays-rates':
         return <TodaysRatesTab 
@@ -373,11 +368,14 @@ export default function LandingPageTabs({
         />;
       
       case 'schedule-call':
-        return <ScheduleCallTab
-          selectedTemplate={selectedTemplate}
-          isPublic={isPublic}
-          publicTemplateData={publicTemplateData}
-        />;
+        return (
+          <ScheduleCallTab
+            selectedTemplate={selectedTemplate}
+            isPublic={isPublic}
+            publicTemplateData={publicTemplateData}
+            isActive={isActive}
+          />
+        );
       
       case 'learning-center':
         return <LearningCenterTab 
@@ -568,7 +566,7 @@ export default function LandingPageTabs({
 
       {/* Tab Content */}
       <div
-        className={`w-full mx-auto ${
+        className={`w-full min-w-0 max-w-full mx-auto overflow-x-hidden ${
           forceMobileView
             ? ''
             : isTodaysRatesTab
@@ -577,7 +575,7 @@ export default function LandingPageTabs({
         }`}
       >
         <div
-          className={`bg-white md:shadow-xl ${
+          className={`bg-white min-w-0 max-w-full md:shadow-xl overflow-x-hidden ${
             forceMobileView || selectedTemplate === 'template2' ? '' : 'md:overflow-x-auto'
           } ${hideTabNavigation ? 'rounded-2xl' : 'rounded-b-2xl'}`}
           style={{
@@ -593,7 +591,7 @@ export default function LandingPageTabs({
           }}
         >
           <div 
-            className="p-4"
+            className="p-4 min-w-0 max-w-full overflow-x-hidden"
             style={{ 
               padding: `${isTodaysRatesTab ? layout.padding.small : layout.padding.medium}px`
             }}
@@ -624,10 +622,10 @@ export default function LandingPageTabs({
                                 fontFamily={typography.fontFamily}
                               />
                             </div>
-                            <div className="w-full lg:w-[80%]">{renderTabContent(tabId)}</div>
+                            <div className="w-full lg:w-[80%]">{renderTabContent(tabId, isActive)}</div>
                           </div>
                         ) : (
-                          renderTabContent(tabId)
+                          renderTabContent(tabId, isActive)
                         )}
                       </Suspense>
                     </div>
