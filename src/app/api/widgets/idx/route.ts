@@ -1,6 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { isAllowedIdxWidgetUrl, normalizeIdxWidgetScriptUrl } from '@/lib/idx/idxEmbedUrl';
 
-export async function GET() {
+const DEFAULT_WIDGET_ID = '122191';
+
+function resolveScriptSrc(widgetId: string, urlParam: string | null): string {
+  if (urlParam?.trim()) {
+    const normalized = normalizeIdxWidgetScriptUrl(urlParam);
+    if (!isAllowedIdxWidgetUrl(normalized)) {
+      throw new Error('Invalid IDX widget URL');
+    }
+    return normalized;
+  }
+  return `https://syncly360.idxbroker.com/idx/widgets/${widgetId}`;
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const widgetId = searchParams.get('id') || DEFAULT_WIDGET_ID;
+
+  if (!/^\d+$/.test(widgetId)) {
+    return NextResponse.json({ error: 'Invalid widget id' }, { status: 400 });
+  }
+
+  let scriptSrc: string;
+  try {
+    scriptSrc = resolveScriptSrc(widgetId, searchParams.get('url'));
+  } catch {
+    return NextResponse.json({ error: 'Invalid widget URL' }, { status: 400 });
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -349,7 +377,12 @@ export async function GET() {
     });
   </script>
 </body>
-</html>`;
+</html>`
+    .replace(/122191/g, widgetId)
+    .replace(
+      `src="//syncly360.idxbroker.com/idx/widgets/${widgetId}"`,
+      `src="${scriptSrc.replace(/"/g, '&quot;')}"`,
+    );
 
   return new NextResponse(html, {
     headers: {

@@ -4,9 +4,37 @@ import React, { useState, useEffect } from 'react';
 import { useEfficientTemplates } from '@/contexts/UnifiedTemplateContext';
 import { useAuth } from '@/hooks/use-auth';
 import Icon from '@/components/ui/Icon';
+import { buildIdxWidgetIframeSrc } from '@/lib/idx/idxEmbedUrl';
 
-// Prevent duplicate IDX widget script injection when multiple instances mount (e.g. customizer preview)
-const injectedIdxWidgetIds = new Set<string>();
+const findMyHomeWidgetShellClass =
+  'find-my-home-widget w-full min-w-0 max-w-full overflow-x-hidden';
+
+function IdxWidgetIframe({
+  src,
+  loaded,
+  onLoad,
+}: {
+  src: string;
+  loaded: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <iframe
+      src={src}
+      title="IDX Property Search Widget"
+      className="w-full border-0 flex-1 min-w-0 max-w-full"
+      style={{
+        width: '100%',
+        border: 'none',
+        opacity: loaded ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out',
+        pointerEvents: loaded ? 'auto' : 'none',
+      }}
+      onLoad={onLoad}
+      onError={onLoad}
+    />
+  );
+}
 
 interface FindMyHomeTabProps {
   selectedTemplate: 'template1' | 'template2';
@@ -196,19 +224,18 @@ button: {
       trimmedFindMyHomeUrl.startsWith('https://') ||
       trimmedFindMyHomeUrl.startsWith('//'));
 
-  // IDX widget script URLs (e.g. //theloanstar.idxbroker.com/idx/widgets/117781) return JS that must run in page, not in iframe
+  // IDX widget script URLs load inside our same-origin iframe (/api/widgets/idx) so we
+  // can apply mobile CSS/JS — parent-page shadow DOM manipulation is unreliable.
   const idxWidgetScriptMatch = trimmedFindMyHomeUrl.match(/\/idx\/widgets\/([^/?]+)/i);
   const isIdxWidgetScriptUrl = Boolean(idxWidgetScriptMatch);
   const idxWidgetId = idxWidgetScriptMatch ? idxWidgetScriptMatch[1] : null; // e.g. "117781"
+  const idxEmbedIframeSrc =
+    isIdxWidgetScriptUrl && idxWidgetId
+      ? buildIdxWidgetIframeSrc(idxWidgetId, trimmedFindMyHomeUrl)
+      : null;
 
   const [idxWidgetLoaded, setIdxWidgetLoaded] = useState(false);
   const [customIframeLoaded, setCustomIframeLoaded] = useState(false);
-  // When user clicks a result/link inside the IDX widget script, we capture the URL
-  // and show it in an overlay iframe inside this same rectangle instead of a new tab.
-  const [detailsUrl, setDetailsUrl] = useState<string | null>(null);
-  const widgetIframeRef = React.useRef<HTMLIFrameElement>(null);
-  const idxWidgetLoadedRef = React.useRef(false);
-  const idxWidgetContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Load LoanStar form_embed.js when using a theloanstar.com booking widget URL (not for IDX script widgets)
   useEffect(() => {
@@ -225,233 +252,12 @@ button: {
     };
   }, [hasValidCustomUrl, findMyHomeWidgetUrl]);
 
-  // Update ref when state changes
-  useEffect(() => {
-    idxWidgetLoadedRef.current = idxWidgetLoaded;
-  }, [idxWidgetLoaded]);
-
-  useEffect(() => {
-    // Check if IDX widget iframe is already loaded
-    if (typeof window !== 'undefined') {
-      const iframeElement = document.getElementById('idxwidget-iframe-122191') as HTMLIFrameElement;
-      if (iframeElement) {
-        try {
-          if (iframeElement.contentDocument?.readyState === 'complete') {
-            setIdxWidgetLoaded(true);
-          }
-        } catch (e) {
-          // Cross-origin iframe, can't check readyState
-          // Assume loaded if iframe exists
-          setIdxWidgetLoaded(true);
-        }
-      }
-    }
-  }, []);
-
-  const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const iframe = event.currentTarget;
-    console.log('idx Iframe loaded', iframe.src);
-    setIdxWidgetLoaded(true);
-  };
-
-  const handleIframeError = () => {
-    console.log('idx Iframe error');
-    // Set loaded anyway after a delay to show content
-    setTimeout(() => {
-      setIdxWidgetLoaded(true);
-    }, 2000);
-  };
-
-  // Additional check: Monitor iframe load state via ref
-  useEffect(() => {
-    if (!widgetIframeRef.current) return;
-
-    const iframe = widgetIframeRef.current;
-    
-    // Check if iframe is already loaded
-    const checkIframeLoaded = () => {
-      try {
-        if (iframe.contentDocument?.readyState === 'complete') {
-          console.log('idx Iframe readyState is complete');
-          if (!idxWidgetLoaded) {
-            setIdxWidgetLoaded(true);
-          }
-          return true;
-        }
-      } catch (e) {
-        // Cross-origin or not accessible
-        console.log('idx Cannot check iframe readyState:', e);
-      }
-      return false;
-    };
-
-    // Check immediately
-    if (checkIframeLoaded()) {
-      return;
-    }
-
-    // Also listen to load event on the iframe element directly
-    const handleLoad = () => {
-      console.log('idx Iframe load event fired via addEventListener');
-      if (!idxWidgetLoaded) {
-        setIdxWidgetLoaded(true);
-      }
-    };
-
-    iframe.addEventListener('load', handleLoad);
-
-    // Periodic check as fallback
-    const interval = setInterval(() => {
-      if (checkIframeLoaded()) {
-        clearInterval(interval);
-      }
-    }, 500);
-
-    // Fallback timeout
-    const timeout = setTimeout(() => {
-      console.log('idx Fallback: Setting loaded state after timeout');
-      if (!idxWidgetLoaded) {
-        setIdxWidgetLoaded(true);
-      }
-      clearInterval(interval);
-    }, 3000);
-
-    return () => {
-      iframe.removeEventListener('load', handleLoad);
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [idxWidgetLoaded]);
-
-  // Reset custom iframe loading when URL changes
+  // Reset iframe loading when URL changes
   useEffect(() => {
     if (hasValidCustomUrl) setCustomIframeLoaded(false);
   }, [findMyHomeWidgetUrl, hasValidCustomUrl]);
 
-  // Ref so the window.open override can read the latest detailsUrl without re-creating the effect
-  const detailsUrlRef = React.useRef(detailsUrl);
-  useEffect(() => { detailsUrlRef.current = detailsUrl; }, [detailsUrl]);
-
-  // Hide "Data services provided by IDX Broker" attribution once widget renders
-  useEffect(() => {
-    if (!isIdxWidgetScriptUrl) return;
-    const hide = () => {
-      // The IDX widget injects: <div style="...">Data services provided by <a href="https://www.idxbroker.com/">IDX Broker</a></div>
-      // Search the entire document since it may render outside our container
-      document.querySelectorAll('a[href*="idxbroker.com"]').forEach((anchor) => {
-        const parent = anchor.parentElement;
-        if (parent && parent.textContent && /data\s+services\s+provided\s+by/i.test(parent.textContent)) {
-          parent.style.display = 'none';
-        }
-      });
-    };
-    const interval = setInterval(hide, 1000);
-    const observer = new MutationObserver(hide);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => {
-      clearInterval(interval);
-      observer.disconnect();
-    };
-  }, [isIdxWidgetScriptUrl]);
-
-  // Intercept ALL navigation attempts from the IDX script widget:
-  // 1) window.open()      → load URL in overlay iframe
-  // 2) anchor clicks      → load URL in overlay iframe
-  // 3) target="_blank"    → load URL in overlay iframe
-  // This runs only while FindMyHomeTab is mounted.
-  useEffect(() => {
-    if (!isIdxWidgetScriptUrl) return;
-
-    const originalOpen = window.open;
-
-    window.open = function (
-      url?: string | URL,
-      _target?: string,
-      _features?: string,
-    ): Window | null {
-      if (detailsUrlRef.current) return null;
-      const urlStr = url != null ? String(url).trim() : '';
-      if (urlStr !== '') {
-        setDetailsUrl(urlStr);
-      }
-      return null;
-    };
-
-    const handleClickCapture = (event: MouseEvent) => {
-      if (detailsUrlRef.current) return;
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      const anchor = target.closest('a');
-      if (!anchor) return;
-      const href = anchor.getAttribute('href');
-      if (!href) return;
-      event.preventDefault();
-      event.stopPropagation();
-      setDetailsUrl(href);
-    };
-
-    document.addEventListener('click', handleClickCapture, true);
-
-    return () => {
-      window.open = originalOpen;
-      document.removeEventListener('click', handleClickCapture, true);
-    };
-  }, [isIdxWidgetScriptUrl]);
-
-  // IDX widget script: inject <script id="idxwidgetsrc-{id}" src={url}> so the script runs and renders the widget in-page.
-  // Customizer preview can remount rapidly; clean old global nodes first to avoid duplicate widgets.
-  useEffect(() => {
-    if (!isIdxWidgetScriptUrl || !idxWidgetId || !idxWidgetContainerRef.current || typeof document === 'undefined') return;
-    const container = idxWidgetContainerRef.current;
-    const scriptId = `idxwidgetsrc-${idxWidgetId}`;
-    const widgetElementId = `idx-ai-smart-search-${idxWidgetId}`;
-
-    // Remove any stale duplicates from previous mounts/hot reloads before injecting
-    document.querySelectorAll(`#${scriptId}, #${widgetElementId}`).forEach((node) => node.remove());
-
-    if (injectedIdxWidgetIds.has(scriptId)) return;
-    injectedIdxWidgetIds.add(scriptId);
-
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = trimmedFindMyHomeUrl;
-    script.charset = 'UTF-8';
-    script.type = 'text/javascript';
-    script.async = false;
-    const dedupeRenderedWidgets = () => {
-      const renderedWidgets = Array.from(container.querySelectorAll('idx-ai-smart-search'));
-      if (renderedWidgets.length > 1) {
-        renderedWidgets.slice(1).forEach((node) => node.remove());
-      }
-    };
-    script.onload = () => {
-      setTimeout(dedupeRenderedWidgets, 200);
-      setCustomIframeLoaded(true);
-    };
-    script.onerror = () => setCustomIframeLoaded(true);
-    container.appendChild(script);
-
-    const timeout = setTimeout(() => {
-      dedupeRenderedWidgets();
-      setCustomIframeLoaded(true);
-    }, 8000);
-
-    return () => {
-      clearTimeout(timeout);
-      injectedIdxWidgetIds.delete(scriptId);
-      script.remove();
-      document.querySelectorAll(`#${scriptId}, #${widgetElementId}`).forEach((node) => node.remove());
-      while (container.firstChild) container.removeChild(container.firstChild);
-    };
-  }, [isIdxWidgetScriptUrl, idxWidgetId, trimmedFindMyHomeUrl, hasValidCustomUrl]);
-
-  // Stub variables for legacy code (never executed, kept for reference)
-  const searchCriteria: any = {};
-  const handleInputChange = (_field: string, _value: string) => {};
-  const handleSearch = () => {};
-  const setShowIframe = (_show: boolean) => {};
-
-  // Custom widget URL (e.g. LoanStar): show header/body + iframe
+  // Custom widget URL (e.g. LoanStar / IDX): show header/body + iframe
   if (hasValidCustomUrl) {
     return (
       <div
@@ -479,12 +285,11 @@ button: {
           </div>
         )}
         <div
-          className="w-full mt-6 relative"
+          className={`${findMyHomeWidgetShellClass} mt-6 relative`}
           style={{
             height: 'calc(100vh - 40px)',
             minHeight: '1100px',
             borderRadius: `${layout.borderRadius}px`,
-            overflow: 'hidden',
             backgroundColor: colors.background,
             border: `1px solid ${colors.border}`,
             display: 'flex',
@@ -492,7 +297,7 @@ button: {
           }}
         >
           {/* Loading overlay while initial widget/script is loading */}
-          {!customIframeLoaded && !detailsUrl && (
+          {!customIframeLoaded && (
             <div
               className="flex items-center justify-center py-12 absolute inset-0"
               style={{ zIndex: 1, backgroundColor: colors.background }}
@@ -506,51 +311,18 @@ button: {
               </div>
             </div>
           )}
-          {/* When a details URL is selected, show it in an overlay iframe inside this rectangle */}
-          {detailsUrl ? (
-            <div className="w-full flex-1 flex flex-col relative z-10" style={{ overflow: 'hidden' }}>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-                <span className="text-sm" style={{ color: colors.textSecondary }}>
-                  Viewing listing
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setDetailsUrl(null)}
-                  className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                  style={{ color: colors.text }}
-                >
-                  ← Back to Search
-                </button>
-              </div>
-              <iframe
-                loading="lazy"
-                src={detailsUrl}
-                title="Property Details"
-                className="w-full border-0 flex-1"
-                style={{
-                  width: '100%',
-                  border: 'none',
-                }}
-                sandbox="allow-scripts allow-same-origin allow-forms"
-              />
-            </div>
-          ) : isIdxWidgetScriptUrl ? (
-            <div
-              ref={idxWidgetContainerRef}
-              className="w-full flex-1"
-              style={{
-                overflowY: 'auto',
-                opacity: customIframeLoaded ? 1 : 0,
-                transition: 'opacity 0.3s ease-in-out',
-                pointerEvents: customIframeLoaded ? 'auto' : 'none',
-              }}
+          {isIdxWidgetScriptUrl && idxEmbedIframeSrc ? (
+            <IdxWidgetIframe
+              src={idxEmbedIframeSrc}
+              loaded={customIframeLoaded}
+              onLoad={() => setCustomIframeLoaded(true)}
             />
           ) : (
             <iframe
               loading="lazy"
               src={trimmedFindMyHomeUrl}
               title="Home AI Search Widget"
-              className="w-full border-0 flex-1"
+              className="w-full border-0 flex-1 min-w-0 max-w-full"
               style={{
                 width: '100%',
                 border: 'none',
@@ -576,12 +348,11 @@ button: {
       style={{ fontFamily: typography.fontFamily }}
     >
       <div
-        className="w-full mt-6 relative"
+        className={`${findMyHomeWidgetShellClass} mt-6 relative`}
         style={{
             height: 'calc(100vh - 40px)',
             minHeight: '1100px',
             borderRadius: `${layout.borderRadius}px`,
-            overflow: 'hidden',
             backgroundColor: colors.background,
             border: `1px solid ${colors.border}`,
             display: 'flex',
@@ -599,40 +370,21 @@ button: {
             </div>
           </div>
         )}
-        <iframe
-          loading="lazy"
-          id="idxwidget-iframe-122191"
-          ref={widgetIframeRef}
-          src="/api/widgets/idx"
-          title="IDX Property Search Widget"
-          className="w-full border-0"
-          style={{
-            flex: 1,
-            width: '100%',
-            opacity: idxWidgetLoaded ? 1 : 0,
-            transition: 'opacity 0.3s ease-in-out',
-            pointerEvents: idxWidgetLoaded ? 'auto' : 'none'
-          }}
-          sandbox="allow-scripts allow-same-origin allow-forms"
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
-          allow="clipboard-read; clipboard-write"
+        <IdxWidgetIframe
+          src={buildIdxWidgetIframeSrc(idxWidgetId ?? '117781', defaultFindMyHomeWidgetUrl)}
+          loaded={idxWidgetLoaded}
+          onLoad={() => setIdxWidgetLoaded(true)}
         />
       </div>
 
       <style jsx global>{`
-        #idxwidget-iframe-122191 {
+        .find-my-home-widget idx-ai-smart-search,
+        .find-my-home-widget [id^="idx-ai-smart-search-"] {
           width: 100% !important;
           max-width: 100% !important;
-          min-height: 600px;
-        }
-        @media (max-width: 768px) {
-          #idxwidget-iframe-122191 {
-            min-height: 500px;
-          }
-        }
-        body > #idx-ai-smart-search-122191 {
-          display: none !important;
+          min-width: 0 !important;
+          display: block !important;
+          box-sizing: border-box !important;
         }
       `}</style>
     </div>

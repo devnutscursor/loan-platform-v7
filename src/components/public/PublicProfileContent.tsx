@@ -253,7 +253,8 @@ export default function PublicProfileContent({
           .public-profile-container iframe,
           .public-profile-container input,
           .public-profile-container select,
-          .public-profile-container textarea {
+          .public-profile-container textarea,
+          .public-profile-container idx-ai-smart-search {
             max-width: 100%;
           }
 
@@ -275,12 +276,9 @@ export default function PublicProfileContent({
       
       {/* Unified Template Rendering - PUBLIC MODE */}
       {/* Main Content Area (container that wraps hero, content, footer) */}
-        <div className={`w-full min-w-0 public-profile-container`}>
+        <div className={`w-full min-w-0 max-w-full public-profile-container`}>
           <div
-            className="w-full"
-            style={{
-              minWidth: '300px'
-            }}
+            className="w-full min-w-0 max-w-full"
           >
             {/* Hero Section - rounded top corners.
                 Wrapped in its OWN Suspense so the lazy hero chunk does not
@@ -322,10 +320,10 @@ export default function PublicProfileContent({
 
             {/* Content Area - reduced padding and visible side borders */}
             <div
-              className={`p-2 border-x w-full ${forceMobileViewport ? '' : '@[48rem]:p-3'}`}
+              className={`p-2 border-x w-full min-w-0 max-w-full overflow-x-hidden ${forceMobileViewport ? '' : '@[48rem]:p-3'}`}
               style={{ 
                 borderColor: templateData?.template?.colors?.border || '#e5e7eb',
-                minWidth: '300px'
+                minWidth: 0,
               }}
             >
               <PublicProfileTabsSection
