@@ -181,6 +181,7 @@ const StaticHeader = memo(function StaticHeader() {
           { label: 'Loan Officers', icon: 'profile' as keyof typeof icons, href: '/super-admin/officers' },
           { label: 'Leads Insights', icon: 'trendingUp' as keyof typeof icons, href: '/super-admin/insights' },
           { label: 'Conversion Stats', icon: 'calculator' as keyof typeof icons, href: '/super-admin/stats' },
+          { label: 'Embed Widgets', icon: 'custom' as keyof typeof icons, href: '/super-admin/dashboard?tab=embed' },
           { label: 'Settings', icon: 'settings' as keyof typeof icons, href: '/super-admin/settings' },
           { label: 'Activities', icon: 'activity' as keyof typeof icons, href: '/super-admin/activities' },
         ];
