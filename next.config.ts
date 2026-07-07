@@ -1,6 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/embed/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            // * alone does not allow file:// parents in Chrome; http:/https:/file: allows
+            // local test pages and any external http(s) site embedding this widget.
+            value: "frame-ancestors http: https: file: 'self'",
+          },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

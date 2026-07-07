@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
@@ -12,6 +12,7 @@ import { icons } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import SpotlightCard from '@/components/ui/SpotlightCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import SuperAdminEmbedWidgetsPanel from '@/components/super-admin/SuperAdminEmbedWidgetsPanel';
 
 // Interfaces for Super Admin data
 interface PlatformStats {
@@ -66,6 +67,8 @@ interface Lead {
 export default function SuperAdminDashboardPage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'embed' ? 'embed' : 'overview';
 
   // State for dashboard data
   const [platformStats, setPlatformStats] = useState<PlatformStats>({
@@ -381,6 +384,28 @@ export default function SuperAdminDashboardPage() {
         ]}
       >
         <div className="flex flex-col gap-4 sm:gap-6">
+          {/* Dashboard tabs */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={activeTab === 'overview' ? 'primary' : 'secondary'}
+              onClick={() => router.push('/super-admin/dashboard')}
+              className={activeTab === 'overview' ? 'bg-[#01bcc6] hover:bg-[#008eab]' : ''}
+            >
+              Overview
+            </Button>
+            <Button
+              variant={activeTab === 'embed' ? 'primary' : 'secondary'}
+              onClick={() => router.push('/super-admin/dashboard?tab=embed')}
+              className={activeTab === 'embed' ? 'bg-[#01bcc6] hover:bg-[#008eab]' : ''}
+            >
+              Embed Widgets
+            </Button>
+          </div>
+
+          {activeTab === 'embed' ? (
+            <SuperAdminEmbedWidgetsPanel />
+          ) : (
+          <>
           {/* Platform Statistics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             <SpotlightCard variant="default" className="dashboard-card p-4 sm:p-5 animate-card-stagger-1" style={{ background: 'linear-gradient(135deg, #005b7c 0%, #007a9a 100%)', border: 'none' }}>
@@ -534,6 +559,7 @@ export default function SuperAdminDashboardPage() {
               { label: 'Loan Officers', icon: 'profile', href: '/super-admin/officers' },
               { label: 'Leads Insights', icon: 'trendingUp', href: '/super-admin/insights' },
               { label: 'Conversion Stats', icon: 'calculator', href: '/super-admin/stats' },
+              { label: 'Embed Widgets', icon: 'custom', href: '/super-admin/dashboard?tab=embed' },
               { label: 'Settings', icon: 'settings', href: '/super-admin/settings' },
               { label: 'Activities', icon: 'activity', href: '/super-admin/activities' },
             ]}
@@ -726,6 +752,8 @@ export default function SuperAdminDashboardPage() {
             </SpotlightCard>
           </div>
 
+          </>
+          )}
         </div>
       </DashboardLayout>
     </RouteGuard>
