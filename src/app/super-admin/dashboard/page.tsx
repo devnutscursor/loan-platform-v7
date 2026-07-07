@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/auth/RouteGuard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -65,6 +65,29 @@ interface Lead {
 }
 
 export default function SuperAdminDashboardPage() {
+  return (
+    <RouteGuard allowedRoles={['super_admin']}>
+      <DashboardLayout
+        showBreadcrumb={true}
+        breadcrumbVariant="default"
+        breadcrumbSize="md"
+        customBreadcrumbItems={[
+          {
+            label: 'Dashboard',
+            href: '/super-admin/dashboard',
+            icon: 'home' as keyof typeof icons,
+          },
+        ]}
+      >
+        <Suspense fallback={<DashboardLoadingState text="Loading dashboard..." />}>
+          <SuperAdminDashboardContent />
+        </Suspense>
+      </DashboardLayout>
+    </RouteGuard>
+  );
+}
+
+function SuperAdminDashboardContent() {
   const { user, userRole, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -312,31 +335,25 @@ export default function SuperAdminDashboardPage() {
   // Show loading state
   if (authLoading || loading) {
     return (
-      <RouteGuard allowedRoles={['super_admin']}>
-        <DashboardLayout 
-        >
-          <DashboardLoadingState 
-            text={authLoading ? 'Loading user data...' : 'Loading platform data...'} 
-          />
-        </DashboardLayout>
-      </RouteGuard>
+      <DashboardLoadingState
+        text={authLoading ? 'Loading user data...' : 'Loading platform data...'}
+      />
     );
   }
 
   // Show error state
   if (error) {
     return (
-      <RouteGuard allowedRoles={['super_admin']}>
-        <DashboardLayout 
-        >
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            minHeight: '400px',
-            flexDirection: 'column',
-            gap: '16px'
-          }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
             <div style={{
               width: '48px',
               height: '48px',
@@ -364,25 +381,10 @@ export default function SuperAdminDashboardPage() {
               Retry
             </Button>
           </div>
-        </DashboardLayout>
-      </RouteGuard>
     );
   }
 
   return (
-    <RouteGuard allowedRoles={['super_admin']}>
-      <DashboardLayout 
-        showBreadcrumb={true}
-        breadcrumbVariant="default"
-        breadcrumbSize="md"
-        customBreadcrumbItems={[
-          {
-            label: 'Dashboard',
-            href: '/super-admin/dashboard',
-            icon: 'home' as keyof typeof icons
-          }
-        ]}
-      >
         <div className="flex flex-col gap-4 sm:gap-6">
           {/* Dashboard tabs */}
           <div className="flex flex-wrap gap-2">
@@ -755,7 +757,5 @@ export default function SuperAdminDashboardPage() {
           </>
           )}
         </div>
-      </DashboardLayout>
-    </RouteGuard>
   );
 }
