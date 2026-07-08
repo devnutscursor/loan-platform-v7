@@ -1,12 +1,18 @@
+import type { OfficerEmbedPublicProfile } from '@/lib/embed/officerEmbedWidget';
 import type { EmbedTodaysRateRow } from '@/lib/mortech/embedTodaysRates';
 import { formatEmbedRate } from '@/lib/mortech/embedTodaysRates';
 
 type EmbedTodaysRatesTableProps = {
   rates: EmbedTodaysRateRow[];
   updatedAt?: string | null;
+  officer?: OfficerEmbedPublicProfile | null;
 };
 
-export default function EmbedTodaysRatesTable({ rates, updatedAt }: EmbedTodaysRatesTableProps) {
+export default function EmbedTodaysRatesTable({
+  rates,
+  updatedAt,
+  officer,
+}: EmbedTodaysRatesTableProps) {
   const formattedUpdatedAt = updatedAt
     ? new Date(updatedAt).toLocaleString('en-US', {
         month: 'short',
@@ -27,6 +33,29 @@ export default function EmbedTodaysRatesTable({ rates, updatedAt }: EmbedTodaysR
 
   return (
     <div className="embed-rates-root">
+      {officer && (
+        <div className="embed-officer-card">
+          {officer.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={officer.avatarUrl}
+              alt={officer.displayName}
+              className="embed-officer-avatar"
+            />
+          ) : (
+            <div className="embed-officer-avatar embed-officer-avatar-fallback">
+              {officer.displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="embed-officer-info">
+            <h2 className="embed-officer-name">{officer.displayName}</h2>
+            {officer.nmlsNumber && (
+              <p className="embed-officer-nmls">NMLS# {officer.nmlsNumber}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="embed-rates-header">
         <h1 className="embed-rates-title">Today&apos;s Mortgage Rates</h1>
         {formattedUpdatedAt && (

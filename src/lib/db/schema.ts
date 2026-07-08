@@ -531,6 +531,22 @@ export const mortechEmailRateLimits = pgTable('mortech_email_rate_limits', {
   emailCalledAtIdx: index('mortech_email_rate_limits_email_called_at_idx').on(table.email, table.calledAt),
 }));
 
+// Per-officer embed widget (sold separately) — unique slug + display overrides
+export const officerEmbedWidgets = pgTable('officer_embed_widgets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  embedSlug: text('embed_slug').notNull().unique(),
+  displayName: text('display_name'),
+  nmlsNumber: text('nmls_number'),
+  avatarUrl: text('avatar_url'),
+  isEnabled: boolean('is_enabled').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  officerIdUnique: uniqueIndex('officer_embed_widgets_officer_id_unique').on(table.officerId),
+  embedSlugIdx: index('officer_embed_widgets_embed_slug_idx').on(table.embedSlug),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -578,3 +594,5 @@ export type MortechInvestor = typeof mortechInvestors.$inferSelect;
 export type NewMortechInvestor = typeof mortechInvestors.$inferInsert;
 export type MortechProduct = typeof mortechProducts.$inferSelect;
 export type NewMortechProduct = typeof mortechProducts.$inferInsert;
+export type OfficerEmbedWidget = typeof officerEmbedWidgets.$inferSelect;
+export type NewOfficerEmbedWidget = typeof officerEmbedWidgets.$inferInsert;
