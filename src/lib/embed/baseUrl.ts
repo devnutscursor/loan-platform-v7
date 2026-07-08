@@ -15,16 +15,19 @@ export function getEmbedBaseUrl(): string {
   return 'http://localhost:3000';
 }
 
-export function getTodaysRatesEmbedPath(): string {
+export function getTodaysRatesEmbedPath(embedSlug?: string): string {
+  if (embedSlug?.trim()) {
+    return `/embed/todays-rates/${encodeURIComponent(embedSlug.trim())}`;
+  }
   return '/embed/todays-rates';
 }
 
-export function getTodaysRatesEmbedUrl(): string {
-  return `${getEmbedBaseUrl()}${getTodaysRatesEmbedPath()}`;
+export function getTodaysRatesEmbedUrl(embedSlug?: string): string {
+  return `${getEmbedBaseUrl()}${getTodaysRatesEmbedPath(embedSlug)}`;
 }
 
-export function buildTodaysRatesIframeSnippet(height = 520): string {
-  const url = getTodaysRatesEmbedUrl();
+export function buildTodaysRatesIframeSnippet(embedSlug?: string, height = 580): string {
+  const url = getTodaysRatesEmbedUrl(embedSlug);
   return `<iframe
   src="${url}"
   width="100%"
@@ -35,8 +38,8 @@ export function buildTodaysRatesIframeSnippet(height = 520): string {
 ></iframe>`;
 }
 
-export function buildTodaysRatesScriptSnippet(): string {
-  const url = getTodaysRatesEmbedUrl();
+export function buildTodaysRatesScriptSnippet(embedSlug?: string): string {
+  const url = getTodaysRatesEmbedUrl(embedSlug);
   return `<div id="ratecaddy-todays-rates"></div>
 <script>
 (function () {

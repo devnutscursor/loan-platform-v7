@@ -84,6 +84,51 @@
   font-size: 0.875rem;
 }
 
+.embed-officer-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.embed-officer-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #cbd5e1;
+}
+
+.embed-officer-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.embed-officer-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.embed-officer-nmls {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: #475569;
+  font-weight: 500;
+}
+
 @media (max-width: 480px) {
   .embed-rates-root {
     padding: 0.75rem 0.75rem 1rem;
