@@ -561,7 +561,6 @@ function SuperAdminDashboardContent() {
               { label: 'Loan Officers', icon: 'profile', href: '/super-admin/officers' },
               { label: 'Leads Insights', icon: 'trendingUp', href: '/super-admin/insights' },
               { label: 'Conversion Stats', icon: 'calculator', href: '/super-admin/stats' },
-              { label: 'Embed Widgets', icon: 'custom', href: '/super-admin/dashboard?tab=embed' },
               { label: 'Settings', icon: 'settings', href: '/super-admin/settings' },
               { label: 'Activities', icon: 'activity', href: '/super-admin/activities' },
             ]}

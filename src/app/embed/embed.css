@@ -1,7 +1,55 @@
+/* —— Kill global white body / height bugs on embed routes —— */
+/* Works before JS runs (fixes white strip under card) */
+html:has(.embed-shell),
+html:has(.embed-shell) body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #070707 !important;
+  background-color: #070707 !important;
+  color: #e8eaed;
+}
+
+html.rc-embed,
+html.rc-embed body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #070707 !important;
+  background-color: #070707 !important;
+  color: #e8eaed;
+}
+
+html.rc-embed-iframe,
+html.rc-embed-iframe body {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+html.rc-embed-page,
+html.rc-embed-page body {
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
 .embed-shell {
-  min-height: 100%;
-  background: #ffffff;
-  color: #111827;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  background: #070707;
+  color: #e8eaed;
+}
+
+html.rc-embed-page .embed-shell {
+  min-height: 100vh;
+}
+
+html.rc-embed-iframe .embed-shell {
+  min-height: 0 !important;
+  height: auto !important;
 }
 
 .embed-rates-root {
@@ -9,6 +57,25 @@
   margin: 0 auto;
   padding: 1rem 1rem 1.25rem;
   box-sizing: border-box;
+}
+
+.embed-rates-root--officer {
+  max-width: 880px;
+  padding: 0.75rem;
+  /* Pin content to top — never vertically center (looks broken in tall viewports) */
+  display: block;
+}
+
+/* —— Generic (no officer) light layout —— */
+.embed-shell:not(:has(.embed-rates-root--officer)) {
+  background: #ffffff;
+  color: #111827;
+}
+
+html.rc-embed:not(:has(.embed-rates-root--officer)),
+html.rc-embed:not(:has(.embed-rates-root--officer)) body {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .embed-rates-header {
@@ -80,63 +147,322 @@
 .embed-rates-empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: #64748b;
+  color: #94a3b8;
   font-size: 0.875rem;
+  background: #070707;
+  min-height: 160px;
 }
 
-.embed-officer-card {
-  display: flex;
+/* —— Officer dark unified card —— */
+.embed-dark-card {
+  --embed-accent: #c9a227;
+  position: relative;
+  overflow: hidden;
+  background-color: #121212;
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 7px
+    ),
+    linear-gradient(145deg, #171717 0%, #101010 55%, #0d0d0d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.75rem;
+  padding: 1.5rem 1.6rem 1.15rem;
+  color: #e8eaed;
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.embed-dark-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 55% 70% at 12% 35%,
+    color-mix(in srgb, var(--embed-accent) 12%, transparent),
+    transparent 70%
+  );
+}
+
+.embed-dark-card-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 1.75rem;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.875rem 1rem;
-  margin-bottom: 0.875rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
 }
 
-.embed-officer-avatar {
-  width: 64px;
-  height: 64px;
+.embed-dark-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.35rem 0.25rem;
+}
+
+.embed-dark-avatar-ring {
+  width: 108px;
+  height: 108px;
+  border-radius: 9999px;
+  padding: 2.5px;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--embed-accent) 25%, #7c3aed) 0%,
+    var(--embed-accent) 48%,
+    color-mix(in srgb, var(--embed-accent) 70%, #f5e6b8) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 22px color-mix(in srgb, var(--embed-accent) 35%, transparent);
+}
+
+.embed-dark-avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  padding: 3px;
+  background: #121212;
+}
+
+.embed-dark-avatar {
+  width: 100%;
+  height: 100%;
   border-radius: 9999px;
   object-fit: cover;
-  flex-shrink: 0;
-  border: 2px solid #cbd5e1;
+  display: block;
+  background: #1a1a1a;
 }
 
-.embed-officer-avatar-fallback {
+.embed-dark-avatar-fallback {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0f766e;
-  color: #ffffff;
-  font-size: 1.5rem;
+  font-size: 2.1rem;
   font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--embed-accent) 28%, #1a1a1a),
+    #151515
+  );
 }
 
-.embed-officer-name {
+.embed-dark-name-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+
+.embed-dark-name {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0f172a;
   line-height: 1.25;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 156px;
 }
 
-.embed-officer-nmls {
-  margin: 0.25rem 0 0;
+.embed-dark-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: #111111;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--embed-accent) 85%, #fff),
+    var(--embed-accent)
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--embed-accent) 40%, transparent);
+}
+
+.embed-dark-nmls {
+  margin: 0.4rem 0 0;
   font-size: 0.8125rem;
-  color: #475569;
+  color: #9ca3af;
   font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.embed-dark-rates {
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.35rem 0 0.15rem 1.35rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.embed-dark-rates-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.embed-dark-rates-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.embed-dark-updated {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: #8b919a;
+}
+
+.embed-dark-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.embed-dark-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 260px;
+}
+
+.embed-dark-table th,
+.embed-dark-table td {
+  padding: 0.62rem 0.85rem;
+  text-align: left;
+  font-size: 0.84rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.embed-dark-table th {
+  color: #8b919a;
+  font-weight: 600;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.embed-dark-table th:nth-child(2),
+.embed-dark-table th:nth-child(3),
+.embed-dark-table td:nth-child(2),
+.embed-dark-table td:nth-child(3) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.embed-dark-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.embed-dark-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.embed-dark-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.embed-dark-table td {
+  color: #e8eaed;
+  font-weight: 500;
+}
+
+.embed-dark-rate {
+  font-weight: 700;
+  color: var(--embed-accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.embed-dark-apr {
+  color: #c4c9d1;
+  font-variant-numeric: tabular-nums;
+}
+
+.embed-dark-disclaimer {
+  position: relative;
+  z-index: 1;
+  margin: 1.1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.625rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+@media (max-width: 720px) {
+  .embed-rates-root--officer {
+    padding: 0.55rem;
+  }
+
+  .embed-dark-card {
+    padding: 1.15rem 1rem 1rem;
+    border-radius: 1.35rem;
+  }
+
+  .embed-dark-card-inner {
+    grid-template-columns: 1fr;
+    gap: 1.15rem;
+    align-items: stretch;
+  }
+
+  .embed-dark-profile {
+    padding-bottom: 0.15rem;
+  }
+
+  .embed-dark-name {
+    max-width: 220px;
+  }
+
+  .embed-dark-rates {
+    padding: 1rem 0 0;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .embed-dark-rates-head {
+    text-align: center;
+    justify-content: center;
+  }
+
+  .embed-dark-table th,
+  .embed-dark-table td {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.78rem;
+  }
 }
 
 @media (max-width: 480px) {
   .embed-rates-root {
-    padding: 0.75rem 0.75rem 1rem;
+    padding: 0.75rem;
   }
 
-  .embed-rates-table th,
-  .embed-rates-table td {
-    padding: 0.625rem 0.625rem;
-    font-size: 0.8125rem;
+  .embed-dark-avatar-ring {
+    width: 96px;
+    height: 96px;
   }
 }

@@ -534,11 +534,14 @@ export const mortechEmailRateLimits = pgTable('mortech_email_rate_limits', {
 // Per-officer embed widget (sold separately) — unique slug + display overrides
 export const officerEmbedWidgets = pgTable('officer_embed_widgets', {
   id: uuid('id').primaryKey().defaultRandom(),
-  officerId: uuid('officer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  officerId: uuid('officer_id').references(() => users.id, { onDelete: 'cascade' }),
+  isExternal: boolean('is_external').default(false).notNull(),
+  contactEmail: text('contact_email'),
   embedSlug: text('embed_slug').notNull().unique(),
   displayName: text('display_name'),
   nmlsNumber: text('nmls_number'),
   avatarUrl: text('avatar_url'),
+  accentColor: text('accent_color'),
   isEnabled: boolean('is_enabled').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
