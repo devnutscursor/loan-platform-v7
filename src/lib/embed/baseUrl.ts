@@ -26,16 +26,41 @@ export function getTodaysRatesEmbedUrl(embedSlug?: string): string {
   return `${getEmbedBaseUrl()}${getTodaysRatesEmbedPath(embedSlug)}`;
 }
 
-export function buildTodaysRatesIframeSnippet(embedSlug?: string, height = 580): string {
+/**
+ * Copy-paste embed: iframe + resize script.
+ * Parent listens for postMessage and sets iframe height to content height.
+ */
+export function buildTodaysRatesIframeSnippet(embedSlug?: string): string {
   const url = getTodaysRatesEmbedUrl(embedSlug);
-  return `<iframe
+  const iframeId = `ratecaddy-embed-${(embedSlug || 'rates').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'rates'}`;
+
+  return `<!-- RateCaddy Today's Rates (auto-height) -->
+<iframe
+  id="${iframeId}"
   src="${url}"
   width="100%"
-  height="${height}"
+  height="780"
+  loading="lazy"
   frameborder="0"
-  style="border:0;max-width:100%;"
+  scrolling="no"
+  style="border:0;width:100%;max-width:100%;display:block;overflow:hidden;background:#070707;"
   title="Today's Mortgage Rates"
-></iframe>`;
+></iframe>
+<script>
+(function () {
+  var id = ${JSON.stringify(iframeId)};
+  function apply(h) {
+    var el = document.getElementById(id);
+    if (!el || !h) return;
+    el.style.height = Math.ceil(h) + 'px';
+  }
+  window.addEventListener('message', function (e) {
+    var d = e && e.data;
+    if (!d || d.type !== 'ratecaddy-embed-resize' || !d.height) return;
+    apply(d.height);
+  });
+})();
+</script>`;
 }
 
 export function buildTodaysRatesScriptSnippet(embedSlug?: string): string {
@@ -49,9 +74,16 @@ export function buildTodaysRatesScriptSnippet(embedSlug?: string): string {
   iframe.src = ${JSON.stringify(url)};
   iframe.title = "Today's Mortgage Rates";
   iframe.width = '100%';
-  iframe.height = '520';
+  iframe.height = '700';
   iframe.frameBorder = '0';
-  iframe.style.cssText = 'border:0;max-width:100%;';
+  iframe.scrolling = 'no';
+  iframe.style.cssText = 'border:0;width:100%;max-width:100%;display:block;overflow:hidden;';
+  window.addEventListener('message', function (e) {
+    var d = e && e.data;
+    if (!d || d.type !== 'ratecaddy-embed-resize' || !d.height) return;
+    if (e.source !== iframe.contentWindow) return;
+    iframe.style.height = Math.ceil(d.height) + 'px';
+  });
   el.appendChild(iframe);
 })();
 </script>`;

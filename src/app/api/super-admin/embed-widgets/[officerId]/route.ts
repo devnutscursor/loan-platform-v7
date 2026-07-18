@@ -36,6 +36,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       displayName: body.displayName,
       nmlsNumber: body.nmlsNumber,
       avatarUrl: body.avatarUrl,
+      accentColor: body.accentColor,
       isEnabled: body.isEnabled !== false,
     });
     const officer = await getOfficerEmbedForAdmin(officerId);
