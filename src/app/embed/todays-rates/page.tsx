@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import { getEmbedTodaysRates } from '@/lib/mortech/embedTodaysRates';
 import EmbedTodaysRatesTable from '@/components/embed/EmbedTodaysRatesTable';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Today's Mortgage Rates",
   robots: 'noindex',
